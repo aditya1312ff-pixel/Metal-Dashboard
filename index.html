@@ -34,6 +34,13 @@
   .upload-btn:hover { background: #1c2536; border-color: var(--accent); }
   .upload-btn.loaded { background: rgba(46,204,113,0.15); border-color: var(--green); color: var(--green); }
   .upload-btn input[type=file] { display: none; }
+  .btn-refresh {
+    background: rgba(232,163,61,0.15); border: 1px solid var(--accent); color: var(--accent);
+    padding: 7px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-refresh:hover { background: rgba(232,163,61,0.25); }
+  .btn-refresh:disabled { opacity: 0.5; cursor: wait; }
 
   .sbi-bar {
     background: linear-gradient(135deg, #1c2536 0%, #161d2b 100%);
@@ -59,6 +66,7 @@
   }
   .status-banner.err { background: rgba(231,76,60,0.12); border: 1px solid var(--red); color: #f5a3a3; display: block; }
   .status-banner.ok  { background: rgba(46,204,113,0.12); border: 1px solid var(--green); color: #7ee8a7; display: block; }
+  .status-banner.info{ background: rgba(232,163,61,0.10); border: 1px solid var(--accent); color: var(--accent); display: block; }
   .status-banner ul { margin: 4px 0 0 18px; }
 
   .head { display:flex; justify-content:space-between; align-items:center; padding:8px 4px 20px; flex-wrap:wrap; gap:12px; }
@@ -278,16 +286,17 @@
 <div class="dashboard">
 
   <div class="upload-bar">
-    <span class="title"><i class="fas fa-folder-open"></i> Load data</span>
+    <span class="title"><i class="fas fa-folder-open"></i> Data</span>
+    <button class="btn-refresh" id="btnRefreshAll"><i class="fas fa-sync-alt"></i> Refresh from GitHub</button>
     <label class="upload-btn" id="btnMetals">
-      <i class="fas fa-file-csv"></i> Load metals.csv
+      <i class="fas fa-file-csv"></i> Override metals.csv
       <input type="file" accept=".csv,.txt" id="fileMetals">
     </label>
     <label class="upload-btn" id="btnCSP">
-      <i class="fas fa-file-csv"></i> Load lme_csp.csv
+      <i class="fas fa-file-csv"></i> Override lme_csp.csv
       <input type="file" accept=".csv,.txt" id="fileCSP">
     </label>
-    <span class="hint">Load metals.csv + lme_csp.csv. News auto-loads.</span>
+    <span class="hint">Auto-loads from GitHub. Use Override buttons for local files.</span>
   </div>
 
   <!-- SBI TT URL bar -->
@@ -310,8 +319,8 @@
 
   <div id="placeholder" class="card span-12">
     <div class="placeholder">
-      <i class="fas fa-arrow-up"></i>
-      Load <strong>metals.csv</strong> and <strong>lme_csp.csv</strong> above.
+      <i class="fas fa-spinner fa-spin"></i>
+      Loading data from GitHub…
     </div>
   </div>
 
@@ -600,6 +609,15 @@
 </div>
 
 <script>
+/* ========================================================================
+   CONFIG — EDIT THESE IF YOUR REPO/FILE NAMES CHANGE
+   ======================================================================== */
+const REPO_OWNER = 'aditya1312ff-pixel';
+const REPO_NAME  = 'Metal-Dashboard';
+const REPO_BRANCH = 'main';
+const METALS_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/metals.csv`;
+const CSP_URL    = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/lme_csp.csv`;
+
 /* ========================================================================
    CSV PARSER + HELPERS
    ======================================================================== */
@@ -1046,13 +1064,12 @@ function renderCSPDaysTable() {
   }
   const N = parseInt(document.getElementById('cspDaysCount')?.value || '5', 10);
 
-  // Filter rows that have at least one metal with cash+3M
   const validRows = CSP_RAW.filter(r =>
     (r.Cu && r.Cu.cash != null && r.Cu.threeM != null) ||
     (r.Zn && r.Zn.cash != null && r.Zn.threeM != null) ||
     (r.Al && r.Al.cash != null && r.Al.threeM != null)
   );
-  const last = validRows.slice(-N).reverse(); // newest first
+  const last = validRows.slice(-N).reverse();
 
   if (!last.length) {
     wrap.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:8px;">No CSP data available.</div>';
@@ -2129,7 +2146,7 @@ async function loadNews() {
 }
 
 /* ========================================================================
-   SBI TT FETCH — multi-proxy fallbacks
+   SBI TT FETCH — multi-proxy
    ======================================================================== */
 async function tryFetch(url, timeoutMs = 15000) {
   const controller = new AbortController();
@@ -2195,6 +2212,77 @@ async function fetchSbiTT(url) {
 }
 
 /* ========================================================================
+   AUTO-LOAD from GitHub
+   ======================================================================== */
+async function fetchText(url, timeoutMs = 20000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.text();
+  } catch (err) {
+    clearTimeout(timer);
+    throw err;
+  }
+}
+
+async function autoLoadFromGitHub(silent = false) {
+  const btn = document.getElementById('btnRefreshAll');
+  if (btn && !silent) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading…'; }
+
+  let metalsOk = false, cspOk = false;
+  const errs = [];
+
+  // Metals
+  try {
+    const txt = await fetchText(METALS_URL + '?t=' + Date.now());
+    const res = parseMetalsCSV(txt);
+    if (!res.ok) throw new Error(res.msg);
+    computeLatest();
+    document.getElementById('rangeLabel').textContent = RAW[0].date + ' → ' + RAW[RAW.length-1].date;
+    const fromEl = document.getElementById('priceDateFrom');
+    const toEl = document.getElementById('priceDateTo');
+    if (fromEl && !fromEl.value) fromEl.value = RAW[0].date;
+    if (toEl && !toEl.value) toEl.value = RAW[RAW.length-1].date;
+    const btnM = document.getElementById('btnMetals');
+    btnM.classList.add('loaded');
+    metalsOk = true;
+  } catch (e) {
+    errs.push('metals.csv: ' + e.message);
+  }
+
+  // CSP
+  try {
+    const txt = await fetchText(CSP_URL + '?t=' + Date.now());
+    const res = parseCSPCSV(txt);
+    if (!res.ok) throw new Error(res.msg);
+    const btnC = document.getElementById('btnCSP');
+    btnC.classList.add('loaded');
+    cspOk = true;
+  } catch (e) {
+    errs.push('lme_csp.csv: ' + e.message);
+  }
+
+  if (btn && !silent) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh from GitHub'; }
+
+  if (metalsOk || cspOk) {
+    if (!silent) {
+      showStatus('ok', 'Loaded from GitHub' +
+        (metalsOk ? ' · metals.csv ✓' : '') + (cspOk ? ' · lme_csp.csv ✓' : ''),
+        errs.length ? errs : null);
+    }
+    maybeRender();
+  } else {
+    showStatus('err', 'Could not load from GitHub',
+      [...errs,
+       'Check that the CSV files are uploaded to the repo root',
+       'And that the repo is public']);
+  }
+}
+
+/* ========================================================================
    FILE LOADING + RENDER
    ======================================================================== */
 function showContent() {
@@ -2213,7 +2301,7 @@ function loadMetalsFile(text) {
   const btn = document.getElementById('btnMetals');
   btn.classList.add('loaded');
   btn.querySelector('i').className = 'fas fa-check-circle';
-  showStatus('ok', 'metals.csv: ' + res.msg, res.details);
+  showStatus('ok', 'metals.csv (local override): ' + res.msg, res.details);
   return true;
 }
 function loadCSPFile(text) {
@@ -2222,7 +2310,7 @@ function loadCSPFile(text) {
   const btn = document.getElementById('btnCSP');
   btn.classList.add('loaded');
   btn.querySelector('i').className = 'fas fa-check-circle';
-  showStatus('ok', 'lme_csp.csv: ' + res.msg, res.details);
+  showStatus('ok', 'lme_csp.csv (local override): ' + res.msg, res.details);
   return true;
 }
 function readFile(file, onLoad) {
@@ -2343,6 +2431,7 @@ function wireControls() {
    INIT
    ======================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
+  // Override buttons (still work if you want to load a local file)
   document.getElementById('fileMetals').addEventListener('change', e => {
     const f = e.target.files[0]; if (!f) return;
     readFile(f, txt => { if (loadMetalsFile(txt)) maybeRender(); });
@@ -2351,10 +2440,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const f = e.target.files[0]; if (!f) return;
     readFile(f, txt => { if (loadCSPFile(txt)) maybeRender(); });
   });
+
+  // Refresh from GitHub button
+  document.getElementById('btnRefreshAll').addEventListener('click', () => autoLoadFromGitHub(false));
+
+  // SBI fetch
   document.getElementById('sbiFetchBtn').addEventListener('click', () => {
     const url = document.getElementById('sbiUrl').value.trim();
     fetchSbiTT(url);
   });
+
+  // Auto-load on page load
+  autoLoadFromGitHub(true);
+
+  // News
   loadNews();
 });
 </script>
