@@ -1,0 +1,2362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Non-Ferrous Metals Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  :root {
+    --copper:#d68b4d; --alu:#93a2b5; --zinc:#5b8fc9;
+    --bg:#0e1420; --card:#161d2b; --card2:#1c2536; --border:#232d42;
+    --text:#e6ecf5; --muted:#7c8aa0; --accent:#e8a33d;
+    --green:#2ecc71; --red:#e74c3c; --amber:#f39c12; --sbi:#ff6b9d;
+  }
+  body { background:var(--bg); color:var(--text); padding:18px; min-height:100vh; }
+  .dashboard { max-width:1600px; margin:0 auto; }
+
+  .upload-bar {
+    background: linear-gradient(135deg, #1c2536 0%, #161d2b 100%);
+    border: 1px solid var(--accent);
+    border-radius: 12px; padding: 14px 18px; margin-bottom: 18px;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .upload-bar .title { font-size: 0.85rem; color: var(--accent); font-weight: 600; }
+  .upload-bar .hint { font-size: 0.72rem; color: var(--muted); flex: 1; min-width: 200px; }
+  .upload-btn {
+    background: #0e1724; border: 1px solid var(--border); color: var(--text);
+    padding: 7px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 500;
+    cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .upload-btn:hover { background: #1c2536; border-color: var(--accent); }
+  .upload-btn.loaded { background: rgba(46,204,113,0.15); border-color: var(--green); color: var(--green); }
+  .upload-btn input[type=file] { display: none; }
+
+  .sbi-bar {
+    background: linear-gradient(135deg, #1c2536 0%, #161d2b 100%);
+    border: 1px solid var(--sbi);
+    border-radius: 12px; padding: 12px 16px; margin-bottom: 18px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .sbi-bar .title { font-size: 0.8rem; color: var(--sbi); font-weight: 600; white-space:nowrap; }
+  .sbi-bar input[type=text] {
+    flex: 1; min-width: 260px; background:#0e1724; border:1px solid var(--border);
+    color:var(--text); padding:7px 12px; border-radius:8px; font-size:0.72rem;
+    font-family: monospace;
+  }
+  .sbi-bar input[type=text]:focus { outline:none; border-color:var(--sbi); }
+  .sbi-bar .status { font-size:0.7rem; color:var(--muted); flex-basis:100%; }
+  .sbi-bar .status.ok { color:var(--green); }
+  .sbi-bar .status.err { color:var(--red); }
+  .sbi-bar .status.warn { color:var(--amber); }
+
+  .status-banner {
+    padding: 10px 14px; border-radius: 10px; margin-bottom: 14px;
+    font-size: 0.78rem; display: none;
+  }
+  .status-banner.err { background: rgba(231,76,60,0.12); border: 1px solid var(--red); color: #f5a3a3; display: block; }
+  .status-banner.ok  { background: rgba(46,204,113,0.12); border: 1px solid var(--green); color: #7ee8a7; display: block; }
+  .status-banner ul { margin: 4px 0 0 18px; }
+
+  .head { display:flex; justify-content:space-between; align-items:center; padding:8px 4px 20px; flex-wrap:wrap; gap:12px; }
+  .head h1 { font-size:1.5rem; font-weight:700; display:flex; align-items:center; gap:12px; }
+  .head h1 i { color:var(--accent); }
+  .head .meta { color:var(--muted); font-size:0.8rem; display:flex; gap:18px; flex-wrap:wrap;}
+  .head .meta strong { color:var(--text); }
+  .fresh-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); margin-right:6px;}
+  .fresh-dot.warn { background:var(--amber); }
+  .fresh-dot.stale { background:var(--red); }
+
+  .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:14px; margin-bottom:14px;}
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:10px; }
+  .card h3 { font-size:0.82rem; font-weight:600; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); display:flex; align-items:center; gap:8px; }
+  .card h3 i { color:var(--accent); }
+  .card .sub { font-size:0.7rem; color:var(--muted); text-transform:none; letter-spacing:0;}
+
+  .span-3{grid-column:span 3;} .span-4{grid-column:span 4;} .span-5{grid-column:span 5;}
+  .span-6{grid-column:span 6;} .span-7{grid-column:span 7;} .span-8{grid-column:span 8;}
+  .span-12{grid-column:span 12;}
+  @media(max-width:1200px){ .span-3,.span-4,.span-5{grid-column:span 6;} .span-7,.span-8{grid-column:span 12;} }
+  @media(max-width:700px){ .grid{grid-template-columns:1fr;} .card{grid-column:span 1 !important;} }
+
+  .price-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap:10px; }
+  .price-card { background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:11px 12px; position:relative; overflow:hidden; }
+  .price-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:#d68b4d; }
+  .price-card.cat-mcx::before { background:#c07c2b; }
+  .price-card.cat-comex::before { background:#e8b23d; }
+  .price-card.cat-energy::before { background:#c0392b; }
+  .price-card.cat-fx::before { background:#2ecc71; }
+  .price-card.cat-yield::before { background:#9b59b6; }
+  .price-card .label { font-size:0.68rem; color:var(--muted); display:flex; justify-content:space-between; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;}
+  .price-card .label .venue { background:#0e1724; padding:1px 6px; border-radius:3px; font-size:0.6rem; color:#a9b6cb; }
+  .price-card .value { font-size:1.15rem; font-weight:700; color:#fff; font-variant-numeric: tabular-nums; }
+  .price-card .unit { font-size:0.62rem; color:var(--muted); margin-left:3px;}
+  .price-card .chg { font-size:0.7rem; font-weight:600; margin-top:4px; display:flex; align-items:center; gap:5px; }
+  .price-card .chg.up { color:var(--green); }
+  .price-card .chg.down { color:var(--red); }
+
+  .csp-latest-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; }
+  .csp-latest-card { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:14px; position:relative; overflow:hidden; }
+  .csp-latest-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--copper); }
+  .csp-latest-card.zn::before { background:var(--zinc); }
+  .csp-latest-card.al::before { background:var(--alu); }
+  .csp-latest-card .metal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .csp-latest-card .metal-name { font-size:0.95rem; font-weight:700; letter-spacing:0.3px; }
+  .csp-latest-card .metal-date { font-size:0.65rem; color:var(--muted); background:#0e1724; padding:2px 7px; border-radius:4px; }
+  .csp-latest-card .row-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin-bottom:10px; }
+  .csp-latest-card .cell .lbl { font-size:0.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; }
+  .csp-latest-card .cell .val { font-size:0.95rem; font-weight:700; font-variant-numeric:tabular-nums; color:#fff; }
+  .csp-latest-card .spread-row { display:flex; justify-content:space-between; align-items:center; padding-top:8px; border-top:1px solid #1f2837; }
+  .csp-latest-card .spread-row .lbl { font-size:0.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+  .csp-latest-card .spread-row .val { font-size:1.05rem; font-weight:700; font-variant-numeric:tabular-nums; }
+  .csp-latest-card .spread-row .val.pos { color:var(--green); }
+  .csp-latest-card .spread-row .val.neg { color:var(--red); }
+  .csp-latest-card .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:0.6rem; font-weight:700; letter-spacing:0.5px; margin-left:8px; }
+  .csp-latest-card .badge.bwd { background:rgba(46,204,113,0.18); color:var(--green); }
+  .csp-latest-card .badge.ctg { background:rgba(231,76,60,0.18); color:var(--red); }
+  .csp-latest-card .badge.na { background:rgba(124,138,160,0.18); color:var(--muted); }
+
+  /* Last N Days CSP table */
+  .csp-days-wrap { overflow-x: auto; }
+  .csp-days-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .csp-days-table th {
+    text-align: right; color: var(--muted); font-weight: 600;
+    padding: 7px 10px; border-bottom: 1px solid var(--border);
+    font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.4px;
+    white-space: nowrap;
+  }
+  .csp-days-table th.metal-h { text-align: left; }
+  .csp-days-table td {
+    padding: 8px 10px; border-bottom: 1px solid #1a2334;
+    color: #c6d0de; font-variant-numeric: tabular-nums; text-align: right;
+    white-space: nowrap;
+  }
+  .csp-days-table td.metal-name { text-align: left; font-weight: 700; font-size: 0.82rem; }
+  .csp-days-table td.date-cell { color: var(--muted); font-size: 0.72rem; text-align: left; }
+  .csp-days-table td.pos { color: var(--green); font-weight: 600; }
+  .csp-days-table td.neg { color: var(--red); font-weight: 600; }
+  .csp-days-table .pill {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.4px;
+  }
+  .csp-days-table .pill.bwd { background: rgba(46,204,113,0.18); color: var(--green); }
+  .csp-days-table .pill.ctg { background: rgba(231,76,60,0.18); color: var(--red); }
+  .csp-days-table .pill.flat { background: rgba(124,138,160,0.18); color: var(--muted); }
+
+  .spread-panel { display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; }
+  .spread-metal-card { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:14px; position:relative; overflow:hidden; }
+  .spread-metal-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--copper); }
+  .spread-metal-card.zn::before { background:var(--zinc); }
+  .spread-metal-card.al::before { background:var(--alu); }
+  .spread-metal-card .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .spread-metal-card .m-name { font-size:0.95rem; font-weight:700; }
+  .spread-metal-card .m-date { font-size:0.65rem; color:var(--muted); background:#0e1724; padding:2px 7px; border-radius:4px; }
+  .spread-metal-card .row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+  .spread-metal-card .cell .lbl { font-size:0.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; }
+  .spread-metal-card .cell .val { font-size:0.95rem; font-weight:700; font-variant-numeric:tabular-nums; color:#fff; }
+  .spread-metal-card .spread-line { display:flex; justify-content:space-between; align-items:center; padding-top:8px; border-top:1px solid #1f2837; }
+  .spread-metal-card .spread-line .lbl { font-size:0.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+  .spread-metal-card .spread-line .val { font-size:1.05rem; font-weight:700; font-variant-numeric:tabular-nums; }
+  .spread-metal-card .spread-line .val.pos { color:var(--green); }
+  .spread-metal-card .spread-line .val.neg { color:var(--red); }
+  .spread-metal-card .spread-line .pct { font-size:0.68rem; color:var(--muted); margin-left:6px; }
+
+  .chart-wrap { position:relative; width:100%; height:230px; }
+  .chart-wrap.tall { height:290px; }
+
+  .controls { display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+  .btn { background:#0e1724; border:1px solid var(--border); color:var(--muted); padding:5px 11px; border-radius:8px; font-size:0.72rem; font-weight:500; cursor:pointer; }
+  .btn:hover { color:var(--text); border-color:#33425e;}
+  .btn.active { background:var(--accent); color:#0e1420; border-color:var(--accent); font-weight:600;}
+  .btn.small { padding:3px 8px; font-size:0.68rem; }
+
+  .tf-select { background:#0e1724; border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:8px; font-size:0.72rem; cursor:pointer; max-width:220px; }
+  .tf-select:hover { border-color:var(--accent); }
+  .date-input { background:#0e1724; border:1px solid var(--border); color:var(--text); padding:4px 8px; border-radius:6px; font-size:0.7rem; cursor:pointer; }
+  .date-input:hover { border-color:var(--accent); }
+
+  .freq-group { display:inline-flex; background:#0e1724; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .freq-group button { background:transparent; border:none; color:var(--muted); padding:5px 10px; font-size:0.72rem; font-weight:600; cursor:pointer; }
+  .freq-group button.active { background:var(--accent); color:#0e1420; }
+
+  .feed { list-style:none; overflow-y:auto; max-height:330px; padding-right:4px;}
+  .feed::-webkit-scrollbar { width:4px; }
+  .feed::-webkit-scrollbar-thumb { background:#2a3548; border-radius:4px;}
+  .feed li { padding:10px 0; border-bottom:1px solid #1f2837; }
+  .feed li:last-child { border-bottom:none; }
+  .feed .title { font-size:0.85rem; color:#dfe8f2; line-height:1.35; margin-bottom:5px; }
+  .feed .title a { color:inherit; text-decoration:none; }
+  .feed .title a:hover { color:var(--accent); }
+  .feed .meta { font-size:0.68rem; color:var(--muted); display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .feed .empty { font-size:0.8rem; color:var(--muted); padding:20px; text-align:center; font-style:italic;}
+  .tag { padding:2px 8px; border-radius:20px; font-size:0.62rem; font-weight:600; text-transform:uppercase;}
+  .tag.bull { background:rgba(46,204,113,0.14); color:var(--green);}
+  .tag.bear { background:rgba(231,76,60,0.14); color:var(--red);}
+  .tag.neut { background:rgba(243,156,18,0.14); color:var(--amber);}
+  .tag.metal { background:#22304a; color:#9db3d1;}
+
+  .foot { text-align:center; color:#4a5971; font-size:0.7rem; padding:24px 10px 10px; border-top:1px solid var(--border); margin-top:20px;}
+  .loading { display:flex; align-items:center; justify-content:center; height:230px; color:var(--muted); font-size:0.85rem; }
+  .spinner { width:22px; height:22px; border:2px solid #2a3548; border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin-right:10px;}
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .placeholder { text-align:center; padding: 60px 20px; color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+  .placeholder i { font-size: 2rem; color: var(--accent); margin-bottom: 16px; display: block; opacity: 0.5; }
+
+  .matrix-wrap { overflow-x:auto; width:100%; }
+  .matrix { border-collapse:collapse; font-size:0.72rem; width:100%; }
+  .matrix th, .matrix td { padding:6px 8px; text-align:right; border:1px solid #1f2837; font-variant-numeric:tabular-nums; }
+  .matrix th { background:#0e1724; color:var(--muted); font-weight:600; text-align:center; font-size:0.68rem; text-transform:uppercase; }
+  .matrix td.row-h { color:var(--accent); font-weight:600; text-align:center; background:#0e1724; }
+  .matrix td.pos { background:rgba(46,204,113,0.10); color:#7ee8a7; }
+  .matrix td.neg { background:rgba(231,76,60,0.10); color:#f5a3a3; }
+  .matrix td.avg { background:#1a2334; color:var(--text); font-weight:700; }
+
+  .corr-matrix { border-collapse:collapse; font-size:0.68rem; }
+  .corr-matrix th, .corr-matrix td { padding:6px 8px; text-align:center; border:1px solid #1f2837; font-variant-numeric:tabular-nums; min-width:60px; }
+  .corr-matrix th { background:#0e1724; color:var(--muted); font-weight:600; font-size:0.62rem; text-transform:uppercase;}
+  .corr-matrix td.row-h { color:var(--accent); font-weight:600; text-align:left; background:#0e1724; white-space:nowrap; }
+  .corr-matrix td.diag { background:#1a2334; color:var(--muted); }
+
+  .series-picker { display:flex; flex-wrap:wrap; gap:6px; max-height:130px; overflow-y:auto; padding:8px; background:#0e1724; border-radius:8px; border:1px solid var(--border); }
+  .series-picker label { display:inline-flex; align-items:center; gap:5px; font-size:0.72rem; color:var(--text); cursor:pointer; padding:3px 8px; border-radius:6px; background:#161d2b; border:1px solid var(--border); user-select:none; }
+  .series-picker label:hover { border-color:var(--accent); }
+  .series-picker input { accent-color:var(--accent); cursor:pointer; }
+  .series-picker label.active { background:rgba(232,163,61,0.15); border-color:var(--accent); color:var(--accent); font-weight:600; }
+
+  .spread-stats { display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; background:#0e1724; border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
+  .spread-stat .lbl { font-size:0.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+  .spread-stat .val { font-size:1.05rem; font-weight:700; margin-top:3px; font-variant-numeric:tabular-nums; }
+  .spread-stat .val.pos { color:var(--green); }
+  .spread-stat .val.neg { color:var(--red); }
+  .spread-stat .badge { display:inline-block; margin-top:3px; padding:1px 7px; border-radius:10px; font-size:0.58rem; font-weight:700; }
+  .spread-stat .badge.bwd { background:rgba(46,204,113,0.18); color:var(--green); }
+  .spread-stat .badge.ctg { background:rgba(231,76,60,0.18); color:var(--red); }
+  .spread-stat .badge.na { background:rgba(124,138,160,0.18); color:var(--muted); }
+
+  .sent-row { display:grid; grid-template-columns:110px 1fr 70px; gap:10px; align-items:center; padding:12px 0; border-bottom:1px solid #1f2837;}
+  .sent-row:last-child { border-bottom:none;}
+  .sent-row .metal { font-size:0.85rem; font-weight:600; }
+  .sent-row .metric { font-size:0.7rem; color:var(--muted); display:flex; flex-direction:column; gap:4px;}
+  .sent-row .bar-wrap { position:relative; height:8px; background:#0e1724; border-radius:4px; overflow:hidden;}
+  .sent-row .bar { position:absolute; top:0; bottom:0; border-radius:4px;}
+  .sent-row .bar.neg { background:var(--red); }
+  .sent-row .bar.pos { background:var(--green); }
+  .sent-row .bar.mid { left:50%; }
+  .sent-row .bar.left { right:50%; }
+  .sent-row .score { text-align:right; font-variant-numeric:tabular-nums; font-size:0.8rem; font-weight:600;}
+  .sent-row .score.pos { color:var(--green);}
+  .sent-row .score.neg { color:var(--red);}
+  .sent-row .score.neu { color:var(--amber);}
+  .sent-detail { font-size:0.6rem; color:var(--muted); margin-top:2px; }
+
+  .trend-table { width:100%; border-collapse:collapse; font-size:0.75rem; }
+  .trend-table th { text-align:left; color:var(--muted); font-weight:600; padding:8px 10px; border-bottom:1px solid var(--border); font-size:0.65rem; text-transform:uppercase; letter-spacing:0.5px; }
+  .trend-table td { padding:10px; border-bottom:1px solid #1a2334; color:#c6d0de; font-variant-numeric:tabular-nums; }
+  .trend-table tr:last-child td { border-bottom:none; }
+  .trend-table td.metal-name { font-weight:600; font-size:0.8rem; }
+  .trend-table td.val { font-weight:600; }
+  .trend-table .trend-tag { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:12px; font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; }
+  .trend-table .trend-tag.up { background:rgba(46,204,113,0.15); color:var(--green); }
+  .trend-table .trend-tag.down { background:rgba(231,76,60,0.15); color:var(--red); }
+  .trend-table .trend-tag.na { background:rgba(124,138,160,0.15); color:var(--muted); }
+  .trend-table .dist { font-size:0.65rem; color:var(--muted); margin-left:6px; }
+  .trend-table .dist.up { color:rgba(46,204,113,0.8); }
+  .trend-table .dist.down { color:rgba(231,76,60,0.8); }
+
+  .price-picker { display:flex; flex-wrap:wrap; gap:6px; max-height:100px; overflow-y:auto; padding:8px; background:#0e1724; border-radius:8px; border:1px solid var(--border); margin-bottom:6px; }
+  .price-picker label { display:inline-flex; align-items:center; gap:5px; font-size:0.72rem; color:var(--text); cursor:pointer; padding:3px 8px; border-radius:6px; background:#161d2b; border:1px solid var(--border); user-select:none; }
+  .price-picker label:hover { border-color:var(--accent); }
+  .price-picker input { accent-color:var(--accent); cursor:pointer; }
+  .price-picker label.active { background:rgba(232,163,61,0.15); border-color:var(--accent); color:var(--accent); font-weight:600; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <div class="upload-bar">
+    <span class="title"><i class="fas fa-folder-open"></i> Load data</span>
+    <label class="upload-btn" id="btnMetals">
+      <i class="fas fa-file-csv"></i> Load metals.csv
+      <input type="file" accept=".csv,.txt" id="fileMetals">
+    </label>
+    <label class="upload-btn" id="btnCSP">
+      <i class="fas fa-file-csv"></i> Load lme_csp.csv
+      <input type="file" accept=".csv,.txt" id="fileCSP">
+    </label>
+    <span class="hint">Load metals.csv + lme_csp.csv. News auto-loads.</span>
+  </div>
+
+  <!-- SBI TT URL bar -->
+  <div class="sbi-bar">
+    <span class="title"><i class="fas fa-university"></i> SBI TT Sell</span>
+    <input type="text" id="sbiUrl" value="https://raw.githubusercontent.com/sahilgupta/sbi-fx-ratekeeper/main/csv_files/SBI_REFERENCE_RATES_USD.csv">
+    <button class="btn" id="sbiFetchBtn"><i class="fas fa-cloud-download-alt"></i> Fetch</button>
+    <span class="status" id="sbiStatus">Click Fetch to load SBI TT Sell history.</span>
+  </div>
+
+  <div id="statusBanner" class="status-banner"></div>
+
+  <div class="head">
+    <h1><i class="fas fa-chart-line"></i> Non-Ferrous Metals Dashboard</h1>
+    <div class="meta">
+      <span id="freshnessLine"><span class="fresh-dot warn"></span>Waiting…</span>
+      <span>Range: <strong id="rangeLabel">—</strong></span>
+    </div>
+  </div>
+
+  <div id="placeholder" class="card span-12">
+    <div class="placeholder">
+      <i class="fas fa-arrow-up"></i>
+      Load <strong>metals.csv</strong> and <strong>lme_csp.csv</strong> above.
+    </div>
+  </div>
+
+  <div id="content" style="display:none;">
+
+    <!-- Latest metals prices -->
+    <div class="grid">
+      <div class="card span-12">
+        <h3><i class="fas fa-coins"></i> Latest Prices <span class="sub">— grouped by category</span></h3>
+        <div id="priceGrid"></div>
+      </div>
+    </div>
+
+    <!-- SBI TT Sell vs USDINR chart -->
+    <div class="grid">
+      <div class="card span-12">
+        <h3 style="justify-content:space-between;display:flex;">
+          <span><i class="fas fa-university" style="color:var(--sbi);"></i> SBI TT Sell vs USDINR <span class="sub">— spot comparison</span></span>
+          <span class="controls">
+            <select class="tf-select" id="sbiTf">
+              <option value="1m">1M</option><option value="3m">3M</option><option value="6m">6M</option>
+              <option value="1y" selected>1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option>
+            </select>
+            <span class="freq-group" id="sbiFreq">
+              <button data-freq="daily" class="active">D</button>
+              <button data-freq="weekly">W</button>
+              <button data-freq="monthly">M</button>
+            </span>
+          </span>
+        </h3>
+        <div class="chart-wrap tall" id="sbiChartWrap"><canvas id="sbiChart"></canvas></div>
+        <div id="sbiEmpty" style="text-align:center;color:var(--muted);font-size:0.78rem;padding:8px;">
+          Click "Fetch" above to load SBI TT Sell history.
+        </div>
+      </div>
+    </div>
+
+    <!-- Latest CSP snapshot -->
+    <div class="grid">
+      <div class="card span-12">
+        <h3 style="justify-content:space-between;display:flex;">
+          <span><i class="fas fa-balance-scale"></i> Latest Cash / 3M / Stock <span class="sub">— LME official, 3 metals</span></span>
+          <span id="cspLatestDate" style="font-size:0.68rem;color:var(--muted);font-weight:400;"></span>
+        </h3>
+        <div class="csp-latest-grid" id="cspLatestGrid">
+          <div class="loading"><div class="spinner"></div> Waiting for lme_csp.csv…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Last N Days CSP table -->
+    <div class="grid">
+      <div class="card span-12">
+        <h3 style="justify-content:space-between;display:flex;">
+          <span><i class="fas fa-history"></i> Last Days Cash / 3M / Stock <span class="sub">— recent history per metal</span></span>
+          <span class="controls">
+            <select class="tf-select" id="cspDaysCount">
+              <option value="3">3 days</option>
+              <option value="4">4 days</option>
+              <option value="5" selected>5 days</option>
+              <option value="7">7 days</option>
+              <option value="10">10 days</option>
+            </select>
+          </span>
+        </h3>
+        <div id="cspDaysTable" class="csp-days-wrap">
+          <div class="loading"><div class="spinner"></div> Waiting for lme_csp.csv…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LME-MCX spread snapshot -->
+    <div class="grid">
+      <div class="card span-12">
+        <h3 style="justify-content:space-between;display:flex;">
+          <span><i class="fas fa-arrows-left-right"></i> LME–MCX Spread (INR) <span class="sub">— (MCX − LME × USDINR)</span></span>
+          <span id="lmcSpreadDate" style="font-size:0.68rem;color:var(--muted);font-weight:400;"></span>
+        </h3>
+        <div class="spread-panel" id="lmcSpreadGrid">
+          <div class="loading"><div class="spinner"></div> Waiting for data…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LME-MCX historical -->
+    <div class="grid">
+      <div class="card span-12">
+        <h3 style="justify-content:space-between;display:flex;">
+          <span><i class="fas fa-chart-line"></i> LME–MCX Spread History <span class="sub">— INR basis over time</span></span>
+          <span class="controls">
+            <button class="btn active" data-lmc="Copper">Cu</button>
+            <button class="btn" data-lmc="Zinc">Zn</button>
+            <button class="btn" data-lmc="Aluminium">Al</button>
+            <select class="tf-select" id="lmcTf">
+              <option value="1m">1M</option><option value="3m">3M</option><option value="6m">6M</option>
+              <option value="1y" selected>1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option>
+            </select>
+            <span class="freq-group" id="lmcFreq">
+              <button data-freq="daily" class="active">D</button>
+              <button data-freq="weekly">W</button>
+              <button data-freq="monthly">M</button>
+            </span>
+          </span>
+        </h3>
+        <div class="chart-wrap" style="height:240px;"><canvas id="lmcChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Raw Price Chart -->
+    <div class="grid">
+      <div class="card span-12">
+        <h3 style="justify-content:space-between;display:flex;">
+          <span><i class="fas fa-chart-area"></i> Price Chart <span class="sub">— actual prices, adjustable range</span></span>
+          <span class="controls">
+            <select class="tf-select" id="priceTf">
+              <option value="2d">2D</option>
+              <option value="5d">5D</option>
+              <option value="8d">8D</option>
+              <option value="15d">15D</option>
+              <option value="1m" selected>1M</option>
+              <option value="3m">3M</option>
+              <option value="6m">6M</option>
+              <option value="1y">1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option>
+              <option value="custom">Custom…</option>
+            </select>
+            <span class="freq-group" id="priceFreq">
+              <button data-freq="daily" class="active">D</button>
+              <button data-freq="weekly">W</button>
+              <button data-freq="monthly">M</button>
+            </span>
+          </span>
+        </h3>
+        <div id="priceCustomRange" class="controls" style="display:none;margin-bottom:4px;gap:8px;align-items:center;">
+          <span style="font-size:0.68rem;color:var(--muted);">From:</span>
+          <input type="date" class="date-input" id="priceDateFrom">
+          <span style="font-size:0.68rem;color:var(--muted);">To:</span>
+          <input type="date" class="date-input" id="priceDateTo">
+          <button class="btn small" id="priceApplyRange">Apply</button>
+          <span id="priceRangeLabel" style="font-size:0.68rem;color:var(--accent);"></span>
+        </div>
+        <div class="controls" style="margin-bottom:4px;">
+          <button class="btn small" id="priceAllBtn">All</button>
+          <button class="btn small" id="priceNoneBtn">None</button>
+          <button class="btn small" id="priceMetalsBtn">Metals only</button>
+          <label style="margin-left:8px;font-size:0.68rem;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
+            <input type="checkbox" id="priceLogToggle" style="accent-color:var(--accent);"> Log scale
+          </label>
+        </div>
+        <div class="price-picker" id="pricePicker"></div>
+        <div class="chart-wrap tall"><canvas id="priceChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Seasonality -->
+    <div class="grid">
+      <div class="card span-12">
+        <h3 style="justify-content:space-between;display:flex;">
+          <span><i class="fas fa-calendar-alt"></i> Seasonality</span>
+        </h3>
+        <div class="controls" style="margin-bottom:4px;">
+          <button class="btn active" data-metal="copper" data-season>Cu</button>
+          <button class="btn" data-metal="aluminium" data-season>Al</button>
+          <button class="btn" data-metal="zinc" data-season>Zn</button>
+          <select class="tf-select" id="seasonYears">
+            <option value="all" selected>All</option><option value="10">10Y</option><option value="5">5Y</option><option value="3">3Y</option>
+          </select>
+          <select class="tf-select" id="seasonMode">
+            <option value="monthly" selected>Monthly</option>
+            <option value="weekly">Weekly</option>
+            <option value="matrix">Month Matrix</option>
+          </select>
+        </div>
+        <div class="chart-wrap tall" id="seasonChartWrap"><canvas id="seasonChart"></canvas></div>
+        <div id="seasonMatrixWrap" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card span-6">
+        <h3 style="justify-content:space-between;display:flex;">
+          <span><i class="fas fa-balance-scale"></i> LME Cash–3M Spread</span>
+          <span class="controls">
+            <button class="btn active" data-csp="Cu">Cu</button>
+            <button class="btn" data-csp="Zn">Zn</button>
+            <button class="btn" data-csp="Al">Al</button>
+            <span class="freq-group" id="cspFreq">
+              <button data-freq="daily" class="active">D</button>
+              <button data-freq="weekly">W</button>
+              <button data-freq="monthly">M</button>
+            </span>
+          </span>
+        </h3>
+        <div class="spread-stats" id="cspStats">
+          <div class="spread-stat"><div class="lbl">Cash</div><div class="val" id="cspCash">—</div></div>
+          <div class="spread-stat"><div class="lbl">3M</div><div class="val" id="csp3m">—</div></div>
+          <div class="spread-stat">
+            <div class="lbl">Spread (C–3M)</div>
+            <div class="val" id="cspSpread">—</div>
+            <div id="cspBadge"></div>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:200px;"><canvas id="cspChart"></canvas></div>
+      </div>
+
+      <div class="card span-6">
+        <h3 style="justify-content:space-between;display:flex;">
+          <span><i class="fas fa-chart-line"></i> Cash Price vs LME Stock</span>
+          <span class="controls">
+            <button class="btn active" data-csp2="Cu">Cu</button>
+            <button class="btn" data-csp2="Zn">Zn</button>
+            <button class="btn" data-csp2="Al">Al</button>
+            <span class="freq-group" id="csp2Freq">
+              <button data-freq="daily" class="active">D</button>
+              <button data-freq="weekly">W</button>
+              <button data-freq="monthly">M</button>
+            </span>
+          </span>
+        </h3>
+        <div class="chart-wrap" style="height:270px;"><canvas id="csp2Chart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Correlations -->
+    <div class="grid">
+      <div class="card span-12">
+        <h3 style="justify-content:space-between;display:flex;">
+          <span><i class="fas fa-project-diagram"></i> Correlations</span>
+          <span class="controls">
+            <select class="tf-select" id="corrData">
+              <option value="returns" selected>Returns</option>
+              <option value="levels">Levels</option>
+            </select>
+            <select class="tf-select" id="corrTf">
+              <option value="1m">1M</option><option value="3m">3M</option><option value="6m">6M</option>
+              <option value="1y" selected>1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option>
+            </select>
+            <select class="tf-select" id="corrMode">
+              <option value="rolling" selected>Rolling</option>
+              <option value="matrix">Matrix</option>
+            </select>
+          </span>
+        </h3>
+        <div id="corrPairControls" class="controls" style="margin-bottom:6px;">
+          <select class="tf-select" id="corrA"></select>
+          <span style="color:var(--muted);font-size:0.75rem;">vs</span>
+          <select class="tf-select" id="corrB"></select>
+          <select class="tf-select" id="corrWindow">
+            <option value="30">30d</option><option value="60">60d</option><option value="90" selected>90d</option>
+            <option value="180">180d</option><option value="365">365d</option>
+          </select>
+          <span id="corrCurrent" style="font-size:0.85rem;font-weight:700;color:var(--accent);margin-left:8px;"></span>
+          <span id="corrSample" style="font-size:0.68rem;color:var(--muted);margin-left:8px;"></span>
+        </div>
+        <div id="corrMatrixControls" style="display:none;">
+          <div class="series-picker" id="seriesPicker"></div>
+        </div>
+        <div class="chart-wrap" id="corrRollingWrap" style="height:260px;"><canvas id="corrChart"></canvas></div>
+        <div id="corrMatrixWrap" style="display:none;overflow-x:auto;"></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card span-6">
+        <h3><i class="fas fa-newspaper"></i> News <span class="sub">— Mining.com</span> <span style="font-size:0.65rem;color:var(--muted);font-weight:400;margin-left:auto;" id="newsUpdated"></span></h3>
+        <ul class="feed" id="newsFeed"><li class="empty">Loading…</li></ul>
+      </div>
+      <div class="card span-6">
+        <h3><i class="fas fa-brain"></i> Quant Sentiment <span class="sub">— momentum + vol + basis</span></h3>
+        <div id="sentimentPanel"></div>
+      </div>
+    </div>
+
+    <!-- Trend Analysis -->
+    <div class="grid">
+      <div class="card span-12">
+        <h3 style="justify-content:space-between;display:flex;">
+          <span><i class="fas fa-wave-square"></i> Trend Analysis <span class="sub">— EMA-based regime detection</span></span>
+          <span id="trendUpdated" style="font-size:0.65rem;color:var(--muted);font-weight:400;"></span>
+        </h3>
+        <div id="trendPanel"></div>
+      </div>
+    </div>
+
+    <div class="foot">Data: metals.csv + lme_csp.csv | SBI TT: sahilgupta/sbi-fx-ratekeeper | News: Mining.com</div>
+  </div>
+</div>
+
+<script>
+/* ========================================================================
+   CSV PARSER + HELPERS
+   ======================================================================== */
+function parseCSVLine(line) {
+  const out = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      out.push(cur); cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  out.push(cur);
+  return out.map(s => s.trim());
+}
+
+function parseNumber(s) {
+  if (s == null) return null;
+  s = String(s).replace(/,/g, '').replace(/[^\d.\-eE]/g, '');
+  if (s === '') return null;
+  const v = parseFloat(s);
+  return isFinite(v) ? v : null;
+}
+
+const MONTH_NAMES = {
+  january:0,february:1,march:2,april:3,may:4,june:5,july:6,
+  august:7,september:8,october:9,november:10,december:11,
+  jan:0,feb:1,mar:2,apr:3,jun:5,jul:6,aug:7,sep:8,sept:8,oct:9,nov:10,dec:11,
+};
+
+function parseDateLoose(s) {
+  s = String(s).trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  m = s.match(/^(\d{1,2})\.?\s+([A-Za-zäöü]+)\s+(\d{4})$/);
+  if (m) {
+    const day = m[1].padStart(2, '0');
+    const monKey = m[2].toLowerCase();
+    const monIdx = MONTH_NAMES[monKey];
+    if (monIdx !== undefined) return `${m[3]}-${String(monIdx+1).padStart(2,'0')}-${day}`;
+  }
+  return null;
+}
+
+function showStatus(kind, msg, details) {
+  const el = document.getElementById('statusBanner');
+  if (!el) return;
+  let html = msg;
+  if (details && details.length) {
+    html += '<ul>' + details.map(d => `<li>${d}</li>`).join('') + '</ul>';
+  }
+  el.className = 'status-banner ' + kind;
+  el.innerHTML = html;
+}
+
+/* ========================================================================
+   STATE
+   ======================================================================== */
+let RAW = [];
+let SERIES_NAMES = [];
+let latest = {};
+let CSP_RAW = [];
+let SBI_RAW = [];
+let seasonChart, corrChart, cspChart, csp2Chart, lmcChart, priceChart, sbiChart;
+let currentSeasonMetal = 'copper';
+let currentCSP = 'Cu', currentCSP2 = 'Cu', currentLMC = 'Copper';
+let selectedMatrixSeries = new Set();
+let selectedPriceSeries = new Set();
+let priceFreq = 'daily', cspFreq = 'daily', csp2Freq = 'daily', lmcFreq = 'daily', sbiFreq = 'daily';
+let controlsWired = false;
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const CSP_COLORS = { Cu:'#d68b4d', Zn:'#5b8fc9', Al:'#93a2b5' };
+const LMC_METAL_MAP = { Copper:'Cu', Zinc:'Zn', Aluminium:'Al' };
+
+/* ========================================================================
+   HELPERS
+   ======================================================================== */
+function fmt(v, dp=2) {
+  if (v == null || !isFinite(v)) return '—';
+  return v.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
+}
+function tfCutoff(tf) {
+  const now = new Date();
+  const yr = 365.25 * 24 * 3600 * 1000;
+  switch (tf) {
+    case '2d':  return now - 2*24*3600*1000;
+    case '5d':  return now - 5*24*3600*1000;
+    case '8d':  return now - 8*24*3600*1000;
+    case '15d': return now - 15*24*3600*1000;
+    case '1m':  return now - 30*24*3600*1000;
+    case '3m':  return now - 90*24*3600*1000;
+    case '6m':  return now - 180*24*3600*1000;
+    case '1y':  return now - yr;
+    case '3y':  return now - 3*yr;
+    case '5y':  return now - 5*yr;
+    default: return null;
+  }
+}
+function isoWeek(d) {
+  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+function resample(series, freq) {
+  if (freq === 'daily' || !series.length) return series;
+  const buckets = new Map();
+  for (const p of series) {
+    const d = new Date(p.t);
+    let key;
+    if (freq === 'weekly') key = `${d.getUTCFullYear()}-W${String(isoWeek(d)).padStart(2,'0')}`;
+    else if (freq === 'monthly') key = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`;
+    else key = p.t;
+    buckets.set(key, p);
+  }
+  return [...buckets.values()].sort((a,b) => a.t - b.t);
+}
+function computeEMA(values, period) {
+  if (values.length < period) return [];
+  const k = 2 / (period + 1);
+  const ema = [];
+  let sum = 0;
+  for (let i = 0; i < period; i++) sum += values[i].v;
+  let prev = sum / period;
+  ema.push({ t: values[period-1].t, date: values[period-1].date, v: prev });
+  for (let i = period; i < values.length; i++) {
+    prev = values[i].v * k + prev * (1 - k);
+    ema.push({ t: values[i].t, date: values[i].date, v: prev });
+  }
+  return ema;
+}
+function resampleWeekly(series) {
+  if (!series.length) return series;
+  const buckets = new Map();
+  for (const p of series) {
+    const d = new Date(p.t);
+    const key = `${d.getUTCFullYear()}-W${String(isoWeek(d)).padStart(2,'0')}`;
+    buckets.set(key, p);
+  }
+  return [...buckets.values()].sort((a,b) => a.t - b.t);
+}
+
+/* ========================================================================
+   PARSE metals.csv
+   ======================================================================== */
+function parseMetalsCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (!lines.length) return { ok:false, msg:'File is empty' };
+  const header = parseCSVLine(lines[0]);
+  if (header.length < 2) return { ok:false, msg:'metals.csv needs at least 2 columns' };
+  SERIES_NAMES = header.slice(1);
+  const rows = [];
+  let badDates = 0;
+  for (let i = 1; i < lines.length; i++) {
+    const parts = parseCSVLine(lines[i]);
+    if (parts.length < 2) continue;
+    const d = parseDateLoose(parts[0]);
+    if (!d) { badDates++; continue; }
+    const t = new Date(d + 'T00:00:00Z').getTime();
+    const series = {};
+    for (let j = 0; j < SERIES_NAMES.length; j++) {
+      const v = parseNumber(parts[j + 1]);
+      if (v != null) series[SERIES_NAMES[j]] = v;
+    }
+    rows.push({ date: d, t, series });
+  }
+  rows.sort((a,b) => a.t - b.t);
+  RAW = rows;
+  return {
+    ok: true,
+    msg: `Loaded ${rows.length} rows × ${SERIES_NAMES.length} series`,
+    details: badDates ? [`${badDates} rows skipped (unparsable date)`] : null
+  };
+}
+
+/* ========================================================================
+   PARSE lme_csp.csv — tolerant
+   ======================================================================== */
+function parseCSPCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (!lines.length) return { ok:false, msg:'lme_csp.csv is empty' };
+  const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim());
+  if (header.length < 2) return { ok:false, msg:'lme_csp.csv needs at least 2 columns' };
+
+  let dateCol = header.findIndex(h => /date|time|day|timestamp/i.test(h));
+  if (dateCol < 0) dateCol = 0;
+
+  const map = {};
+  const detectedCols = [];
+  header.forEach((name, idx) => {
+    if (idx === dateCol) return;
+    const n = name.toLowerCase();
+    let metal = null;
+    if (/\b(copper|cu)\b/.test(n)) metal = 'Cu';
+    else if (/\b(zinc|zn)\b/.test(n)) metal = 'Zn';
+    else if (/\b(aluminium|aluminum|alu|al)\b/.test(n)) metal = 'Al';
+    if (!metal) return;
+    let field = null;
+    if (/cash|spot/.test(n)) field = 'cash';
+    else if (/(3[\s-]?m(onth)?|three[\s-]?month)/.test(n)) field = 'three';
+    else if (/stock|invent|warehouse|lme.?stock/.test(n)) field = 'stock';
+    if (!field) return;
+    if (!map[metal]) map[metal] = { cash: null, three: null, stock: null };
+    map[metal][field] = idx;
+    detectedCols.push(`${metal}.${field} ← "${name}"`);
+  });
+
+  if (!Object.keys(map).length) {
+    const rest = header.map((h, i) => ({h, i})).filter(x => x.i !== dateCol);
+    if (rest.length >= 9) {
+      ['Cu','Zn','Al'].forEach((metal, mi) => {
+        map[metal] = { cash: rest[mi*3+0].i, three: rest[mi*3+1].i, stock: rest[mi*3+2].i };
+      });
+    }
+  }
+
+  if (!Object.keys(map).length) {
+    return {
+      ok: false,
+      msg: 'Could not detect LME metal columns in lme_csp.csv',
+      details: [
+        'Header: ' + header.join(' | '),
+        'Need columns with: copper/cu, zinc/zn, aluminium/aluminum/alu',
+        'And field keywords: cash/spot, 3-month/3m, stock/inventory'
+      ]
+    };
+  }
+
+  const rows = [];
+  let badDates = 0;
+  for (let i = 1; i < lines.length; i++) {
+    const parts = parseCSVLine(lines[i]);
+    if (parts.length <= dateCol) continue;
+    const d = parseDateLoose(parts[dateCol]);
+    if (!d) { badDates++; continue; }
+    const t = new Date(d + 'T00:00:00Z').getTime();
+    const entry = { date: d, t };
+    for (const [metal, idx] of Object.entries(map)) {
+      const get = (i) => (i != null && parts[i] != null) ? parseNumber(parts[i]) : null;
+      entry[metal] = { cash: get(idx.cash), threeM: get(idx.three), stock: get(idx.stock) };
+    }
+    rows.push(entry);
+  }
+  rows.sort((a,b) => a.t - b.t);
+  CSP_RAW = rows;
+  return {
+    ok: true,
+    msg: `Loaded ${rows.length} CSP rows (metals: ${Object.keys(map).join(', ')})`,
+    details: [
+      ...detectedCols.map(c => 'Detected: ' + c),
+      badDates ? `${badDates} rows skipped (unparsable date)` : null
+    ].filter(Boolean)
+  };
+}
+
+/* ========================================================================
+   PARSE SBI TT Sell CSV
+   ======================================================================== */
+function parseSBICSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (!lines.length) return { ok:false, msg:'SBI CSV is empty' };
+  const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim().toUpperCase());
+
+  const dateIdx = header.findIndex(h => /^DATE$/.test(h));
+  const ttSellIdx = header.findIndex(h => /^TT\s*SELL$/.test(h));
+  if (dateIdx < 0) return { ok:false, msg:'SBI CSV: no DATE column found',
+                             details: ['Header: ' + header.join(' | ')] };
+  if (ttSellIdx < 0) return { ok:false, msg:'SBI CSV: no "TT SELL" column found',
+                               details: ['Header: ' + header.join(' | ')] };
+
+  const out = [];
+  let zeroSkipped = 0, badDates = 0;
+  for (let i = 1; i < lines.length; i++) {
+    const parts = parseCSVLine(lines[i]);
+    if (parts.length <= Math.max(dateIdx, ttSellIdx)) continue;
+    const d = parseDateLoose(parts[dateIdx]);
+    if (!d) { badDates++; continue; }
+    const v = parseNumber(parts[ttSellIdx]);
+    if (v == null || v === 0) { zeroSkipped++; continue; }
+    out.push({ date: d, t: new Date(d + 'T00:00:00Z').getTime(), value: v });
+  }
+  out.sort((a,b) => a.t - b.t);
+
+  const byDate = new Map();
+  for (const p of out) byDate.set(p.date, p);
+  const dedup = [...byDate.values()].sort((a,b) => a.t - b.t);
+
+  return {
+    ok: true,
+    msg: `Loaded ${dedup.length} SBI TT Sell rows`,
+    details: [
+      dedup.length ? `Range: ${dedup[0].date} → ${dedup[dedup.length-1].date}` : null,
+      zeroSkipped ? `${zeroSkipped} rows skipped (TT SELL = 0.00)` : null,
+      badDates ? `${badDates} rows skipped (unparsable date)` : null
+    ].filter(Boolean),
+    rows: dedup
+  };
+}
+
+/* ========================================================================
+   COMPUTE LATEST
+   ======================================================================== */
+function computeLatest() {
+  latest = {};
+  SERIES_NAMES.forEach(name => {
+    for (let i = RAW.length - 1; i >= 0; i--) {
+      const v = RAW[i].series[name];
+      if (v != null) {
+        let prev = null;
+        for (let k = i - 1; k >= 0; k--) {
+          if (RAW[k].series[name] != null) { prev = RAW[k].series[name]; break; }
+        }
+        const change = prev ? v - prev : 0;
+        const pct = prev ? (change / prev) * 100 : 0;
+        latest[name] = { value: v, date: RAW[i].date, change, pct };
+        break;
+      }
+    }
+  });
+}
+
+/* ========================================================================
+   RENDER PRICE GRID
+   ======================================================================== */
+function categorize(name) {
+  if (/^lme\s/i.test(name)) return 'lme';
+  if (/^mcx\s/i.test(name)) return 'mcx';
+  if (/^comex\s/i.test(name)) return 'comex';
+  if (/^us\s+oil$/i.test(name)) return 'energy';
+  if (/^(usdinr|dollar\s+index|dxy)$/i.test(name)) return 'fx';
+  if (/^us\s+\d+\s*y$/i.test(name)) return 'yield';
+  return 'other';
+}
+function isYield(name) { return /^us\s+\d+\s*y$/i.test(name); }
+
+function renderPriceGrid() {
+  const el = document.getElementById('priceGrid');
+  const buckets = { lme:[], mcx:[], comex:[], energy:[], fx:[], yield:[], other:[] };
+  for (const name of SERIES_NAMES) {
+    if (latest[name]) buckets[categorize(name)].push(name);
+  }
+  const order = ['lme','mcx','comex','energy','fx','yield','other'];
+  const titles = { lme:'LME', mcx:'MCX', comex:'COMEX', energy:'Energy', fx:'FX', yield:'US Yields', other:'Other' };
+  let html = '';
+  for (const key of order) {
+    if (!buckets[key].length) continue;
+    html += `<div style="margin-bottom:14px;"><div style="font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;border-left:3px solid var(--accent);padding-left:8px;font-weight:600;">${titles[key]}</div><div class="price-grid">`;
+    for (const name of buckets[key]) {
+      const l = latest[name];
+      const up = l.change >= 0;
+      let chgText, unit = '';
+      if (isYield(name)) {
+        chgText = `${up?'+':''}${(l.change*100).toFixed(1)} bp`;
+        unit = '%';
+      } else {
+        chgText = `${up?'+':''}${fmt(l.change, 2)} (${up?'+':''}${l.pct.toFixed(2)}%)`;
+      }
+      html += `
+        <div class="price-card cat-${key}">
+          <div class="label"><span>${name}</span><span class="venue">${l.date}</span></div>
+          <div class="value">${fmt(l.value, 2)}<span class="unit">${unit}</span></div>
+          <div class="chg ${up?'up':'down'}"><i class="fas fa-caret-${up?'up':'down'}"></i>${chgText}</div>
+        </div>`;
+    }
+    html += `</div></div>`;
+  }
+  el.innerHTML = html || '<div style="color:var(--muted);">No data</div>';
+}
+
+/* ========================================================================
+   CSP LATEST SNAPSHOT
+   ======================================================================== */
+function renderCSPLatest() {
+  const grid = document.getElementById('cspLatestGrid');
+  const dateEl = document.getElementById('cspLatestDate');
+  if (!grid) return;
+  if (!CSP_RAW.length) {
+    grid.innerHTML = '<div class="loading"><div class="spinner"></div> Waiting for lme_csp.csv…</div>';
+    if (dateEl) dateEl.textContent = '';
+    return;
+  }
+  const last = CSP_RAW[CSP_RAW.length-1];
+  if (dateEl) dateEl.textContent = 'As of ' + last.date;
+  const metals = [
+    { key:'Cu', name:'Copper', cls:'' },
+    { key:'Zn', name:'Zinc', cls:'zn' },
+    { key:'Al', name:'Aluminium', cls:'al' },
+  ];
+  let html = '';
+  for (const m of metals) {
+    const data = last[m.key] || {};
+    const cash = data.cash, threeM = data.threeM, stock = data.stock;
+    let spread = null, badge = '', badgeCls = 'na', spreadCls = '';
+    if (cash != null && threeM != null) {
+      spread = cash - threeM;
+      spreadCls = spread >= 0 ? 'pos' : 'neg';
+      if (spread > 0.5) { badge = 'Backwardation'; badgeCls = 'bwd'; }
+      else if (spread < -0.5) { badge = 'Contango'; badgeCls = 'ctg'; }
+      else { badge = 'Flat'; badgeCls = 'na'; }
+    }
+    html += `<div class="csp-latest-card ${m.cls}">
+      <div class="metal-header">
+        <span class="metal-name" style="color:${CSP_COLORS[m.key]}">${m.name} (${m.key})</span>
+        <span class="metal-date">${last.date}</span>
+      </div>
+      <div class="row-grid">
+        <div class="cell"><div class="lbl">Cash</div><div class="val">${cash!=null?fmt(cash):'—'}</div></div>
+        <div class="cell"><div class="lbl">3M</div><div class="val">${threeM!=null?fmt(threeM):'—'}</div></div>
+        <div class="cell"><div class="lbl">Stock</div><div class="val">${stock!=null?fmt(stock,0):'—'}</div></div>
+      </div>
+      <div class="spread-row">
+        <span class="lbl">Cash–3M Spread</span>
+        <span>
+          <span class="val ${spreadCls}">${spread!=null?fmt(spread,1):'—'}</span>
+          ${badge ? `<span class="badge ${badgeCls}">${badge}</span>` : ''}
+        </span>
+      </div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+/* ========================================================================
+   LAST N DAYS CSP TABLE
+   ======================================================================== */
+function renderCSPDaysTable() {
+  const wrap = document.getElementById('cspDaysTable');
+  if (!wrap) return;
+  if (!CSP_RAW.length) {
+    wrap.innerHTML = '<div class="loading"><div class="spinner"></div> Waiting for lme_csp.csv…</div>';
+    return;
+  }
+  const N = parseInt(document.getElementById('cspDaysCount')?.value || '5', 10);
+
+  // Filter rows that have at least one metal with cash+3M
+  const validRows = CSP_RAW.filter(r =>
+    (r.Cu && r.Cu.cash != null && r.Cu.threeM != null) ||
+    (r.Zn && r.Zn.cash != null && r.Zn.threeM != null) ||
+    (r.Al && r.Al.cash != null && r.Al.threeM != null)
+  );
+  const last = validRows.slice(-N).reverse(); // newest first
+
+  if (!last.length) {
+    wrap.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:8px;">No CSP data available.</div>';
+    return;
+  }
+
+  const metals = [
+    { key:'Cu', label:'Copper (Cu)', color:CSP_COLORS.Cu },
+    { key:'Zn', label:'Zinc (Zn)',   color:CSP_COLORS.Zn },
+    { key:'Al', label:'Aluminium (Al)', color:CSP_COLORS.Al },
+  ];
+
+  let html = '';
+  for (const m of metals) {
+    html += `<table class="csp-days-table" style="margin-bottom:14px;">
+      <thead>
+        <tr>
+          <th class="metal-h" style="color:${m.color}">${m.label}</th>
+          <th>Date</th>
+          <th>Cash</th>
+          <th>3M</th>
+          <th>Stock</th>
+          <th>Spread (C–3M)</th>
+          <th>Structure</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+    let anyRow = false;
+    for (const r of last) {
+      const data = r[m.key] || {};
+      const cash = data.cash;
+      const threeM = data.threeM;
+      const stock = data.stock;
+      if (cash == null && threeM == null && stock == null) continue;
+      anyRow = true;
+
+      let spread = null, structure = '—', pillCls = 'flat';
+      if (cash != null && threeM != null) {
+        spread = cash - threeM;
+        if (spread > 0.5) { structure = 'Backwardation'; pillCls = 'bwd'; }
+        else if (spread < -0.5) { structure = 'Contango'; pillCls = 'ctg'; }
+        else { structure = 'Flat'; pillCls = 'flat'; }
+      }
+
+      const spreadCls = spread == null ? '' : (spread >= 0 ? 'pos' : 'neg');
+      const spreadTxt = spread != null ? (spread >= 0 ? '+' : '') + fmt(spread, 2) : '—';
+      const pillTxt = structure === 'Backwardation' ? 'B · BWD'
+                    : structure === 'Contango'     ? 'C · CTG'
+                    : structure === 'Flat'         ? 'F · FLAT'
+                    : '—';
+
+      html += `<tr>
+        <td class="metal-name" style="color:${m.color}">${m.key}</td>
+        <td class="date-cell">${r.date}</td>
+        <td>${cash != null ? fmt(cash, 2) : '—'}</td>
+        <td>${threeM != null ? fmt(threeM, 2) : '—'}</td>
+        <td>${stock != null ? fmt(stock, 0) : '—'}</td>
+        <td class="${spreadCls}">${spreadTxt}</td>
+        <td><span class="pill ${pillCls}">${pillTxt}</span></td>
+      </tr>`;
+    }
+
+    if (!anyRow) {
+      html += `<tr><td colspan="7" style="color:var(--muted);text-align:left;">No ${m.key} data in the last ${N} rows.</td></tr>`;
+    }
+
+    html += `</tbody></table>`;
+  }
+
+  wrap.innerHTML = html;
+}
+
+/* ========================================================================
+   SBI TT Sell vs USDINR CHART
+   ======================================================================== */
+function renderSbiChart() {
+  const canvas = document.getElementById('sbiChart');
+  const emptyEl = document.getElementById('sbiEmpty');
+  if (!canvas) return;
+
+  const usdinr = [];
+  if (RAW.length) {
+    for (const r of RAW) {
+      const v = r.series['USDINR'];
+      if (v != null) usdinr.push({ t: r.t, date: r.date, v });
+    }
+  }
+
+  if (!SBI_RAW.length && !usdinr.length) {
+    if (sbiChart) { sbiChart.destroy(); sbiChart = null; }
+    canvas.style.display = 'none';
+    emptyEl.style.display = 'block';
+    emptyEl.textContent = 'Fetch SBI TT and load metals.csv (with USDINR column) to see comparison.';
+    return;
+  }
+  canvas.style.display = 'block';
+  emptyEl.style.display = 'none';
+
+  const tf = document.getElementById('sbiTf').value;
+  const cutoff = tfCutoff(tf);
+  const filtUsd = cutoff ? usdinr.filter(p => p.t >= cutoff) : usdinr;
+  const filtSbi = cutoff ? SBI_RAW.filter(p => p.t >= cutoff) : SBI_RAW;
+
+  const usdResampled = resample(filtUsd, sbiFreq);
+  const sbiResampled = resample(filtSbi.map(p => ({ t: p.t, date: p.date, v: p.value })), sbiFreq);
+
+  const usdData = usdResampled.map(p => ({ x: p.t, y: p.v }));
+  const sbiData = sbiResampled.map(p => ({ x: p.t, y: p.v }));
+
+  const sbiMap = new Map(sbiData.map(p => [p.x, p.y]));
+  const spreadData = usdData
+    .filter(p => sbiMap.has(p.x))
+    .map(p => ({ x: p.x, y: p.y - sbiMap.get(p.x) }));
+
+  const datasets = [];
+  if (usdData.length) {
+    datasets.push({
+      label: 'USDINR (Spot)', data: usdData,
+      borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,0.08)',
+      borderWidth: 1.8, pointRadius: 0, tension: 0.15, yAxisID: 'y',
+    });
+  }
+  if (sbiData.length) {
+    datasets.push({
+      label: 'SBI TT Sell', data: sbiData,
+      borderColor: '#ff6b9d', backgroundColor: 'rgba(255,107,157,0.08)',
+      borderWidth: 1.8, pointRadius: 0, tension: 0.15,
+      yAxisID: 'y', borderDash: [6, 3],
+    });
+  }
+  if (spreadData.length) {
+    datasets.push({
+      label: 'Spread (Spot − SBI)', data: spreadData,
+      borderColor: '#e8a33d', backgroundColor: 'rgba(232,163,61,0.06)',
+      borderWidth: 1.2, pointRadius: 0, tension: 0.15, yAxisID: 'y1',
+    });
+  }
+
+  if (sbiChart) sbiChart.destroy();
+  sbiChart = new Chart(canvas, {
+    type: 'line', data: { datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } },
+        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(4)}` } }
+      },
+      scales: {
+        x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
+        y: {
+          position: 'left', grid: { color: '#1c2536' },
+          ticks: { color: '#7c8aa0', font: { size: 10 } },
+          title: { display: true, text: 'INR per USD', color: '#7c8aa0', font: { size: 10 } }
+        },
+        y1: {
+          position: 'right', grid: { display: false },
+          ticks: { color: '#e8a33d', font: { size: 9 } },
+          title: { display: true, text: 'Spread (₹)', color: '#e8a33d', font: { size: 9 } }
+        }
+      }
+    }
+  });
+}
+
+/* ========================================================================
+   LME–MCX SPREAD
+   ======================================================================== */
+function computeLmcSpreadSeries(metal) {
+  const lmeName = `LME ${metal}`;
+  const mcxName = `MCX ${metal}`;
+  const out = [];
+  for (const r of RAW) {
+    const lme = r.series[lmeName];
+    const mcx = r.series[mcxName];
+    const fx = r.series['USDINR'];
+    if (lme == null || mcx == null || fx == null) continue;
+    const lmeInrPerKg = (lme * fx) / 1000;
+    const spread = mcx - lmeInrPerKg;
+    out.push({ t: r.t, date: r.date, lme, mcx, fx, lmeInrPerKg, spread });
+  }
+  return out;
+}
+function findLatestLmcSpread(metal) {
+  const series = computeLmcSpreadSeries(metal);
+  return series.length ? series[series.length-1] : null;
+}
+function renderLmcSpread() {
+  const grid = document.getElementById('lmcSpreadGrid');
+  const dateEl = document.getElementById('lmcSpreadDate');
+  if (!RAW.length) return;
+  const metals = [
+    { name:'Copper', cls:'', color:CSP_COLORS.Cu },
+    { name:'Zinc', cls:'zn', color:CSP_COLORS.Zn },
+    { name:'Aluminium', cls:'al', color:CSP_COLORS.Al },
+  ];
+  const lastDate = RAW[RAW.length-1].date;
+  dateEl.textContent = 'As of ' + lastDate;
+  let html = '';
+  for (const m of metals) {
+    const last = findLatestLmcSpread(m.name);
+    let spread = null, pct = null, spreadCls = '';
+    if (last) {
+      spread = last.spread;
+      pct = (spread / last.lmeInrPerKg) * 100;
+      spreadCls = spread >= 0 ? 'pos' : 'neg';
+    }
+    html += `<div class="spread-metal-card ${m.cls}">
+      <div class="header">
+        <span class="m-name" style="color:${m.color}">${m.name}</span>
+        <span class="m-date">${last ? last.date : '—'}</span>
+      </div>
+      <div class="row2">
+        <div class="cell"><div class="lbl">LME (₹/kg)</div><div class="val">${last!=null?fmt(last.lmeInrPerKg, 2):'—'}</div></div>
+        <div class="cell"><div class="lbl">MCX (₹/kg)</div><div class="val">${last!=null?fmt(last.mcx, 2):'—'}</div></div>
+      </div>
+      <div class="spread-line">
+        <span class="lbl">MCX − LME</span>
+        <span>
+          <span class="val ${spreadCls}">${spread!=null?fmt(spread, 2):'—'}</span>
+          ${pct!=null ? `<span class="pct">(${pct>=0?'+':''}${pct.toFixed(2)}%)</span>` : ''}
+        </span>
+      </div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+function renderLmcChart() {
+  const canvas = document.getElementById('lmcChart');
+  if (!canvas) return;
+  const tf = document.getElementById('lmcTf').value;
+  const cutoff = tfCutoff(tf);
+  const series = computeLmcSpreadSeries(currentLMC);
+  const filtered = cutoff ? series.filter(p => p.t >= cutoff) : series;
+  const resampled = resample(filtered, lmcFreq);
+  const color = CSP_COLORS[LMC_METAL_MAP[currentLMC]] || '#e8a33d';
+  const data = resampled.map(p => ({ x: p.t, y: p.spread }));
+
+  if (lmcChart) lmcChart.destroy();
+  lmcChart = new Chart(canvas, {
+    type: 'line',
+    data: { datasets: [{
+      label: `${currentLMC} MCX − LME (₹/kg)`, data,
+      borderColor: color, backgroundColor: color + '20',
+      borderWidth: 2, pointRadius: 0, tension: 0.15, fill: true,
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } },
+        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ₹${ctx.parsed.y.toFixed(2)}` } }
+      },
+      scales: {
+        x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
+        y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 }, callback: v => '₹' + v } }
+      }
+    }
+  });
+}
+
+/* ========================================================================
+   RAW PRICE CHART
+   ======================================================================== */
+function populatePricePicker() {
+  const picker = document.getElementById('pricePicker');
+  picker.innerHTML = '';
+  SERIES_NAMES.forEach(name => {
+    const lbl = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.value = name;
+    cb.addEventListener('change', () => {
+      if (cb.checked) selectedPriceSeries.add(name);
+      else selectedPriceSeries.delete(name);
+      lbl.classList.toggle('active', cb.checked);
+      renderPriceChart();
+    });
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(name));
+    picker.appendChild(lbl);
+  });
+  ['LME Copper','LME Aluminium','LME Zinc','USDINR'].forEach(name => {
+    if (SERIES_NAMES.includes(name)) {
+      selectedPriceSeries.add(name);
+      const lbl = [...picker.children].find(c => c.textContent === name);
+      if (lbl) { lbl.querySelector('input').checked = true; lbl.classList.add('active'); }
+    }
+  });
+}
+function updatePricePickerUI() {
+  const picker = document.getElementById('pricePicker');
+  [...picker.children].forEach(lbl => {
+    const name = lbl.textContent;
+    const checked = selectedPriceSeries.has(name);
+    lbl.querySelector('input').checked = checked;
+    lbl.classList.toggle('active', checked);
+  });
+}
+function renderPriceChart() {
+  const tf = document.getElementById('priceTf').value;
+  const customWrap = document.getElementById('priceCustomRange');
+  let cutoff = null;
+  let fromDate = null, toDate = null;
+  if (tf === 'custom') {
+    customWrap.style.display = 'flex';
+    fromDate = document.getElementById('priceDateFrom').value;
+    toDate = document.getElementById('priceDateTo').value;
+  } else {
+    customWrap.style.display = 'none';
+    cutoff = tfCutoff(tf);
+  }
+
+  const fxSeries = new Set(['USDINR','DXY','Dollar Index','US 2Y','US 10Y','US 30Y']);
+  const datasets = [];
+  const palette = ['#d68b4d','#93a2b5','#5b8fc9','#e8b23d','#c0392b','#2ecc71','#9b59b6','#f39c12','#e84393','#1abc9c'];
+  let i = 0;
+  for (const name of selectedPriceSeries) {
+    const series = [];
+    for (const r of RAW) {
+      const v = r.series[name];
+      if (v != null) series.push({ t: r.t, v, date: r.date });
+    }
+    if (!series.length) continue;
+    let filtered = series;
+    if (tf === 'custom') {
+      if (fromDate) filtered = filtered.filter(p => p.date >= fromDate);
+      if (toDate) filtered = filtered.filter(p => p.date <= toDate);
+    } else if (cutoff) {
+      filtered = series.filter(p => p.t >= cutoff);
+    }
+    if (!filtered.length) continue;
+    const resampled = resample(filtered, priceFreq);
+    const isFx = fxSeries.has(name);
+    datasets.push({
+      label: name,
+      data: resampled.map(p => ({ x: p.t, y: p.v })),
+      borderColor: palette[i % palette.length],
+      borderWidth: 1.8, pointRadius: 0, tension: 0.15,
+      yAxisID: isFx ? 'y1' : 'y',
+    });
+    i++;
+  }
+
+  const rangeLbl = document.getElementById('priceRangeLabel');
+  if (tf === 'custom') {
+    rangeLbl.textContent = (fromDate || toDate) ? `${fromDate||'start'} → ${toDate||'end'}` : 'Full range';
+  } else { rangeLbl.textContent = ''; }
+
+  const logScale = document.getElementById('priceLogToggle').checked;
+  const hasFx = datasets.some(d => d.yAxisID === 'y1');
+
+  if (priceChart) priceChart.destroy();
+  priceChart = new Chart(document.getElementById('priceChart'), {
+    type: 'line', data: { datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } },
+      scales: {
+        x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
+        y: {
+          position: 'left', type: logScale ? 'logarithmic' : 'linear',
+          grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } }
+        },
+        ...(hasFx ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 9 } } } } : {})
+      }
+    }
+  });
+}
+
+/* ========================================================================
+   SEASONALITY
+   ======================================================================== */
+function getLmeSeries(metal) {
+  const map = { copper:'LME Copper', aluminium:'LME Aluminium', zinc:'LME Zinc' };
+  const name = map[metal];
+  const out = [];
+  for (const r of RAW) {
+    const v = r.series[name];
+    if (v != null) out.push({ t: r.t, date: r.date, v });
+  }
+  return out;
+}
+function computeSeasonalityMonthly(metal, years) {
+  const cutoff = years ? tfCutoff(years + 'y') : null;
+  const arr = Array.from({length:12}, () => []);
+  let prev = null;
+  for (const p of getLmeSeries(metal)) {
+    if (cutoff && p.t < cutoff) { prev = null; continue; }
+    if (prev != null) arr[new Date(p.date+'T00:00:00Z').getUTCMonth()].push((p.v - prev)/prev);
+    prev = p.v;
+  }
+  return arr.map(a => a.length ? (a.reduce((x,y)=>x+y,0)/a.length)*100 : 0);
+}
+function computeSeasonalityWeekly(metal, years) {
+  const cutoff = years ? tfCutoff(years + 'y') : null;
+  const arr = Array.from({length:53}, () => []);
+  let prev = null;
+  for (const p of getLmeSeries(metal)) {
+    if (cutoff && p.t < cutoff) { prev = null; continue; }
+    if (prev != null) {
+      const wk = isoWeek(new Date(p.date+'T00:00:00Z'));
+      if (wk >= 1 && wk <= 53) arr[wk-1].push((p.v - prev)/prev);
+    }
+    prev = p.v;
+  }
+  return arr.map(a => a.length ? (a.reduce((x,y)=>x+y,0)/a.length)*5*100 : 0);
+}
+function computeMonthlyMatrix(metal, years) {
+  const cutoff = years ? tfCutoff(years + 'y') : null;
+  const monthEnd = new Map();
+  for (const p of getLmeSeries(metal)) {
+    if (cutoff && p.t < cutoff) continue;
+    monthEnd.set(p.date.slice(0,7), p.v);
+  }
+  const sorted = [...monthEnd.keys()].sort();
+  const matrix = new Map();
+  for (let i = 1; i < sorted.length; i++) {
+    const cur = sorted[i], prev = sorted[i-1];
+    const ret = (monthEnd.get(cur) - monthEnd.get(prev)) / monthEnd.get(prev) * 100;
+    const [yr, mo] = cur.split('-');
+    const idx = parseInt(mo,10)-1;
+    if (!matrix.has(yr)) matrix.set(yr, Array(12).fill(null));
+    matrix.get(yr)[idx] = ret;
+  }
+  return matrix;
+}
+function renderSeasonChart() {
+  const mode = document.getElementById('seasonMode').value;
+  const yearsSel = document.getElementById('seasonYears').value;
+  const years = yearsSel === 'all' ? null : parseInt(yearsSel, 10);
+  const chartWrap = document.getElementById('seasonChartWrap');
+  const matrixWrap = document.getElementById('seasonMatrixWrap');
+  if (mode === 'matrix') {
+    chartWrap.style.display = 'none';
+    matrixWrap.style.display = 'block';
+    if (seasonChart) { seasonChart.destroy(); seasonChart = null; }
+    renderMatrix();
+    return;
+  }
+  chartWrap.style.display = 'block';
+  matrixWrap.style.display = 'none';
+  let labels, data, isWeekly;
+  if (mode === 'weekly') {
+    isWeekly = true;
+    labels = Array.from({length:53}, (_,i) => 'W'+(i+1));
+    data = computeSeasonalityWeekly(currentSeasonMetal, years);
+  } else {
+    isWeekly = false;
+    labels = MONTHS;
+    data = computeSeasonalityMonthly(currentSeasonMetal, years);
+  }
+  if (seasonChart) seasonChart.destroy();
+  seasonChart = new Chart(document.getElementById('seasonChart'), {
+    type: 'bar', data: { labels, datasets: [{
+      data,
+      backgroundColor: data.map(v => v >= 0 ? 'rgba(46,204,113,0.65)' : 'rgba(231,76,60,0.65)'),
+      borderRadius: 3,
+    }]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#7c8aa0', font: { size: isWeekly ? 7 : 9 } } },
+        y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }
+      }
+    }
+  });
+}
+function renderMatrix() {
+  const yearsSel = document.getElementById('seasonYears').value;
+  const years = yearsSel === 'all' ? null : parseInt(yearsSel, 10);
+  const matrix = computeMonthlyMatrix(currentSeasonMetal, years);
+  const yearKeys = [...matrix.keys()].sort();
+  const wrap = document.getElementById('seasonMatrixWrap');
+  if (!yearKeys.length) { wrap.innerHTML = '<div class="feed empty">No data</div>'; return; }
+  const monthAvgs = Array(12).fill(0).map((_, m) => {
+    const vals = yearKeys.map(y => matrix.get(y)[m]).filter(v => v != null);
+    return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+  });
+  let html = '<div class="matrix-wrap"><table class="matrix"><thead><tr><th class="row-h">Year</th>';
+  MONTHS.forEach(m => html += `<th>${m}</th>`);
+  html += '<th>Avg</th></tr></thead><tbody>';
+  yearKeys.forEach(y => {
+    const row = matrix.get(y);
+    const vals = row.filter(v => v != null);
+    const avg = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+    html += `<tr><td class="row-h">${y}</td>`;
+    for (let m = 0; m < 12; m++) {
+      const v = row[m];
+      if (v == null) html += '<td style="color:var(--muted);">—</td>';
+      else {
+        const cls = v > 0.05 ? 'pos' : v < -0.05 ? 'neg' : '';
+        html += `<td class="${cls}">${v>=0?'+':''}${v.toFixed(2)}</td>`;
+      }
+    }
+    html += `<td class="avg">${avg==null?'—':(avg>=0?'+':'')+avg.toFixed(2)}</td></tr>`;
+  });
+  html += '<tr><td class="row-h" style="background:#1a2334;color:var(--accent);">Avg</td>';
+  monthAvgs.forEach(v => {
+    const cls = v > 0.05 ? 'pos' : v < -0.05 ? 'neg' : '';
+    html += `<td class="${cls} avg">${v>=0?'+':''}${v.toFixed(2)}</td>`;
+  });
+  const grand = monthAvgs.reduce((a,b)=>a+b,0)/12;
+  html += `<td class="avg">${grand>=0?'+':''}${grand.toFixed(2)}</td></tr>`;
+  html += '</tbody></table></div>';
+  wrap.innerHTML = html;
+}
+
+/* ========================================================================
+   CSP CARD
+   ======================================================================== */
+function renderCSP() {
+  const metal = currentCSP;
+  if (!CSP_RAW.length) {
+    document.getElementById('cspCash').textContent = '—';
+    document.getElementById('csp3m').textContent = '—';
+    document.getElementById('cspSpread').textContent = '—';
+    document.getElementById('cspBadge').innerHTML = '<span class="badge na">LOAD lme_csp.csv</span>';
+    if (cspChart) { cspChart.destroy(); cspChart = null; }
+    return;
+  }
+  const rows = [];
+  for (const r of CSP_RAW) {
+    const m = r[metal];
+    if (!m || m.cash == null || m.threeM == null) continue;
+    rows.push({ t: r.t, date: r.date, cash: m.cash, threeM: m.threeM, stock: m.stock, spread: m.cash - m.threeM });
+  }
+  if (!rows.length) {
+    document.getElementById('cspBadge').innerHTML = `<span class="badge na">NO ${metal} DATA</span>`;
+    return;
+  }
+  const last = rows[rows.length-1];
+  const spread = last.spread;
+  document.getElementById('cspCash').textContent = fmt(last.cash, 2);
+  document.getElementById('csp3m').textContent = fmt(last.threeM, 2);
+  const spEl = document.getElementById('cspSpread');
+  spEl.textContent = (spread >= 0 ? '+' : '') + fmt(spread, 2);
+  spEl.className = 'val ' + (spread >= 0 ? 'pos' : 'neg');
+  document.getElementById('cspBadge').innerHTML = spread >= 0
+    ? '<span class="badge bwd">BACKWARDATION</span>'
+    : '<span class="badge ctg">CONTANGO</span>';
+
+  const data = resample(rows, cspFreq);
+  const labels = data.map(r => r.t);
+  const spreadData = data.map(r => r.spread);
+  const stockData = data.map(r => r.stock);
+  const hasStock = stockData.some(s => s != null);
+
+  if (cspChart) cspChart.destroy();
+  cspChart = new Chart(document.getElementById('cspChart'), {
+    data: {
+      labels,
+      datasets: [
+        { type:'bar', label:'Cash − 3M', data: spreadData,
+          backgroundColor: spreadData.map(v => v >= 0 ? 'rgba(46,204,113,0.6)' : 'rgba(231,76,60,0.6)'),
+          yAxisID: 'y', order: 2 },
+        ...(hasStock ? [{
+          type:'line', label:'LME Stock', data: stockData,
+          borderColor: '#e8a33d', borderWidth: 1.5, pointRadius: 0, tension: 0.15,
+          yAxisID: 'y1', order: 1,
+        }] : []),
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } },
+      scales: {
+        x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } },
+        y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } },
+        ...(hasStock ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 8 } } } } : {})
+      }
+    }
+  });
+}
+
+/* ========================================================================
+   CSP2 CARD
+   ======================================================================== */
+function renderCSP2() {
+  const metal = currentCSP2;
+  if (!CSP_RAW.length) { if (csp2Chart) { csp2Chart.destroy(); csp2Chart = null; } return; }
+  const rows = [];
+  for (const r of CSP_RAW) {
+    const m = r[metal];
+    if (!m || m.cash == null) continue;
+    rows.push({ t: r.t, date: r.date, cash: m.cash, stock: m.stock });
+  }
+  if (!rows.length) { if (csp2Chart) { csp2Chart.destroy(); csp2Chart = null; } return; }
+  const data = resample(rows, csp2Freq);
+  const cashData = data.map(r => ({ x: r.t, y: r.cash }));
+  const stockData = data.map(r => ({ x: r.t, y: r.stock }));
+  const hasStock = stockData.some(s => s.y != null);
+  const color = CSP_COLORS[metal] || '#d68b4d';
+
+  if (csp2Chart) csp2Chart.destroy();
+  csp2Chart = new Chart(document.getElementById('csp2Chart'), {
+    data: {
+      datasets: [
+        { type:'line', label: `${metal} Cash`, data: cashData,
+          borderColor: color, backgroundColor: color + '20',
+          borderWidth: 2, pointRadius: 0, tension: 0.15, yAxisID: 'y' },
+        ...(hasStock ? [{
+          type:'line', label: `${metal} Stock`, data: stockData,
+          borderColor: '#e8a33d', borderWidth: 1.5, borderDash: [5, 3],
+          pointRadius: 0, tension: 0.15, yAxisID: 'y1'
+        }] : []),
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } },
+      scales: {
+        x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } },
+        y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } },
+        ...(hasStock ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 9 } } } } : {})
+      }
+    }
+  });
+}
+
+/* ========================================================================
+   CORRELATION
+   ======================================================================== */
+function seriesValues(name) {
+  const out = [];
+  for (const r of RAW) {
+    const v = r.series[name];
+    if (v != null) out.push({ t: r.t, v });
+  }
+  return out;
+}
+function seriesReturns(name, cutoff) {
+  const raw = seriesValues(name);
+  const isY = isYield(name);
+  const ret = [];
+  for (let i = 1; i < raw.length; i++) {
+    const prev = raw[i-1].v;
+    let d;
+    if (isY) d = raw[i].v - prev;
+    else { if (prev === 0) continue; d = (raw[i].v - prev) / prev; }
+    if (cutoff && raw[i].t < cutoff) continue;
+    ret.push({ t: raw[i].t, v: d });
+  }
+  return ret;
+}
+function seriesLevels(name, cutoff) {
+  const out = [];
+  for (const r of RAW) {
+    if (cutoff && r.t < cutoff) continue;
+    const v = r.series[name];
+    if (v != null) out.push({ t: r.t, v });
+  }
+  return out;
+}
+function alignSeries(a, b, cutoff, mode) {
+  const aVals = mode === 'returns' ? seriesReturns(a, cutoff) : seriesLevels(a, cutoff);
+  const bVals = mode === 'returns' ? seriesReturns(b, cutoff) : seriesLevels(b, cutoff);
+  const bMap = new Map(bVals.map(p => [p.t, p.v]));
+  const out = [];
+  for (const p of aVals) {
+    const bv = bMap.get(p.t);
+    if (bv == null) continue;
+    out.push({ t: p.t, a: p.v, b: bv });
+  }
+  return out;
+}
+function pearson(pairs) {
+  const n = pairs.length;
+  if (n < 3) return null;
+  let sa = 0, sb = 0;
+  for (const p of pairs) { sa += p.a; sb += p.b; }
+  const ma = sa/n, mb = sb/n;
+  let num = 0, da2 = 0, db2 = 0;
+  for (const p of pairs) {
+    const da = p.a - ma, db = p.b - mb;
+    num += da*db; da2 += da*da; db2 += db*db;
+  }
+  const den = Math.sqrt(da2*db2);
+  return den === 0 ? null : num/den;
+}
+function rollingCorr(a, b, win, cutoff, mode) {
+  const aligned = alignSeries(a, b, cutoff, mode);
+  const out = [];
+  for (let i = win - 1; i < aligned.length; i++) {
+    const w = aligned.slice(i - win + 1, i + 1);
+    const c = pearson(w);
+    if (c != null) out.push({ t: aligned[i].t, corr: c });
+  }
+  return { series: out, sample: aligned.length };
+}
+function fullCorr(a, b, cutoff, mode) {
+  return pearson(alignSeries(a, b, cutoff, mode));
+}
+function populateCorrDropdowns() {
+  const a = document.getElementById('corrA');
+  const b = document.getElementById('corrB');
+  a.innerHTML = ''; b.innerHTML = '';
+  SERIES_NAMES.forEach(name => {
+    const oa = document.createElement('option'); oa.value = name; oa.textContent = name; a.appendChild(oa);
+    const ob = document.createElement('option'); ob.value = name; ob.textContent = name; b.appendChild(ob);
+  });
+  if (SERIES_NAMES.includes('LME Copper')) a.value = 'LME Copper';
+  if (SERIES_NAMES.includes('USDINR')) b.value = 'USDINR';
+}
+function populateSeriesPicker() {
+  const picker = document.getElementById('seriesPicker');
+  picker.innerHTML = '';
+  SERIES_NAMES.forEach(name => {
+    const lbl = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.value = name;
+    cb.addEventListener('change', () => {
+      if (cb.checked) selectedMatrixSeries.add(name);
+      else selectedMatrixSeries.delete(name);
+      lbl.classList.toggle('active', cb.checked);
+      renderCorrMatrix();
+    });
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(name));
+    picker.appendChild(lbl);
+  });
+}
+function renderCorrRolling() {
+  const a = document.getElementById('corrA').value;
+  const b = document.getElementById('corrB').value;
+  const win = parseInt(document.getElementById('corrWindow').value, 10);
+  const tf = document.getElementById('corrTf').value;
+  const mode = document.getElementById('corrData').value;
+  const cutoff = tfCutoff(tf);
+  const { series, sample } = rollingCorr(a, b, win, cutoff, mode);
+  document.getElementById('corrSample').textContent = `· ${sample} obs`;
+  if (!series.length) {
+    if (corrChart) { corrChart.destroy(); corrChart = null; }
+    document.getElementById('corrCurrent').textContent = '— no data';
+    return;
+  }
+  const cur = series[series.length-1].corr;
+  const cls = cur > 0.3 ? 'var(--green)' : cur < -0.3 ? 'var(--red)' : 'var(--accent)';
+  document.getElementById('corrCurrent').innerHTML = `ρ = <span style="color:${cls};">${cur.toFixed(3)}</span>`;
+  if (corrChart) corrChart.destroy();
+  corrChart = new Chart(document.getElementById('corrChart'), {
+    type: 'line',
+    data: { datasets: [{
+      label: `${a} vs ${b} — ${win}d ρ (${mode})`,
+      data: series.map(r => ({ x: r.t, y: r.corr })),
+      borderColor: '#e8a33d', backgroundColor: 'rgba(232,163,61,0.1)',
+      borderWidth: 1.8, pointRadius: 0, tension: 0.15, fill: true,
+    }]},
+    options: { responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { color: '#a9b6cb', font: { size: 10 } } } },
+      scales: {
+        x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } },
+        y: { min: -1, max: 1, grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }
+      }
+    }
+  });
+}
+function renderCorrMatrix() {
+  const tf = document.getElementById('corrTf').value;
+  const mode = document.getElementById('corrData').value;
+  const cutoff = tfCutoff(tf);
+  const names = [...selectedMatrixSeries];
+  const wrap = document.getElementById('corrMatrixWrap');
+  if (names.length < 2) { wrap.innerHTML = '<div class="feed empty">Select ≥2 series above.</div>'; return; }
+  let html = '<table class="corr-matrix"><thead><tr><th></th>';
+  for (const n of names) html += `<th>${n}</th>`;
+  html += '</tr></thead><tbody>';
+  for (const a of names) {
+    html += `<tr><td class="row-h">${a}</td>`;
+    for (const b of names) {
+      if (a === b) { html += '<td class="diag">1.000</td>'; continue; }
+      const v = fullCorr(a, b, cutoff, mode);
+      if (v == null) { html += '<td>—</td>'; continue; }
+      const alpha = 0.08 + 0.45 * Math.min(1, Math.abs(v));
+      const bg = v >= 0 ? `rgba(46,204,113,${alpha})` : `rgba(231,76,60,${alpha})`;
+      const fg = v >= 0 ? '#7ee8a7' : '#f5a3a3';
+      html += `<td style="background:${bg};color:${fg};">${(v>=0?'+':'')+v.toFixed(2)}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+function renderCorrChart() {
+  const mode = document.getElementById('corrMode').value;
+  const rollingWrap = document.getElementById('corrRollingWrap');
+  const matrixWrap = document.getElementById('corrMatrixWrap');
+  const pairControls = document.getElementById('corrPairControls');
+  const matrixControls = document.getElementById('corrMatrixControls');
+  if (mode === 'matrix') {
+    rollingWrap.style.display = 'none';
+    matrixWrap.style.display = 'block';
+    pairControls.style.display = 'none';
+    matrixControls.style.display = 'block';
+    if (corrChart) { corrChart.destroy(); corrChart = null; }
+    renderCorrMatrix();
+  } else {
+    rollingWrap.style.display = 'block';
+    matrixWrap.style.display = 'none';
+    pairControls.style.display = 'flex';
+    matrixControls.style.display = 'none';
+    renderCorrRolling();
+  }
+}
+
+/* ========================================================================
+   TREND ANALYSIS
+   ======================================================================== */
+function computeTrend(seriesName) {
+  const prices = [];
+  for (const r of RAW) {
+    const v = r.series[seriesName];
+    if (v != null) prices.push({ t: r.t, date: r.date, v });
+  }
+  if (prices.length < 20) return null;
+
+  const ema20d = computeEMA(prices, 20);
+  const latestPrice = prices[prices.length-1];
+  const latestEma20d = ema20d.length ? ema20d[ema20d.length-1] : null;
+  let shortTrend = 'na', shortDist = null;
+  if (latestEma20d) {
+    shortTrend = latestPrice.v > latestEma20d.v ? 'up' : 'down';
+    shortDist = ((latestPrice.v - latestEma20d.v) / latestEma20d.v) * 100;
+  }
+
+  const weekly = resampleWeekly(prices);
+  let mediumTrend = 'na', mediumDist = null, ema20w = null;
+  if (weekly.length >= 20) {
+    ema20w = computeEMA(weekly, 20);
+    const latestWeekly = weekly[weekly.length-1];
+    const latestEma20w = ema20w[ema20w.length-1];
+    if (latestEma20w) {
+      mediumTrend = latestWeekly.v > latestEma20w.v ? 'up' : 'down';
+      mediumDist = ((latestWeekly.v - latestEma20w.v) / latestEma20w.v) * 100;
+    }
+  }
+
+  return {
+    latestPrice: latestPrice.v, latestDate: latestPrice.date,
+    ema20d: latestEma20d ? latestEma20d.v : null,
+    shortTrend, shortDist,
+    ema20w: ema20w && ema20w.length ? ema20w[ema20w.length-1].v : null,
+    mediumTrend, mediumDist,
+  };
+}
+
+function renderTrendAnalysis() {
+  const panel = document.getElementById('trendPanel');
+  const updatedEl = document.getElementById('trendUpdated');
+  const metals = [
+    { name:'LME Copper', label:'Copper', color:'#d68b4d' },
+    { name:'LME Aluminium', label:'Aluminium', color:'#93a2b5' },
+    { name:'LME Zinc', label:'Zinc', color:'#5b8fc9' },
+    { name:'MCX Copper', label:'MCX Copper', color:'#c07c2b' },
+    { name:'MCX Aluminium', label:'MCX Aluminium', color:'#c07c2b' },
+    { name:'MCX Zinc', label:'MCX Zinc', color:'#c07c2b' },
+  ];
+
+  let html = `<table class="trend-table">
+    <thead><tr>
+      <th>Instrument</th><th>Price</th><th>20D EMA</th>
+      <th>Short-term Trend</th><th>20W EMA</th><th>Medium-term Trend</th>
+    </tr></thead><tbody>`;
+
+  let anyRow = false, lastDate = null;
+  for (const m of metals) {
+    if (!SERIES_NAMES.includes(m.name)) continue;
+    const t = computeTrend(m.name);
+    if (!t) continue;
+    anyRow = true;
+    lastDate = t.latestDate;
+
+    const shortCls = t.shortTrend === 'up' ? 'up' : t.shortTrend === 'down' ? 'down' : 'na';
+    const shortIcon = t.shortTrend === 'up' ? '▲' : t.shortTrend === 'down' ? '▼' : '—';
+    const shortTxt = t.shortTrend === 'up' ? 'UPTREND' : t.shortTrend === 'down' ? 'DOWNTREND' : 'N/A';
+    const shortDistCls = t.shortDist >= 0 ? 'up' : 'down';
+    const shortDistTxt = t.shortDist != null ? `${t.shortDist>=0?'+':''}${t.shortDist.toFixed(2)}%` : '';
+
+    const medCls = t.mediumTrend === 'up' ? 'up' : t.mediumTrend === 'down' ? 'down' : 'na';
+    const medIcon = t.mediumTrend === 'up' ? '▲' : t.mediumTrend === 'down' ? '▼' : '—';
+    const medTxt = t.mediumTrend === 'up' ? 'UPTREND' : t.mediumTrend === 'down' ? 'DOWNTREND' : 'N/A';
+    const medDistCls = t.mediumDist >= 0 ? 'up' : 'down';
+    const medDistTxt = t.mediumDist != null ? `${t.mediumDist>=0?'+':''}${t.mediumDist.toFixed(2)}%` : '';
+
+    html += `<tr>
+      <td class="metal-name" style="color:${m.color}">${m.label}</td>
+      <td class="val">${fmt(t.latestPrice, 2)}</td>
+      <td class="val">${t.ema20d != null ? fmt(t.ema20d, 2) : '—'}</td>
+      <td>
+        <span class="trend-tag ${shortCls}">${shortIcon} ${shortTxt}</span>
+        ${shortDistTxt ? `<span class="dist ${shortDistCls}">${shortDistTxt}</span>` : ''}
+      </td>
+      <td class="val">${t.ema20w != null ? fmt(t.ema20w, 2) : '—'}</td>
+      <td>
+        <span class="trend-tag ${medCls}">${medIcon} ${medTxt}</span>
+        ${medDistTxt ? `<span class="dist ${medDistCls}">${medDistTxt}</span>` : ''}
+      </td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+
+  if (!anyRow) {
+    panel.innerHTML = '<div class="feed empty">No trend data available.</div>';
+    if (updatedEl) updatedEl.textContent = '';
+    return;
+  }
+  panel.innerHTML = html;
+  if (updatedEl && lastDate) updatedEl.textContent = 'As of ' + lastDate;
+}
+
+/* ========================================================================
+   ENHANCED SENTIMENT
+   ======================================================================== */
+function renderSentiment() {
+  const panel = document.getElementById('sentimentPanel');
+  const metals = [
+    { name:'LME Copper', label:'Copper', color:'#d68b4d', metalKey:'Copper' },
+    { name:'LME Aluminium', label:'Aluminium', color:'#93a2b5', metalKey:'Aluminium' },
+    { name:'LME Zinc', label:'Zinc', color:'#5b8fc9', metalKey:'Zinc' },
+  ];
+  let html = '';
+  for (const m of metals) {
+    const prices = seriesValues(m.name).map(p => p.v);
+    if (prices.length < 100) continue;
+
+    const lookback = 20;
+    const roll = [];
+    for (let i = lookback; i < prices.length; i++)
+      roll.push((prices[i] - prices[i-lookback]) / prices[i-lookback]);
+    const recent = roll.slice(-250);
+    const meanR = recent.reduce((a,b)=>a+b,0)/recent.length;
+    const sdR = Math.sqrt(recent.reduce((s,x)=>s+(x-meanR)**2,0)/(recent.length-1));
+    const momZ = sdR > 0 ? (roll[roll.length-1] - meanR)/sdR : 0;
+
+    const rets = [];
+    for (let i = 1; i < prices.length; i++) rets.push((prices[i]-prices[i-1])/prices[i-1]);
+    const vol20 = Math.sqrt(rets.slice(-20).reduce((s,x,_,a)=>s+(x-a.reduce((p,q)=>p+q,0)/a.length)**2,0)/19);
+    const vol90 = Math.sqrt(rets.slice(-90).reduce((s,x,_,a)=>s+(x-a.reduce((p,q)=>p+q,0)/a.length)**2,0)/89);
+    const volScore = Math.max(-1, Math.min(1, (vol90 > 0 ? vol20/vol90 : 1) - 1));
+
+    let basisScore = 0, basisText = 'n/a';
+    const lmcSeries = computeLmcSpreadSeries(m.metalKey);
+    if (lmcSeries.length > 20) {
+      const recentSpreads = lmcSeries.slice(-20).map(p => p.spread);
+      const allSpreads = lmcSeries.map(p => p.spread);
+      const meanB = allSpreads.reduce((a,b)=>a+b,0)/allSpreads.length;
+      const sdB = Math.sqrt(allSpreads.reduce((s,x)=>s+(x-meanB)**2,0)/(allSpreads.length-1));
+      const latestB = recentSpreads[recentSpreads.length-1];
+      basisScore = sdB > 0 ? (latestB - meanB)/sdB : 0;
+      basisText = (basisScore>=0?'+':'') + basisScore.toFixed(2) + 'σ';
+    }
+
+    const trend5 = prices.length > 5 ? (prices[prices.length-1] / prices[prices.length-6] - 1) * 100 : 0;
+    const composite = momZ * 0.5 + volScore * 0.2 + basisScore * 0.3;
+    const cls = composite >= 0.5 ? 'bull' : composite <= -0.5 ? 'bear' : 'neut';
+    const badge = cls === 'bull' ? 'BULLISH' : cls === 'bear' ? 'BEARISH' : 'NEUTRAL';
+    const scoreTxt = (composite>=0?'+':'') + composite.toFixed(2);
+
+    html += `
+      <div class="sent-row">
+        <div>
+          <div class="metal" style="color:${m.color};">${m.label}</div>
+          <span class="tag ${cls}" style="margin-top:4px;display:inline-block;">${badge}</span>
+          <div class="sent-detail">5d: ${trend5>=0?'+':''}${trend5.toFixed(1)}%</div>
+        </div>
+        <div>
+          <div class="metric">
+            <span style="display:flex;justify-content:space-between;font-size:0.65rem;">
+              <span>Momentum (50%)</span><span>${(momZ>=0?'+':'')+momZ.toFixed(2)}σ</span>
+            </span>
+            <div class="bar-wrap">
+              <div class="bar ${momZ>=0?'pos':'neg'} ${momZ>=0?'mid':'left'}" style="width:${Math.min(50,Math.abs(momZ)*25)}%;"></div>
+            </div>
+          </div>
+          <div class="metric" style="margin-top:6px;">
+            <span style="display:flex;justify-content:space-between;font-size:0.65rem;">
+              <span>Basis (30%)</span><span>${basisText}</span>
+            </span>
+            <div class="bar-wrap">
+              <div class="bar ${basisScore>=0?'pos':'neg'} ${basisScore>=0?'mid':'left'}" style="width:${Math.min(50,Math.abs(basisScore)*25)}%;"></div>
+            </div>
+          </div>
+          <div class="metric" style="margin-top:6px;">
+            <span style="display:flex;justify-content:space-between;font-size:0.65rem;">
+              <span>Vol regime (20%)</span><span>${(volScore>=0?'+':'')+volScore.toFixed(2)}</span>
+            </span>
+            <div class="bar-wrap">
+              <div class="bar ${volScore>=0?'neg':'pos'} ${volScore>=0?'mid':'left'}" style="width:${Math.min(50,Math.abs(volScore)*50)}%;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="score ${cls==='bull'?'pos':cls==='bear'?'neg':'neu'}">${scoreTxt}</div>
+      </div>`;
+  }
+  panel.innerHTML = html || '<div style="color:var(--muted);">No data</div>';
+}
+
+/* ========================================================================
+   FRESHNESS
+   ======================================================================== */
+function renderFreshness() {
+  const el = document.getElementById('freshnessLine');
+  if (!RAW.length) { el.innerHTML = '<span class="fresh-dot warn"></span>Waiting…'; return; }
+  const last = RAW[RAW.length-1].date;
+  const daysOld = (Date.now() - new Date(last + 'T00:00:00Z').getTime()) / 86400000;
+  const cls = daysOld < 2 ? '' : daysOld < 7 ? 'warn' : 'stale';
+  const txt = daysOld < 2 ? 'fresh' : daysOld < 7 ? 'aging' : 'stale';
+  el.innerHTML = `<span class="fresh-dot ${cls}"></span>${last} (${daysOld.toFixed(1)}d · ${txt})`;
+}
+
+/* ========================================================================
+   NEWS
+   ======================================================================== */
+function timeAgo(iso) {
+  if (!iso) return '';
+  const t = new Date(iso).getTime();
+  if (!isFinite(t)) return '';
+  const secs = Math.max(0, (Date.now() - t) / 1000);
+  if (secs < 60) return 'just now';
+  if (secs < 3600) return Math.floor(secs/60) + ' min ago';
+  if (secs < 86400) return Math.floor(secs/3600) + ' h ago';
+  if (secs < 86400*7) return Math.floor(secs/86400) + ' d ago';
+  return new Date(iso).toISOString().slice(0,10);
+}
+function detectMetals(title) {
+  const hits = [];
+  const low = title.toLowerCase();
+  const map = { copper:'Copper', aluminium:'Aluminium', zinc:'Zinc', nickel:'Nickel', lme:'LME', mcx:'MCX' };
+  for (const [kw, tag] of Object.entries(map)) if (low.includes(kw)) hits.push(tag);
+  return [...new Set(hits)];
+}
+async function loadNews() {
+  const feed = document.getElementById('newsFeed');
+  const stamp = document.getElementById('newsUpdated');
+  try {
+    const api = 'https://api.rss2json.com/v1/api.json?rss_url=' +
+                encodeURIComponent('https://www.mining.com/feed/') + '&count=20';
+    const res = await fetch(api);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.status === 'ok' && data.items && data.items.length) {
+      feed.innerHTML = data.items.map(it => {
+        const metals = detectMetals(it.title || '').map(m => `<span class="tag metal">${m}</span>`).join(' ');
+        return `<li>
+          <div class="title"><a href="${it.link}" target="_blank" rel="noopener">${it.title}</a></div>
+          <div class="meta">Mining.com · ${timeAgo(it.pubDate)} ${metals ? '· '+metals : ''}</div>
+        </li>`;
+      }).join('');
+      stamp.textContent = 'live · ' + new Date().toLocaleTimeString();
+      return;
+    }
+  } catch (e) {}
+  try {
+    const api = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://www.mining.com/feed/');
+    const res = await fetch(api);
+    const xml = new DOMParser().parseFromString(await res.text(), 'text/xml');
+    const items = xml.querySelectorAll('item');
+    feed.innerHTML = Array.from(items).slice(0, 20).map(it => {
+      const title = (it.querySelector('title')?.textContent || '').trim();
+      const metals = detectMetals(title).map(m => `<span class="tag metal">${m}</span>`).join(' ');
+      return `<li>
+        <div class="title"><a href="${it.querySelector('link')?.textContent}" target="_blank">${title}</a></div>
+        <div class="meta">Mining.com · ${timeAgo(it.querySelector('pubDate')?.textContent)} ${metals ? '· '+metals : ''}</div>
+      </li>`;
+    }).join('');
+    stamp.textContent = 'live · ' + new Date().toLocaleTimeString();
+  } catch (err) {
+    feed.innerHTML = '<li class="empty">Could not load feed.</li>';
+  }
+}
+
+/* ========================================================================
+   SBI TT FETCH — multi-proxy fallbacks
+   ======================================================================== */
+async function tryFetch(url, timeoutMs = 15000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.text();
+  } catch (err) {
+    clearTimeout(timer);
+    throw err;
+  }
+}
+
+async function fetchSbiTT(url) {
+  const statusEl = document.getElementById('sbiStatus');
+  if (!url || !/^https?:\/\//.test(url)) {
+    statusEl.textContent = 'Please enter a valid URL starting with http(s)://';
+    statusEl.className = 'status err';
+    return;
+  }
+  statusEl.textContent = 'Fetching…';
+  statusEl.className = 'status';
+
+  const proxies = [
+    { name: 'corsproxy.io',  wrap: u => 'https://corsproxy.io/?' + encodeURIComponent(u) },
+    { name: 'allorigins',    wrap: u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u) },
+    { name: 'codetabs',      wrap: u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u) },
+    { name: 'thingproxy',    wrap: u => 'https://thingproxy.freeboard.io/fetch/' + u },
+    { name: 'direct',        wrap: u => u },
+  ];
+
+  let text = null, lastErr = null, usedProxy = '';
+  for (const p of proxies) {
+    try {
+      statusEl.textContent = `Fetching via ${p.name}…`;
+      text = await tryFetch(p.wrap(url), 15000);
+      if (text && text.length > 100) { usedProxy = p.name; break; }
+      text = null;
+    } catch (e) { lastErr = e; }
+  }
+
+  if (!text) {
+    statusEl.innerHTML = `All proxies failed. Last error: ${lastErr ? lastErr.message : 'unknown'}.<br>` +
+      `Tip: try again in a moment, or check that the URL is a raw GitHub CSV link.`;
+    statusEl.className = 'status err';
+    return;
+  }
+
+  try {
+    const parsed = parseSBICSV(text);
+    if (!parsed.ok) throw new Error(parsed.msg);
+    SBI_RAW = parsed.rows;
+    statusEl.textContent = `${parsed.msg} · via ${usedProxy}` +
+      (parsed.details && parsed.details.length ? ' · ' + parsed.details[0] : '');
+    statusEl.className = 'status ok';
+    renderSbiChart();
+  } catch (err) {
+    statusEl.textContent = 'Parse error: ' + err.message;
+    statusEl.className = 'status err';
+  }
+}
+
+/* ========================================================================
+   FILE LOADING + RENDER
+   ======================================================================== */
+function showContent() {
+  document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+}
+function loadMetalsFile(text) {
+  const res = parseMetalsCSV(text);
+  if (!res.ok) { showStatus('err', 'metals.csv failed: ' + res.msg, res.details); return false; }
+  computeLatest();
+  document.getElementById('rangeLabel').textContent = RAW[0].date + ' → ' + RAW[RAW.length-1].date;
+  const fromEl = document.getElementById('priceDateFrom');
+  const toEl = document.getElementById('priceDateTo');
+  if (fromEl && !fromEl.value) fromEl.value = RAW[0].date;
+  if (toEl && !toEl.value) toEl.value = RAW[RAW.length-1].date;
+  const btn = document.getElementById('btnMetals');
+  btn.classList.add('loaded');
+  btn.querySelector('i').className = 'fas fa-check-circle';
+  showStatus('ok', 'metals.csv: ' + res.msg, res.details);
+  return true;
+}
+function loadCSPFile(text) {
+  const res = parseCSPCSV(text);
+  if (!res.ok) { showStatus('err', 'lme_csp.csv failed: ' + res.msg, res.details); return false; }
+  const btn = document.getElementById('btnCSP');
+  btn.classList.add('loaded');
+  btn.querySelector('i').className = 'fas fa-check-circle';
+  showStatus('ok', 'lme_csp.csv: ' + res.msg, res.details);
+  return true;
+}
+function readFile(file, onLoad) {
+  const r = new FileReader();
+  r.onload = e => onLoad(e.target.result);
+  r.readAsText(file);
+}
+
+function maybeRender() {
+  if (!RAW.length) return;
+  showContent();
+
+  const steps = [
+    ['freshness',        () => renderFreshness()],
+    ['price grid',       () => renderPriceGrid()],
+    ['sbi chart',        () => renderSbiChart()],
+    ['csp latest',       () => renderCSPLatest()],
+    ['csp days table',   () => renderCSPDaysTable()],
+    ['lmc spread',       () => renderLmcSpread()],
+    ['lmc chart',        () => renderLmcChart()],
+    ['price picker',     () => populatePricePicker()],
+    ['price chart',      () => renderPriceChart()],
+    ['season chart',     () => renderSeasonChart()],
+    ['csp card',         () => renderCSP()],
+    ['csp2 card',        () => renderCSP2()],
+    ['sentiment',        () => renderSentiment()],
+    ['trend analysis',   () => renderTrendAnalysis()],
+    ['corr dropdowns',   () => populateCorrDropdowns()],
+    ['series picker',    () => populateSeriesPicker()],
+    ['corr chart',       () => renderCorrChart()],
+  ];
+  const errs = [];
+  for (const [name, fn] of steps) {
+    try { fn(); }
+    catch (e) { errs.push(`${name}: ${e.message}`); console.error(name, e); }
+  }
+  if (errs.length) showStatus('err', 'Some sections failed to render:', errs);
+  if (!controlsWired) { wireControls(); controlsWired = true; }
+}
+
+/* ========================================================================
+   CONTROLS
+   ======================================================================== */
+function wireControls() {
+  document.getElementById('priceTf').addEventListener('change', renderPriceChart);
+  document.getElementById('priceApplyRange').addEventListener('click', renderPriceChart);
+  document.getElementById('priceLogToggle').addEventListener('change', renderPriceChart);
+  document.getElementById('seasonYears').addEventListener('change', renderSeasonChart);
+  document.getElementById('seasonMode').addEventListener('change', renderSeasonChart);
+  document.getElementById('lmcTf').addEventListener('change', renderLmcChart);
+  document.getElementById('sbiTf').addEventListener('change', renderSbiChart);
+  document.getElementById('cspDaysCount').addEventListener('change', renderCSPDaysTable);
+
+  document.querySelectorAll('#priceFreq button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#priceFreq button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); priceFreq = b.dataset.freq; renderPriceChart();
+  }));
+  document.querySelectorAll('#cspFreq button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#cspFreq button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); cspFreq = b.dataset.freq; renderCSP();
+  }));
+  document.querySelectorAll('#csp2Freq button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#csp2Freq button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); csp2Freq = b.dataset.freq; renderCSP2();
+  }));
+  document.querySelectorAll('#lmcFreq button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#lmcFreq button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); lmcFreq = b.dataset.freq; renderLmcChart();
+  }));
+  document.querySelectorAll('#sbiFreq button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#sbiFreq button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); sbiFreq = b.dataset.freq; renderSbiChart();
+  }));
+
+  document.getElementById('priceAllBtn').addEventListener('click', () => {
+    selectedPriceSeries = new Set(SERIES_NAMES);
+    updatePricePickerUI(); renderPriceChart();
+  });
+  document.getElementById('priceNoneBtn').addEventListener('click', () => {
+    selectedPriceSeries = new Set();
+    updatePricePickerUI(); renderPriceChart();
+  });
+  document.getElementById('priceMetalsBtn').addEventListener('click', () => {
+    selectedPriceSeries = new Set();
+    SERIES_NAMES.forEach(n => {
+      const c = categorize(n);
+      if (c === 'lme' || c === 'mcx' || c === 'comex') selectedPriceSeries.add(n);
+    });
+    updatePricePickerUI(); renderPriceChart();
+  });
+
+  document.querySelectorAll('[data-season]').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-season]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); currentSeasonMetal = btn.dataset.metal; renderSeasonChart();
+  }));
+  document.querySelectorAll('[data-csp]').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-csp]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); currentCSP = btn.dataset.csp; renderCSP();
+  }));
+  document.querySelectorAll('[data-csp2]').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-csp2]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); currentCSP2 = btn.dataset.csp2; renderCSP2();
+  }));
+  document.querySelectorAll('[data-lmc]').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-lmc]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); currentLMC = btn.dataset.lmc; renderLmcChart();
+  }));
+
+  document.getElementById('corrTf').addEventListener('change', renderCorrChart);
+  document.getElementById('corrData').addEventListener('change', renderCorrChart);
+  document.getElementById('corrMode').addEventListener('change', renderCorrChart);
+  document.getElementById('corrA').addEventListener('change', renderCorrChart);
+  document.getElementById('corrB').addEventListener('change', renderCorrChart);
+  document.getElementById('corrWindow').addEventListener('change', renderCorrChart);
+}
+
+/* ========================================================================
+   INIT
+   ======================================================================== */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('fileMetals').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    readFile(f, txt => { if (loadMetalsFile(txt)) maybeRender(); });
+  });
+  document.getElementById('fileCSP').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    readFile(f, txt => { if (loadCSPFile(txt)) maybeRender(); });
+  });
+  document.getElementById('sbiFetchBtn').addEventListener('click', () => {
+    const url = document.getElementById('sbiUrl').value.trim();
+    fetchSbiTT(url);
+  });
+  loadNews();
+});
+</script>
+</body>
+</html>
