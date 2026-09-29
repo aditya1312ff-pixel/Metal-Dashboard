@@ -14,6 +14,7 @@
     --bg:#0e1420; --card:#161d2b; --card2:#1c2536; --border:#232d42;
     --text:#e6ecf5; --muted:#7c8aa0; --accent:#e8a33d;
     --green:#2ecc71; --red:#e74c3c; --amber:#f39c12; --sbi:#ff6b9d;
+    --gold:#e8b23d; --silver:#c9d1d9;
   }
   body { background:var(--bg); color:var(--text); padding:18px; min-height:100vh; }
   .dashboard { max-width:1600px; margin:0 auto; }
@@ -41,6 +42,26 @@
   }
   .btn-refresh:hover { background: rgba(232,163,61,0.25); }
   .btn-refresh:disabled { opacity: 0.5; cursor: wait; }
+
+  .live-pill {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:4px 10px; border-radius:12px; font-size:0.7rem; font-weight:600;
+    background:rgba(46,204,113,0.12); color:var(--green);
+  }
+  .live-pill.paused { background:rgba(124,138,160,0.12); color:var(--muted); }
+  .live-pill.stale { background:rgba(243,156,18,0.12); color:var(--amber); }
+  .live-pill.error { background:rgba(231,76,60,0.12); color:var(--red); }
+  .live-dot {
+    display:inline-block; width:7px; height:7px; border-radius:50%;
+    background:var(--green); animation:pulse 2s ease-in-out infinite;
+  }
+  .live-dot.paused { background:var(--muted); animation:none; }
+  .live-dot.stale { background:var(--amber); animation:none; }
+  .live-dot.error { background:var(--red); animation:none; }
+  @keyframes pulse {
+    0%, 100% { opacity:1; }
+    50% { opacity:0.35; }
+  }
 
   .sbi-bar {
     background: linear-gradient(135deg, #1c2536 0%, #161d2b 100%);
@@ -72,7 +93,7 @@
   .head { display:flex; justify-content:space-between; align-items:center; padding:8px 4px 20px; flex-wrap:wrap; gap:12px; }
   .head h1 { font-size:1.5rem; font-weight:700; display:flex; align-items:center; gap:12px; }
   .head h1 i { color:var(--accent); }
-  .head .meta { color:var(--muted); font-size:0.8rem; display:flex; gap:18px; flex-wrap:wrap;}
+  .head .meta { color:var(--muted); font-size:0.8rem; display:flex; gap:18px; flex-wrap:wrap; align-items:center;}
   .head .meta strong { color:var(--text); }
   .fresh-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); margin-right:6px;}
   .fresh-dot.warn { background:var(--amber); }
@@ -90,23 +111,34 @@
   @media(max-width:1200px){ .span-3,.span-4,.span-5{grid-column:span 6;} .span-7,.span-8{grid-column:span 12;} }
   @media(max-width:700px){ .grid{grid-template-columns:1fr;} .card{grid-column:span 1 !important;} }
 
+  .price-group-title {
+    font-size:0.68rem; color:var(--muted); text-transform:uppercase;
+    letter-spacing:0.8px; margin-bottom:6px; padding-left:8px;
+    font-weight:600; display:flex; align-items:center; gap:8px;
+  }
+  .price-group-title::before {
+    content:''; width:3px; height:14px; border-radius:2px; background:var(--accent);
+  }
+  .price-group-title.lme::before { background:var(--copper); }
+  .price-group-title.mcx::before { background:#c07c2b; }
+  .price-group-title.precious::before { background:var(--gold); }
+  .price-group-title.fx::before { background:var(--green); }
+  .price-group-title.yield::before { background:#9b59b6; }
+
   .price-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap:10px; }
   .price-card { background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:11px 12px; position:relative; overflow:hidden; }
   .price-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:#d68b4d; }
   .price-card.cat-mcx::before { background:#c07c2b; }
-  .price-card.cat-comex::before { background:#e8b23d; }
-  .price-card.cat-energy::before { background:#c0392b; }
+  .price-card.cat-lme::before { background:#d68b4d; }
+  .price-card.cat-precious::before { background:#e8b23d; }
   .price-card.cat-fx::before { background:#2ecc71; }
   .price-card.cat-yield::before { background:#9b59b6; }
   .price-card .label { font-size:0.68rem; color:var(--muted); display:flex; justify-content:space-between; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;}
   .price-card .label .venue { background:#0e1724; padding:1px 6px; border-radius:3px; font-size:0.6rem; color:#a9b6cb; }
   .price-card .value { font-size:1.15rem; font-weight:700; color:#fff; font-variant-numeric: tabular-nums; }
   .price-card .unit { font-size:0.62rem; color:var(--muted); margin-left:3px;}
-  .price-card .chg { font-size:0.7rem; font-weight:600; margin-top:4px; display:flex; align-items:center; gap:5px; }
-  .price-card .chg.up { color:var(--green); }
-  .price-card .chg.down { color:var(--red); }
+  .price-card .chg { font-size:0.7rem; font-weight:600; margin-top:4px; display:flex; align-items:center; gap:5px; color:var(--muted); }
 
-  /* Parity model */
   .parity-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; }
   @media(max-width:1100px){ .parity-grid { grid-template-columns: 1fr; } }
   .parity-card { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:14px; position:relative; overflow:hidden; }
@@ -119,12 +151,13 @@
   .parity-card .pc-badge.bwd { background:rgba(46,204,113,0.18); color:var(--green); }
   .parity-card .pc-badge.ctg { background:rgba(231,76,60,0.18); color:var(--red); }
   .parity-card .pc-badge.flat{ background:rgba(124,138,160,0.18); color:var(--muted); }
-  .parity-row { display:grid; grid-template-columns: 1fr 120px; gap:8px; align-items:center; padding:6px 0; border-bottom:1px dashed #1a2334; }
+  .parity-row { display:grid; grid-template-columns: 1fr 120px; gap:8px; align-items:center; padding:6px 0; border-bottom:1px dashed #1a2334; position:relative; }
   .parity-row:last-child { border-bottom:none; }
   .parity-row .pr-label { font-size:0.72rem; color:var(--muted); }
   .parity-row .pr-input { background:#0e1724; border:1px solid var(--border); color:#fff; padding:4px 7px; border-radius:6px; font-size:0.72rem; font-variant-numeric:tabular-nums; text-align:right; width:100%; font-family: inherit; }
   .parity-row .pr-input:focus { outline:none; border-color:var(--accent); }
   .parity-row .pr-input.edited { border-color: var(--accent); background: rgba(232,163,61,0.08); }
+  .parity-row .pr-input.live { border-color: var(--green); background: rgba(46,204,113,0.06); }
   .parity-row .pr-value { text-align:right; font-size:0.78rem; font-weight:600; font-variant-numeric:tabular-nums; color:#fff; }
   .parity-row .pr-value.pos { color:var(--green); }
   .parity-row .pr-value.neg { color:var(--red); }
@@ -133,7 +166,6 @@
   .parity-row.pr-result .pr-value { font-size:0.9rem; font-weight:700; }
   .parity-card .pc-footer { margin-top:8px; font-size:0.65rem; color:var(--muted); }
 
-  /* Shared SBI TT bar inside parity */
   .parity-sbi-bar {
     display:flex; align-items:center; gap:12px; flex-wrap:wrap;
     background: linear-gradient(135deg, rgba(255,107,157,0.08) 0%, rgba(255,107,157,0.03) 100%);
@@ -309,7 +341,7 @@
       <i class="fas fa-file-csv"></i> Override lme_csp.csv
       <input type="file" accept=".csv,.txt" id="fileCSP">
     </label>
-    <span class="hint">Auto-loads from GitHub. Use Override buttons for local files.</span>
+    <span class="hint">Live feed auto-loads. GitHub CSVs for other charts.</span>
   </div>
 
   <div class="sbi-bar">
@@ -326,22 +358,28 @@
     <div class="meta">
       <span id="freshnessLine"><span class="fresh-dot warn"></span>Waiting…</span>
       <span>Range: <strong id="rangeLabel">—</strong></span>
+      <span id="liveStatus" class="live-pill paused"><span class="live-dot paused"></span> Live: paused</span>
     </div>
   </div>
 
   <div id="placeholder" class="card span-12">
     <div class="placeholder">
       <i class="fas fa-spinner fa-spin"></i>
-      Loading data from GitHub…
+      Loading data…
     </div>
   </div>
 
   <div id="content" style="display:none;">
 
-    <!-- Latest metals prices -->
+    <!-- Latest Prices (LIVE) -->
     <div class="grid">
       <div class="card span-12">
-        <h3><i class="fas fa-coins"></i> Latest Prices <span class="sub">— grouped by category</span></h3>
+        <h3 style="justify-content:space-between;display:flex;">
+          <span><i class="fas fa-coins"></i> Latest Prices <span class="sub">— live from Google Sheet</span></span>
+          <span class="controls">
+            <span id="liveUpdated" style="font-size:0.68rem;color:var(--muted);"></span>
+          </span>
+        </h3>
         <div id="priceGrid"></div>
       </div>
     </div>
@@ -352,11 +390,10 @@
         <h3 style="justify-content:space-between;display:flex;">
           <span><i class="fas fa-calculator"></i> Import Parity Model <span class="sub">— LME → Landed ₹ vs MCX</span></span>
           <span class="controls">
-            <button class="btn" id="parityResetBtn" title="Reset all edits to defaults from CSVs"><i class="fas fa-undo"></i> Reset</button>
+            <button class="btn" id="parityResetBtn" title="Reset all edits to defaults"><i class="fas fa-undo"></i> Reset</button>
           </span>
         </h3>
 
-        <!-- Shared SBI TT input (USD/INR for all metals) -->
         <div class="parity-sbi-bar">
           <span class="psb-label"><i class="fas fa-university" style="color:var(--sbi)"></i> USD/INR (SBI TT)</span>
           <input type="number" class="pr-input" id="parityUsdinr" step="0.01" placeholder="e.g. 96.50">
@@ -369,7 +406,7 @@
       </div>
     </div>
 
-    <!-- SBI TT Sell vs USDINR chart -->
+    <!-- SBI TT vs USDINR -->
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
@@ -393,11 +430,11 @@
       </div>
     </div>
 
-    <!-- Latest CSP snapshot -->
+    <!-- CSP -->
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
-          <span><i class="fas fa-balance-scale"></i> Latest Cash / 3M / Stock <span class="sub">— LME official, 3 metals</span></span>
+          <span><i class="fas fa-balance-scale"></i> Latest Cash / 3M / Stock <span class="sub">— LME official</span></span>
           <span id="cspLatestDate" style="font-size:0.68rem;color:var(--muted);font-weight:400;"></span>
         </h3>
         <div class="csp-latest-grid" id="cspLatestGrid">
@@ -406,11 +443,10 @@
       </div>
     </div>
 
-    <!-- Last N Days CSP table -->
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
-          <span><i class="fas fa-history"></i> Last Days Cash / 3M / Stock <span class="sub">— recent history per metal</span></span>
+          <span><i class="fas fa-history"></i> Last Days Cash / 3M / Stock</span>
           <span class="controls">
             <select class="tf-select" id="cspDaysCount">
               <option value="3">3 days</option>
@@ -427,11 +463,11 @@
       </div>
     </div>
 
-    <!-- LME-MCX historical -->
+    <!-- LME-MCX Historical -->
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
-          <span><i class="fas fa-chart-line"></i> LME–MCX Spread History <span class="sub">— INR basis over time</span></span>
+          <span><i class="fas fa-chart-line"></i> LME–MCX Spread History</span>
           <span class="controls">
             <button class="btn active" data-lmc="Copper">Cu</button>
             <button class="btn" data-lmc="Zinc">Zn</button>
@@ -451,20 +487,16 @@
       </div>
     </div>
 
-    <!-- Raw Price Chart -->
+    <!-- Price Chart -->
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
-          <span><i class="fas fa-chart-area"></i> Price Chart <span class="sub">— actual prices, adjustable range</span></span>
+          <span><i class="fas fa-chart-area"></i> Price Chart</span>
           <span class="controls">
             <select class="tf-select" id="priceTf">
-              <option value="2d">2D</option>
-              <option value="5d">5D</option>
-              <option value="8d">8D</option>
-              <option value="15d">15D</option>
-              <option value="1m" selected>1M</option>
-              <option value="3m">3M</option>
-              <option value="6m">6M</option>
+              <option value="2d">2D</option><option value="5d">5D</option><option value="8d">8D</option>
+              <option value="15d">15D</option><option value="1m" selected>1M</option>
+              <option value="3m">3M</option><option value="6m">6M</option>
               <option value="1y">1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option>
               <option value="custom">Custom…</option>
             </select>
@@ -604,13 +636,14 @@
       </div>
     </div>
 
+    <!-- News & Sentiment -->
     <div class="grid">
       <div class="card span-6">
         <h3><i class="fas fa-newspaper"></i> News <span class="sub">— Mining.com</span> <span style="font-size:0.65rem;color:var(--muted);font-weight:400;margin-left:auto;" id="newsUpdated"></span></h3>
         <ul class="feed" id="newsFeed"><li class="empty">Loading…</li></ul>
       </div>
       <div class="card span-6">
-        <h3><i class="fas fa-brain"></i> Quant Sentiment <span class="sub">— momentum + vol + basis</span></h3>
+        <h3><i class="fas fa-brain"></i> Quant Sentiment</h3>
         <div id="sentimentPanel"></div>
       </div>
     </div>
@@ -619,14 +652,14 @@
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
-          <span><i class="fas fa-wave-square"></i> Trend Analysis <span class="sub">— EMA-based regime detection</span></span>
+          <span><i class="fas fa-wave-square"></i> Trend Analysis <span class="sub">— EMA-based</span></span>
           <span id="trendUpdated" style="font-size:0.65rem;color:var(--muted);font-weight:400;"></span>
         </h3>
         <div id="trendPanel"></div>
       </div>
     </div>
 
-    <div class="foot">Data: metals.csv + lme_csp.csv | SBI TT: sahilgupta/sbi-fx-ratekeeper | News: Mining.com</div>
+    <div class="foot">Live: Google Sheet (LMEMCX) | CSP: lme_csp.csv | SBI TT: sahilgupta/sbi-fx-ratekeeper | News: Mining.com</div>
   </div>
 </div>
 
@@ -639,6 +672,35 @@ const REPO_NAME  = 'Metal-Dashboard';
 const REPO_BRANCH = 'main';
 const METALS_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/metals.csv`;
 const CSP_URL    = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/lme_csp.csv`;
+
+const LIVE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbynNKaXnesHgbtzHC1udvwi7mmkGkRi2akYZCueRy9PFdN6aWVi3g79ThZsFyoceVs/exec';
+const LIVE_REFRESH_MS = 120000;    // 2 minutes
+const LIVE_TIMEOUT_MS = 45000;     // 45s timeout
+
+const LIVE_SYMBOL_MAP = {
+  'COPPER':      { label: 'LME Copper',    group: 'lme',      unit: '$/t', role: 'lme', metal: 'Copper' },
+  'ZINC':        { label: 'LME Zinc',      group: 'lme',      unit: '$/t', role: 'lme', metal: 'Zinc' },
+  'ALUMINIUM':   { label: 'LME Aluminium', group: 'lme',      unit: '$/t', role: 'lme', metal: 'Aluminium' },
+  'COPPER1!':    { label: 'MCX Copper',    group: 'mcx', unit: '₹/kg', role: 'mcx', metal: 'Copper' },
+  'ZINC1!':      { label: 'MCX Zinc',      group: 'mcx', unit: '₹/kg', role: 'mcx', metal: 'Zinc' },
+  'ALUMINIUM1!': { label: 'MCX Aluminium', group: 'mcx', unit: '₹/kg', role: 'mcx', metal: 'Aluminium' },
+  'XAUUSD':      { label: 'Gold Spot',     group: 'precious', unit: '$/oz' },
+  'SILVER':      { label: 'Silver Spot',   group: 'precious', unit: '$/oz' },
+  'DXY':         { label: 'Dollar Index',  group: 'fx',       unit: '' },
+  'US02Y':       { label: 'US 2Y Yield',   group: 'yield',    unit: '%' },
+  'US05Y':       { label: 'US 5Y Yield',   group: 'yield',    unit: '%' },
+  'US10Y':       { label: 'US 10Y Yield',  group: 'yield',    unit: '%' },
+};
+
+const LIVE_GROUP_ORDER = ['lme','mcx','precious','fx','yield'];
+const LIVE_GROUP_TITLES = {
+  lme: 'Base Metals — LME',
+  mcx: 'Base Metals — MCX',
+  precious: 'Precious Metals',
+  fx: 'FX',
+  yield: 'US Yields',
+  other: 'Other',
+};
 
 /* ========================================================================
    CSV PARSER + HELPERS
@@ -709,6 +771,11 @@ let SERIES_NAMES = [];
 let latest = {};
 let CSP_RAW = [];
 let SBI_RAW = [];
+let LIVE_RAW = [];
+let LIVE_LATEST = {};
+let liveTimer = null;
+let liveLastFetch = null;
+let liveLastError = false;
 let seasonChart, corrChart, cspChart, csp2Chart, lmcChart, priceChart, sbiChart;
 let currentSeasonMetal = 'copper';
 let currentCSP = 'Cu', currentCSP2 = 'Cu', currentLMC = 'Copper';
@@ -733,6 +800,7 @@ const PARITY_METALS = [
     dutyPct:8.25, defaultPremium:65,  cls:'al', color:'#93a2b5' },
 ];
 const parityEdits = {};
+const parityEdited = new Set();   // tracks fields the user manually edited
 
 /* ========================================================================
    HELPERS
@@ -740,6 +808,16 @@ const parityEdits = {};
 function fmt(v, dp=2) {
   if (v == null || !isFinite(v)) return '—';
   return v.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
+}
+function isYield(name) { return /^us\s*\d+\s*y$/i.test(name.replace(/[^A-Za-z0-9]/g,' ')); }
+function categorize(name) {
+  if (/^lme\s/i.test(name)) return 'lme';
+  if (/^mcx\s/i.test(name)) return 'mcx';
+  if (/^comex\s/i.test(name)) return 'comex';
+  if (/^us\s+oil$/i.test(name)) return 'energy';
+  if (/^(usdinr|dollar\s+index|dxy)$/i.test(name)) return 'fx';
+  if (/^us\s+\d+\s*y$/i.test(name)) return 'yield';
+  return 'other';
 }
 function numOrNull(v) {
   if (v == null || v === '') return null;
@@ -806,6 +884,132 @@ function resampleWeekly(series) {
     buckets.set(key, p);
   }
   return [...buckets.values()].sort((a,b) => a.t - b.t);
+}
+
+/* ========================================================================
+   LIVE FEED
+   ======================================================================== */
+function parseLiveCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (lines.length < 2) return [];
+  const header = parseCSVLine(lines[0]).map(h => h.toLowerCase());
+  const idx = {
+    time:   header.findIndex(h => /time|date|timestamp/.test(h)),
+    symbol: header.findIndex(h => /symbol|ticker/.test(h)),
+    price:  header.findIndex(h => /price|close|value/.test(h)),
+  };
+  if (idx.symbol < 0 || idx.price < 0) return [];
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const parts = parseCSVLine(lines[i]);
+    if (parts.length <= Math.max(idx.symbol, idx.price)) continue;
+    const symbol = parts[idx.symbol].trim().toUpperCase();
+    const price = parseNumber(parts[idx.price]);
+    const time = idx.time >= 0 ? parts[idx.time] : '';
+    if (!symbol || price == null) continue;
+    rows.push({ time, symbol, price });
+  }
+  return rows;
+}
+function computeLiveLatest(rows) {
+  const out = {};
+  for (const r of rows) {
+    if (!LIVE_SYMBOL_MAP[r.symbol]) continue;
+    out[r.symbol] = { price: r.price, time: r.time };
+  }
+  return out;
+}
+async function fetchLive() {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), LIVE_TIMEOUT_MS);
+  try {
+    const res = await fetch(LIVE_SHEET_URL, {
+      signal: controller.signal,
+      cache: 'no-store',
+      redirect: 'follow'
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const txt = await res.text();
+    const rows = parseLiveCSV(txt);
+    if (!rows.length) throw new Error('Empty parse');
+    LIVE_RAW = rows;
+    LIVE_LATEST = computeLiveLatest(rows);
+    liveLastFetch = new Date();
+    liveLastError = false;
+
+    const pill = document.getElementById('liveStatus');
+    if (pill) {
+      pill.className = 'live-pill';
+      pill.innerHTML = `<span class="live-dot"></span> Live · ${Object.keys(LIVE_LATEST).length} symbols`;
+    }
+    const updatedEl = document.getElementById('liveUpdated');
+    if (updatedEl) updatedEl.textContent = 'Updated ' + liveLastFetch.toLocaleTimeString();
+
+    renderPriceGrid();
+    renderParity();   // parity now updates from live every cycle
+  } catch (e) {
+    clearTimeout(timer);
+    console.error('Live fetch failed:', e);
+    liveLastError = true;
+    const pill = document.getElementById('liveStatus');
+    if (pill) {
+      if (LIVE_RAW.length && liveLastFetch) {
+        pill.className = 'live-pill stale';
+        pill.innerHTML = `<span class="live-dot stale"></span> Stale · last ok ${liveLastFetch.toLocaleTimeString()}`;
+      } else {
+        pill.className = 'live-pill error';
+        pill.innerHTML = `<span class="live-dot error"></span> Live: error`;
+      }
+    }
+  }
+}
+function startLiveFeed() {
+  if (liveTimer) clearInterval(liveTimer);
+  fetchLive();
+  liveTimer = setInterval(fetchLive, LIVE_REFRESH_MS);
+}
+
+/* ========================================================================
+   RENDER PRICE GRID
+   ======================================================================== */
+function renderPriceGrid() {
+  const el = document.getElementById('priceGrid');
+  if (!el) return;
+  const groups = {};
+  for (const sym of Object.keys(LIVE_LATEST)) {
+    const meta = LIVE_SYMBOL_MAP[sym];
+    if (!meta) continue;
+    const g = meta.group;
+    if (!groups[g]) groups[g] = [];
+    groups[g].push({ symbol: sym, ...LIVE_LATEST[sym], meta });
+  }
+  for (const g of Object.keys(groups)) {
+    groups[g].sort((a, b) => (a.meta?.label || a.symbol).localeCompare(b.meta?.label || b.symbol));
+  }
+
+  let html = '';
+  for (const g of LIVE_GROUP_ORDER) {
+    if (!groups[g] || !groups[g].length) continue;
+    const cards = groups[g].map(item => {
+      const label = item.meta?.label || item.symbol;
+      const unit = item.meta?.unit || '';
+      const timeStr = item.time || '';
+      const timeShort = timeStr.length > 11 ? timeStr.slice(11, 19) : '—';
+      return `
+        <div class="price-card cat-${g}">
+          <div class="label"><span>${label}</span><span class="venue">${timeShort}</span></div>
+          <div class="value">${item.price.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}<span class="unit">${unit}</span></div>
+          <div class="chg"><span class="live-dot"></span> live</div>
+        </div>`;
+    }).join('');
+    html += `
+      <div style="margin-bottom:14px;">
+        <div class="price-group-title ${g}">${LIVE_GROUP_TITLES[g]}</div>
+        <div class="price-grid">${cards}</div>
+      </div>`;
+  }
+  el.innerHTML = html || '<div style="color:var(--muted);padding:20px;">Waiting for live data…</div>';
 }
 
 /* ========================================================================
@@ -1000,49 +1204,58 @@ function initParityEdits() {
   }
   if (parityEdits.__usdinr === undefined) parityEdits.__usdinr = null;
 }
-
 function computeParityDefaults() {
   initParityEdits();
 
-  let sbiLatest = null;
-  if (SBI_RAW.length) sbiLatest = SBI_RAW[SBI_RAW.length-1].value;
-  if (sbiLatest == null) {
-    for (let i = RAW.length-1; i >= 0; i--) {
-      if (RAW[i].series['USDINR'] != null) { sbiLatest = RAW[i].series['USDINR']; break; }
+  // SBI TT / USD-INR — only set if not user-edited
+  if (!parityEdited.has('__usdinr')) {
+    let sbiLatest = null;
+    if (SBI_RAW.length) sbiLatest = SBI_RAW[SBI_RAW.length-1].value;
+    if (sbiLatest == null) {
+      for (let i = RAW.length-1; i >= 0; i--) {
+        if (RAW[i].series['USDINR'] != null) { sbiLatest = RAW[i].series['USDINR']; break; }
+      }
     }
+    parityEdits.__usdinr = sbiLatest;
   }
-  if (parityEdits.__usdinr == null) parityEdits.__usdinr = sbiLatest;
 
   for (const m of PARITY_METALS) {
     const e = parityEdits[m.key];
 
-    let lme3m = null;
-    if (RAW.length && SERIES_NAMES.includes(m.lme3mSeries)) {
-      for (let i = RAW.length-1; i >= 0; i--) {
-        if (RAW[i].series[m.lme3mSeries] != null) { lme3m = RAW[i].series[m.lme3mSeries]; break; }
+    // LME 3M — refresh from live unless user edited
+    if (!parityEdited.has(m.key + '.lme3m')) {
+      const lmeSymbol = m.key === 'Cu' ? 'COPPER' : m.key === 'Zn' ? 'ZINC' : 'ALUMINIUM';
+      let lme3m = null;
+      if (LIVE_LATEST[lmeSymbol]) lme3m = LIVE_LATEST[lmeSymbol].price;
+      if (lme3m == null && RAW.length && SERIES_NAMES.includes(m.lme3mSeries)) {
+        for (let i = RAW.length-1; i >= 0; i--) {
+          if (RAW[i].series[m.lme3mSeries] != null) { lme3m = RAW[i].series[m.lme3mSeries]; break; }
+        }
       }
+      e.lme3m = lme3m;
     }
 
-    let basis = null;
-    if (CSP_RAW.length) {
+    // Basis — from CSP (unless user edited)
+    if (!parityEdited.has(m.key + '.basis') && CSP_RAW.length) {
       const last = CSP_RAW[CSP_RAW.length-1];
       const csp = last[m.lmeCspKey] || {};
-      if (csp.cash != null && csp.threeM != null) basis = csp.cash - csp.threeM;
+      if (csp.cash != null && csp.threeM != null) e.basis = csp.cash - csp.threeM;
     }
 
-    let mcx = null;
-    if (RAW.length && SERIES_NAMES.includes(m.mcxSeries)) {
-      for (let i = RAW.length-1; i >= 0; i--) {
-        if (RAW[i].series[m.mcxSeries] != null) { mcx = RAW[i].series[m.mcxSeries]; break; }
+    // MCX — refresh from live unless user edited
+    if (!parityEdited.has(m.key + '.mcx')) {
+      const mcxSymbol = m.key === 'Cu' ? 'COPPER1!' : m.key === 'Zn' ? 'ZINC1!' : 'ALUMINIUM1!';
+      let mcx = null;
+      if (LIVE_LATEST[mcxSymbol]) mcx = LIVE_LATEST[mcxSymbol].price;
+      if (mcx == null && RAW.length && SERIES_NAMES.includes(m.mcxSeries)) {
+        for (let i = RAW.length-1; i >= 0; i--) {
+          if (RAW[i].series[m.mcxSeries] != null) { mcx = RAW[i].series[m.mcxSeries]; break; }
+        }
       }
+      e.mcx = mcx;
     }
-
-    if (e.lme3m == null) e.lme3m = lme3m;
-    if (e.basis == null) e.basis = basis;
-    if (e.mcx == null) e.mcx = mcx;
   }
 }
-
 function parityCalc(m) {
   const e = parityEdits[m.key];
   const lme3m = numOrNull(e.lme3m);
@@ -1062,11 +1275,10 @@ function parityCalc(m) {
 
   return { lmeCash, cost, inr, duty, landedMt, landedKg, net };
 }
-
 function renderParity() {
   const grid = document.getElementById('parityGrid');
   if (!grid) return;
-  if (!RAW.length && !CSP_RAW.length) {
+  if (!RAW.length && !CSP_RAW.length && !LIVE_RAW.length) {
     grid.innerHTML = '<div class="loading"><div class="spinner"></div> Waiting for data…</div>';
     return;
   }
@@ -1075,6 +1287,7 @@ function renderParity() {
   const usdInp = document.getElementById('parityUsdinr');
   if (usdInp && document.activeElement !== usdInp) {
     usdInp.value = parityEdits.__usdinr ?? '';
+    usdInp.classList.toggle('edited', parityEdited.has('__usdinr'));
   }
 
   let html = '';
@@ -1084,10 +1297,13 @@ function renderParity() {
     const basis = numOrNull(e.basis) ?? 0;
     const badgeCls = basis > 0.5 ? 'bwd' : basis < -0.5 ? 'ctg' : 'flat';
     const badgeTxt = basis > 0.5 ? 'Backwardation' : basis < -0.5 ? 'Contango' : 'Flat';
-
-    // Flip: negative net = good (green), positive net = bad (red)
     const netCls = c.net == null ? '' : (c.net < 0 ? 'pos' : 'neg');
     const netTxt = c.net != null ? '₹' + fmt(c.net, 2) : '—';
+
+    const lmeEdited = parityEdited.has(m.key + '.lme3m');
+    const mcxEdited = parityEdited.has(m.key + '.mcx');
+    const lmeCls = lmeEdited ? 'edited' : 'live';
+    const mcxCls = mcxEdited ? 'edited' : 'live';
 
     html += `<div class="parity-card ${m.cls}" data-metal="${m.key}">
       <div class="pc-header">
@@ -1097,12 +1313,12 @@ function renderParity() {
 
       <div class="parity-row">
         <div class="pr-label">LME ${m.name} 3M (USD/t)</div>
-        <input type="number" class="pr-input" data-metal="${m.key}" data-field="lme3m" value="${e.lme3m ?? ''}" step="0.01">
+        <input type="number" class="pr-input ${lmeCls}" data-metal="${m.key}" data-field="lme3m" value="${e.lme3m ?? ''}" step="0.01">
       </div>
 
       <div class="parity-row">
         <div class="pr-label">Basis (− Ctg / + Bwd)</div>
-        <input type="number" class="pr-input" data-metal="${m.key}" data-field="basis" value="${e.basis ?? 0}" step="0.01">
+        <input type="number" class="pr-input ${parityEdited.has(m.key+'.basis') ? 'edited' : ''}" data-metal="${m.key}" data-field="basis" value="${e.basis ?? 0}" step="0.01">
       </div>
 
       <div class="parity-row">
@@ -1112,7 +1328,7 @@ function renderParity() {
 
       <div class="parity-row">
         <div class="pr-label">Premium</div>
-        <input type="number" class="pr-input" data-metal="${m.key}" data-field="premium" value="${e.premium ?? 0}" step="0.01">
+        <input type="number" class="pr-input ${parityEdited.has(m.key+'.premium') ? 'edited' : ''}" data-metal="${m.key}" data-field="premium" value="${e.premium ?? 0}" step="0.01">
       </div>
 
       <div class="parity-row">
@@ -1132,7 +1348,7 @@ function renderParity() {
 
       <div class="parity-row">
         <div class="pr-label">Import Duty %</div>
-        <input type="number" class="pr-input" data-metal="${m.key}" data-field="dutyPct" value="${e.dutyPct}" step="0.01">
+        <input type="number" class="pr-input ${parityEdited.has(m.key+'.dutyPct') ? 'edited' : ''}" data-metal="${m.key}" data-field="dutyPct" value="${e.dutyPct}" step="0.01">
       </div>
 
       <div class="parity-row">
@@ -1152,7 +1368,7 @@ function renderParity() {
 
       <div class="parity-row">
         <div class="pr-label">${m.name} MCX (₹/kg)</div>
-        <input type="number" class="pr-input" data-metal="${m.key}" data-field="mcx" value="${e.mcx ?? ''}" step="0.01">
+        <input type="number" class="pr-input ${mcxCls}" data-metal="${m.key}" data-field="mcx" value="${e.mcx ?? ''}" step="0.01">
       </div>
 
       <div class="parity-row pr-result">
@@ -1162,6 +1378,7 @@ function renderParity() {
 
       <div class="pc-footer">
         Duty: ${e.dutyPct}% ${e.dutyPct === 0 ? '(duty free)' : ''}
+        ${LIVE_LATEST[m.key === 'Cu' ? 'COPPER' : m.key === 'Zn' ? 'ZINC' : 'ALUMINIUM'] || LIVE_LATEST[m.key === 'Cu' ? 'COPPER1!' : m.key === 'Zn' ? 'ZINC1!' : 'ALUMINIUM1!'] ? ' · <span style="color:var(--green)">live</span>' : ''}
       </div>
     </div>`;
   }
@@ -1173,7 +1390,9 @@ function renderParity() {
       const field = ev.target.dataset.field;
       if (!parityEdits[metal]) return;
       parityEdits[metal][field] = ev.target.value === '' ? null : parseFloat(ev.target.value);
+      parityEdited.add(metal + '.' + field);
       ev.target.classList.add('edited');
+      ev.target.classList.remove('live');
       updateParityCard(metal);
     });
   });
@@ -1181,13 +1400,13 @@ function renderParity() {
   if (usdInp && !usdInp.dataset.wired) {
     usdInp.addEventListener('input', (ev) => {
       parityEdits.__usdinr = ev.target.value === '' ? null : parseFloat(ev.target.value);
+      parityEdited.add('__usdinr');
       ev.target.classList.add('edited');
       for (const mm of PARITY_METALS) updateParityCard(mm.key);
     });
     usdInp.dataset.wired = '1';
   }
 }
-
 function updateParityCard(metalKey) {
   const m = PARITY_METALS.find(x => x.key === metalKey);
   if (!m) return;
@@ -1198,10 +1417,8 @@ function updateParityCard(metalKey) {
 
   card.querySelector('[data-calc="lmeCash"]').textContent = c.lmeCash != null ? fmt(c.lmeCash, 2) : '—';
   card.querySelector('[data-calc="cost"]').textContent = c.cost != null ? fmt(c.cost, 2) : '—';
-
   const usdEl = card.querySelector('[data-calc="usdinr"]');
   if (usdEl) usdEl.textContent = parityEdits.__usdinr != null ? fmt(parityEdits.__usdinr, 2) : '—';
-
   card.querySelector('[data-calc="inr"]').textContent = c.inr != null ? '₹ ' + fmt(c.inr, 2) : '—';
   card.querySelector('[data-calc="duty"]').textContent = c.duty != null ? '₹ ' + fmt(c.duty, 2) : '—';
   card.querySelector('[data-calc="landedMt"]').textContent = c.landedMt != null ? '₹ ' + fmt(c.landedMt, 2) : '—';
@@ -1210,10 +1427,8 @@ function updateParityCard(metalKey) {
   const netEl = card.querySelector('[data-calc="net"]');
   netEl.textContent = c.net != null ? '₹' + fmt(c.net, 2) : '—';
   netEl.classList.remove('pos', 'neg');
-  // Flipped: negative = green (good), positive = red (bad)
   if (c.net != null) netEl.classList.add(c.net < 0 ? 'pos' : 'neg');
 
-  // Live-update duty footer
   const footer = card.querySelector('.pc-footer');
   if (footer) {
     const dp = numOrNull(e.dutyPct) ?? 0;
@@ -1226,54 +1441,6 @@ function updateParityCard(metalKey) {
   if (basis > 0.5) { badge.classList.add('bwd'); badge.textContent = 'Backwardation'; }
   else if (basis < -0.5) { badge.classList.add('ctg'); badge.textContent = 'Contango'; }
   else { badge.classList.add('flat'); badge.textContent = 'Flat'; }
-}
-
-/* ========================================================================
-   RENDER PRICE GRID
-   ======================================================================== */
-function categorize(name) {
-  if (/^lme\s/i.test(name)) return 'lme';
-  if (/^mcx\s/i.test(name)) return 'mcx';
-  if (/^comex\s/i.test(name)) return 'comex';
-  if (/^us\s+oil$/i.test(name)) return 'energy';
-  if (/^(usdinr|dollar\s+index|dxy)$/i.test(name)) return 'fx';
-  if (/^us\s+\d+\s*y$/i.test(name)) return 'yield';
-  return 'other';
-}
-function isYield(name) { return /^us\s+\d+\s*y$/i.test(name); }
-
-function renderPriceGrid() {
-  const el = document.getElementById('priceGrid');
-  const buckets = { lme:[], mcx:[], comex:[], energy:[], fx:[], yield:[], other:[] };
-  for (const name of SERIES_NAMES) {
-    if (latest[name]) buckets[categorize(name)].push(name);
-  }
-  const order = ['lme','mcx','comex','energy','fx','yield','other'];
-  const titles = { lme:'LME', mcx:'MCX', comex:'COMEX', energy:'Energy', fx:'FX', yield:'US Yields', other:'Other' };
-  let html = '';
-  for (const key of order) {
-    if (!buckets[key].length) continue;
-    html += `<div style="margin-bottom:14px;"><div style="font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;border-left:3px solid var(--accent);padding-left:8px;font-weight:600;">${titles[key]}</div><div class="price-grid">`;
-    for (const name of buckets[key]) {
-      const l = latest[name];
-      const up = l.change >= 0;
-      let chgText, unit = '';
-      if (isYield(name)) {
-        chgText = `${up?'+':''}${(l.change*100).toFixed(1)} bp`;
-        unit = '%';
-      } else {
-        chgText = `${up?'+':''}${fmt(l.change, 2)} (${up?'+':''}${l.pct.toFixed(2)}%)`;
-      }
-      html += `
-        <div class="price-card cat-${key}">
-          <div class="label"><span>${name}</span><span class="venue">${l.date}</span></div>
-          <div class="value">${fmt(l.value, 2)}<span class="unit">${unit}</span></div>
-          <div class="chg ${up?'up':'down'}"><i class="fas fa-caret-${up?'up':'down'}"></i>${chgText}</div>
-        </div>`;
-    }
-    html += `</div></div>`;
-  }
-  el.innerHTML = html || '<div style="color:var(--muted);">No data</div>';
 }
 
 /* ========================================================================
@@ -1347,7 +1514,6 @@ function renderCSPDaysTable() {
     (r.Al && r.Al.cash != null && r.Al.threeM != null)
   );
   const last = validRows.slice(-N).reverse();
-
   if (!last.length) {
     wrap.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:8px;">No CSP data available.</div>';
     return;
@@ -1362,28 +1528,17 @@ function renderCSPDaysTable() {
   let html = '';
   for (const m of metals) {
     html += `<table class="csp-days-table" style="margin-bottom:14px;">
-      <thead>
-        <tr>
-          <th class="metal-h" style="color:${m.color}">${m.label}</th>
-          <th>Date</th>
-          <th>Cash</th>
-          <th>3M</th>
-          <th>Stock</th>
-          <th>Spread (C–3M)</th>
-          <th>Structure</th>
-        </tr>
-      </thead>
-      <tbody>`;
-
+      <thead><tr>
+        <th class="metal-h" style="color:${m.color}">${m.label}</th>
+        <th>Date</th><th>Cash</th><th>3M</th><th>Stock</th>
+        <th>Spread (C–3M)</th><th>Structure</th>
+      </tr></thead><tbody>`;
     let anyRow = false;
     for (const r of last) {
       const data = r[m.key] || {};
-      const cash = data.cash;
-      const threeM = data.threeM;
-      const stock = data.stock;
+      const cash = data.cash, threeM = data.threeM, stock = data.stock;
       if (cash == null && threeM == null && stock == null) continue;
       anyRow = true;
-
       let spread = null, structure = '—', pillCls = 'flat';
       if (cash != null && threeM != null) {
         spread = cash - threeM;
@@ -1391,14 +1546,11 @@ function renderCSPDaysTable() {
         else if (spread < -0.5) { structure = 'Contango'; pillCls = 'ctg'; }
         else { structure = 'Flat'; pillCls = 'flat'; }
       }
-
       const spreadCls = spread == null ? '' : (spread >= 0 ? 'pos' : 'neg');
       const spreadTxt = spread != null ? (spread >= 0 ? '+' : '') + fmt(spread, 2) : '—';
       const pillTxt = structure === 'Backwardation' ? 'B · BWD'
                     : structure === 'Contango'     ? 'C · CTG'
-                    : structure === 'Flat'         ? 'F · FLAT'
-                    : '—';
-
+                    : structure === 'Flat'         ? 'F · FLAT' : '—';
       html += `<tr>
         <td class="metal-name" style="color:${m.color}">${m.key}</td>
         <td class="date-cell">${r.date}</td>
@@ -1409,25 +1561,19 @@ function renderCSPDaysTable() {
         <td><span class="pill ${pillCls}">${pillTxt}</span></td>
       </tr>`;
     }
-
-    if (!anyRow) {
-      html += `<tr><td colspan="7" style="color:var(--muted);text-align:left;">No ${m.key} data in the last ${N} rows.</td></tr>`;
-    }
-
+    if (!anyRow) html += `<tr><td colspan="7" style="color:var(--muted);text-align:left;">No ${m.key} data.</td></tr>`;
     html += `</tbody></table>`;
   }
-
   wrap.innerHTML = html;
 }
 
 /* ========================================================================
-   SBI TT Sell vs USDINR CHART
+   SBI TT CHART
    ======================================================================== */
 function renderSbiChart() {
   const canvas = document.getElementById('sbiChart');
   const emptyEl = document.getElementById('sbiEmpty');
   if (!canvas) return;
-
   const usdinr = [];
   if (RAW.length) {
     for (const r of RAW) {
@@ -1435,7 +1581,6 @@ function renderSbiChart() {
       if (v != null) usdinr.push({ t: r.t, date: r.date, v });
     }
   }
-
   if (!SBI_RAW.length && !usdinr.length) {
     if (sbiChart) { sbiChart.destroy(); sbiChart = null; }
     canvas.style.display = 'none';
@@ -1450,41 +1595,30 @@ function renderSbiChart() {
   const cutoff = tfCutoff(tf);
   const filtUsd = cutoff ? usdinr.filter(p => p.t >= cutoff) : usdinr;
   const filtSbi = cutoff ? SBI_RAW.filter(p => p.t >= cutoff) : SBI_RAW;
-
   const usdResampled = resample(filtUsd, sbiFreq);
   const sbiResampled = resample(filtSbi.map(p => ({ t: p.t, date: p.date, v: p.value })), sbiFreq);
-
   const usdData = usdResampled.map(p => ({ x: p.t, y: p.v }));
   const sbiData = sbiResampled.map(p => ({ x: p.t, y: p.v }));
-
   const sbiMap = new Map(sbiData.map(p => [p.x, p.y]));
-  const spreadData = usdData
-    .filter(p => sbiMap.has(p.x))
-    .map(p => ({ x: p.x, y: p.y - sbiMap.get(p.x) }));
+  const spreadData = usdData.filter(p => sbiMap.has(p.x)).map(p => ({ x: p.x, y: p.y - sbiMap.get(p.x) }));
 
   const datasets = [];
-  if (usdData.length) {
-    datasets.push({
-      label: 'USDINR (Spot)', data: usdData,
-      borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,0.08)',
-      borderWidth: 1.8, pointRadius: 0, tension: 0.15, yAxisID: 'y',
-    });
-  }
-  if (sbiData.length) {
-    datasets.push({
-      label: 'SBI TT Sell', data: sbiData,
-      borderColor: '#ff6b9d', backgroundColor: 'rgba(255,107,157,0.08)',
-      borderWidth: 1.8, pointRadius: 0, tension: 0.15,
-      yAxisID: 'y', borderDash: [6, 3],
-    });
-  }
-  if (spreadData.length) {
-    datasets.push({
-      label: 'Spread (Spot − SBI)', data: spreadData,
-      borderColor: '#e8a33d', backgroundColor: 'rgba(232,163,61,0.06)',
-      borderWidth: 1.2, pointRadius: 0, tension: 0.15, yAxisID: 'y1',
-    });
-  }
+  if (usdData.length) datasets.push({
+    label: 'USDINR (Spot)', data: usdData,
+    borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,0.08)',
+    borderWidth: 1.8, pointRadius: 0, tension: 0.15, yAxisID: 'y',
+  });
+  if (sbiData.length) datasets.push({
+    label: 'SBI TT Sell', data: sbiData,
+    borderColor: '#ff6b9d', backgroundColor: 'rgba(255,107,157,0.08)',
+    borderWidth: 1.8, pointRadius: 0, tension: 0.15,
+    yAxisID: 'y', borderDash: [6, 3],
+  });
+  if (spreadData.length) datasets.push({
+    label: 'Spread (Spot − SBI)', data: spreadData,
+    borderColor: '#e8a33d', backgroundColor: 'rgba(232,163,61,0.06)',
+    borderWidth: 1.2, pointRadius: 0, tension: 0.15, yAxisID: 'y1',
+  });
 
   if (sbiChart) sbiChart.destroy();
   sbiChart = new Chart(canvas, {
@@ -1498,16 +1632,12 @@ function renderSbiChart() {
       },
       scales: {
         x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
-        y: {
-          position: 'left', grid: { color: '#1c2536' },
-          ticks: { color: '#7c8aa0', font: { size: 10 } },
-          title: { display: true, text: 'INR per USD', color: '#7c8aa0', font: { size: 10 } }
-        },
-        y1: {
-          position: 'right', grid: { display: false },
-          ticks: { color: '#e8a33d', font: { size: 9 } },
-          title: { display: true, text: 'Spread (₹)', color: '#e8a33d', font: { size: 9 } }
-        }
+        y: { position: 'left', grid: { color: '#1c2536' },
+             ticks: { color: '#7c8aa0', font: { size: 10 } },
+             title: { display: true, text: 'INR per USD', color: '#7c8aa0', font: { size: 10 } } },
+        y1: { position: 'right', grid: { display: false },
+              ticks: { color: '#e8a33d', font: { size: 9 } },
+              title: { display: true, text: 'Spread (₹)', color: '#e8a33d', font: { size: 9 } } }
       }
     }
   });
@@ -1566,7 +1696,7 @@ function renderLmcChart() {
 }
 
 /* ========================================================================
-   RAW PRICE CHART
+   PRICE CHART
    ======================================================================== */
 function populatePricePicker() {
   const picker = document.getElementById('pricePicker');
@@ -1605,8 +1735,7 @@ function updatePricePickerUI() {
 function renderPriceChart() {
   const tf = document.getElementById('priceTf').value;
   const customWrap = document.getElementById('priceCustomRange');
-  let cutoff = null;
-  let fromDate = null, toDate = null;
+  let cutoff = null, fromDate = null, toDate = null;
   if (tf === 'custom') {
     customWrap.style.display = 'flex';
     fromDate = document.getElementById('priceDateFrom').value;
@@ -1615,7 +1744,6 @@ function renderPriceChart() {
     customWrap.style.display = 'none';
     cutoff = tfCutoff(tf);
   }
-
   const fxSeries = new Set(['USDINR','DXY','Dollar Index','US 2Y','US 10Y','US 30Y']);
   const datasets = [];
   const palette = ['#d68b4d','#93a2b5','#5b8fc9','#e8b23d','#c0392b','#2ecc71','#9b59b6','#f39c12','#e84393','#1abc9c'];
@@ -1646,7 +1774,6 @@ function renderPriceChart() {
     });
     i++;
   }
-
   const rangeLbl = document.getElementById('priceRangeLabel');
   if (tf === 'custom') {
     rangeLbl.textContent = (fromDate || toDate) ? `${fromDate||'start'} → ${toDate||'end'}` : 'Full range';
@@ -1664,10 +1791,8 @@ function renderPriceChart() {
       plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } },
       scales: {
         x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
-        y: {
-          position: 'left', type: logScale ? 'logarithmic' : 'linear',
-          grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } }
-        },
+        y: { position: 'left', type: logScale ? 'logarithmic' : 'linear',
+             grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
         ...(hasFx ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 9 } } } } : {})
       }
     }
@@ -2122,7 +2247,6 @@ function computeTrend(seriesName) {
     if (v != null) prices.push({ t: r.t, date: r.date, v });
   }
   if (prices.length < 20) return null;
-
   const ema20d = computeEMA(prices, 20);
   const latestPrice = prices[prices.length-1];
   const latestEma20d = ema20d.length ? ema20d[ema20d.length-1] : null;
@@ -2131,7 +2255,6 @@ function computeTrend(seriesName) {
     shortTrend = latestPrice.v > latestEma20d.v ? 'up' : 'down';
     shortDist = ((latestPrice.v - latestEma20d.v) / latestEma20d.v) * 100;
   }
-
   const weekly = resampleWeekly(prices);
   let mediumTrend = 'na', mediumDist = null, ema20w = null;
   if (weekly.length >= 20) {
@@ -2143,7 +2266,6 @@ function computeTrend(seriesName) {
       mediumDist = ((latestWeekly.v - latestEma20w.v) / latestEma20w.v) * 100;
     }
   }
-
   return {
     latestPrice: latestPrice.v, latestDate: latestPrice.date,
     ema20d: latestEma20d ? latestEma20d.v : null,
@@ -2152,7 +2274,6 @@ function computeTrend(seriesName) {
     mediumTrend, mediumDist,
   };
 }
-
 function renderTrendAnalysis() {
   const panel = document.getElementById('trendPanel');
   const updatedEl = document.getElementById('trendUpdated');
@@ -2164,13 +2285,11 @@ function renderTrendAnalysis() {
     { name:'MCX Aluminium', label:'MCX Aluminium', color:'#c07c2b' },
     { name:'MCX Zinc', label:'MCX Zinc', color:'#c07c2b' },
   ];
-
   let html = `<table class="trend-table">
     <thead><tr>
       <th>Instrument</th><th>Price</th><th>20D EMA</th>
       <th>Short-term Trend</th><th>20W EMA</th><th>Medium-term Trend</th>
     </tr></thead><tbody>`;
-
   let anyRow = false, lastDate = null;
   for (const m of metals) {
     if (!SERIES_NAMES.includes(m.name)) continue;
@@ -2178,36 +2297,28 @@ function renderTrendAnalysis() {
     if (!t) continue;
     anyRow = true;
     lastDate = t.latestDate;
-
     const shortCls = t.shortTrend === 'up' ? 'up' : t.shortTrend === 'down' ? 'down' : 'na';
     const shortIcon = t.shortTrend === 'up' ? '▲' : t.shortTrend === 'down' ? '▼' : '—';
     const shortTxt = t.shortTrend === 'up' ? 'UPTREND' : t.shortTrend === 'down' ? 'DOWNTREND' : 'N/A';
     const shortDistCls = t.shortDist >= 0 ? 'up' : 'down';
     const shortDistTxt = t.shortDist != null ? `${t.shortDist>=0?'+':''}${t.shortDist.toFixed(2)}%` : '';
-
     const medCls = t.mediumTrend === 'up' ? 'up' : t.mediumTrend === 'down' ? 'down' : 'na';
     const medIcon = t.mediumTrend === 'up' ? '▲' : t.mediumTrend === 'down' ? '▼' : '—';
     const medTxt = t.mediumTrend === 'up' ? 'UPTREND' : t.mediumTrend === 'down' ? 'DOWNTREND' : 'N/A';
     const medDistCls = t.mediumDist >= 0 ? 'up' : 'down';
     const medDistTxt = t.mediumDist != null ? `${t.mediumDist>=0?'+':''}${t.mediumDist.toFixed(2)}%` : '';
-
     html += `<tr>
       <td class="metal-name" style="color:${m.color}">${m.label}</td>
       <td class="val">${fmt(t.latestPrice, 2)}</td>
       <td class="val">${t.ema20d != null ? fmt(t.ema20d, 2) : '—'}</td>
-      <td>
-        <span class="trend-tag ${shortCls}">${shortIcon} ${shortTxt}</span>
-        ${shortDistTxt ? `<span class="dist ${shortDistCls}">${shortDistTxt}</span>` : ''}
-      </td>
+      <td><span class="trend-tag ${shortCls}">${shortIcon} ${shortTxt}</span>
+        ${shortDistTxt ? `<span class="dist ${shortDistCls}">${shortDistTxt}</span>` : ''}</td>
       <td class="val">${t.ema20w != null ? fmt(t.ema20w, 2) : '—'}</td>
-      <td>
-        <span class="trend-tag ${medCls}">${medIcon} ${medTxt}</span>
-        ${medDistTxt ? `<span class="dist ${medDistCls}">${medDistTxt}</span>` : ''}
-      </td>
+      <td><span class="trend-tag ${medCls}">${medIcon} ${medTxt}</span>
+        ${medDistTxt ? `<span class="dist ${medDistCls}">${medDistTxt}</span>` : ''}</td>
     </tr>`;
   }
   html += '</tbody></table>';
-
   if (!anyRow) {
     panel.innerHTML = '<div class="feed empty">No trend data available.</div>';
     if (updatedEl) updatedEl.textContent = '';
@@ -2218,7 +2329,7 @@ function renderTrendAnalysis() {
 }
 
 /* ========================================================================
-   ENHANCED SENTIMENT
+   SENTIMENT
    ======================================================================== */
 function renderSentiment() {
   const panel = document.getElementById('sentimentPanel');
@@ -2231,7 +2342,6 @@ function renderSentiment() {
   for (const m of metals) {
     const prices = seriesValues(m.name).map(p => p.v);
     if (prices.length < 100) continue;
-
     const lookback = 20;
     const roll = [];
     for (let i = lookback; i < prices.length; i++)
@@ -2240,13 +2350,11 @@ function renderSentiment() {
     const meanR = recent.reduce((a,b)=>a+b,0)/recent.length;
     const sdR = Math.sqrt(recent.reduce((s,x)=>s+(x-meanR)**2,0)/(recent.length-1));
     const momZ = sdR > 0 ? (roll[roll.length-1] - meanR)/sdR : 0;
-
     const rets = [];
     for (let i = 1; i < prices.length; i++) rets.push((prices[i]-prices[i-1])/prices[i-1]);
     const vol20 = Math.sqrt(rets.slice(-20).reduce((s,x,_,a)=>s+(x-a.reduce((p,q)=>p+q,0)/a.length)**2,0)/19);
     const vol90 = Math.sqrt(rets.slice(-90).reduce((s,x,_,a)=>s+(x-a.reduce((p,q)=>p+q,0)/a.length)**2,0)/89);
     const volScore = Math.max(-1, Math.min(1, (vol90 > 0 ? vol20/vol90 : 1) - 1));
-
     let basisScore = 0, basisText = 'n/a';
     const lmcSeries = computeLmcSpreadSeries(m.metalKey);
     if (lmcSeries.length > 20) {
@@ -2258,13 +2366,11 @@ function renderSentiment() {
       basisScore = sdB > 0 ? (latestB - meanB)/sdB : 0;
       basisText = (basisScore>=0?'+':'') + basisScore.toFixed(2) + 'σ';
     }
-
     const trend5 = prices.length > 5 ? (prices[prices.length-1] / prices[prices.length-6] - 1) * 100 : 0;
     const composite = momZ * 0.5 + volScore * 0.2 + basisScore * 0.3;
     const cls = composite >= 0.5 ? 'bull' : composite <= -0.5 ? 'bear' : 'neut';
     const badge = cls === 'bull' ? 'BULLISH' : cls === 'bear' ? 'BEARISH' : 'NEUTRAL';
     const scoreTxt = (composite>=0?'+':'') + composite.toFixed(2);
-
     html += `
       <div class="sent-row">
         <div>
@@ -2394,7 +2500,6 @@ async function tryFetch(url, timeoutMs = 15000) {
     throw err;
   }
 }
-
 async function fetchSbiTT(url) {
   const statusEl = document.getElementById('sbiStatus');
   if (!url || !/^https?:\/\//.test(url)) {
@@ -2404,15 +2509,12 @@ async function fetchSbiTT(url) {
   }
   statusEl.textContent = 'Fetching…';
   statusEl.className = 'status';
-
   const proxies = [
     { name: 'corsproxy.io',  wrap: u => 'https://corsproxy.io/?' + encodeURIComponent(u) },
     { name: 'allorigins',    wrap: u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u) },
     { name: 'codetabs',      wrap: u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u) },
-    { name: 'thingproxy',    wrap: u => 'https://thingproxy.freeboard.io/fetch/' + u },
     { name: 'direct',        wrap: u => u },
   ];
-
   let text = null, lastErr = null, usedProxy = '';
   for (const p of proxies) {
     try {
@@ -2422,14 +2524,11 @@ async function fetchSbiTT(url) {
       text = null;
     } catch (e) { lastErr = e; }
   }
-
   if (!text) {
-    statusEl.innerHTML = `All proxies failed. Last error: ${lastErr ? lastErr.message : 'unknown'}.<br>` +
-      `Tip: try again in a moment, or check that the URL is a raw GitHub CSV link.`;
+    statusEl.innerHTML = `All proxies failed. Last error: ${lastErr ? lastErr.message : 'unknown'}.`;
     statusEl.className = 'status err';
     return;
   }
-
   try {
     const parsed = parseSBICSV(text);
     if (!parsed.ok) throw new Error(parsed.msg);
@@ -2438,9 +2537,11 @@ async function fetchSbiTT(url) {
       (parsed.details && parsed.details.length ? ' · ' + parsed.details[0] : '');
     statusEl.className = 'status ok';
     renderSbiChart();
-    // Refresh shared USD/INR from latest SBI TT fetch
-    parityEdits.__usdinr = SBI_RAW.length ? SBI_RAW[SBI_RAW.length-1].value : null;
-    renderParity();
+    // Only update parity USD/INR if user hasn't manually edited it
+    if (!parityEdited.has('__usdinr')) {
+      parityEdits.__usdinr = SBI_RAW.length ? SBI_RAW[SBI_RAW.length-1].value : null;
+      renderParity();
+    }
   } catch (err) {
     statusEl.textContent = 'Parse error: ' + err.message;
     statusEl.className = 'status err';
@@ -2448,7 +2549,7 @@ async function fetchSbiTT(url) {
 }
 
 /* ========================================================================
-   AUTO-LOAD from GitHub
+   GITHUB CSV LOAD
    ======================================================================== */
 async function fetchText(url, timeoutMs = 20000) {
   const controller = new AbortController();
@@ -2463,14 +2564,11 @@ async function fetchText(url, timeoutMs = 20000) {
     throw err;
   }
 }
-
 async function autoLoadFromGitHub(silent = false) {
   const btn = document.getElementById('btnRefreshAll');
   if (btn && !silent) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading…'; }
-
   let metalsOk = false, cspOk = false;
   const errs = [];
-
   try {
     const txt = await fetchText(METALS_URL + '?t=' + Date.now());
     const res = parseMetalsCSV(txt);
@@ -2504,16 +2602,13 @@ async function autoLoadFromGitHub(silent = false) {
         errs.length ? errs : null);
     }
     maybeRender();
-  } else {
-    showStatus('err', 'Could not load from GitHub',
-      [...errs,
-       'Check that the CSV files are uploaded to the repo root',
-       'And that the repo is public']);
+  } else if (!silent) {
+    showStatus('err', 'Could not load GitHub CSVs', errs);
   }
 }
 
 /* ========================================================================
-   FILE LOADING + RENDER
+   FILE OVERRIDE
    ======================================================================== */
 function showContent() {
   document.getElementById('placeholder').style.display = 'none';
@@ -2531,7 +2626,7 @@ function loadMetalsFile(text) {
   const btn = document.getElementById('btnMetals');
   btn.classList.add('loaded');
   btn.querySelector('i').className = 'fas fa-check-circle';
-  showStatus('ok', 'metals.csv (local override): ' + res.msg, res.details);
+  showStatus('ok', 'metals.csv (override): ' + res.msg, res.details);
   return true;
 }
 function loadCSPFile(text) {
@@ -2540,7 +2635,7 @@ function loadCSPFile(text) {
   const btn = document.getElementById('btnCSP');
   btn.classList.add('loaded');
   btn.querySelector('i').className = 'fas fa-check-circle';
-  showStatus('ok', 'lme_csp.csv (local override): ' + res.msg, res.details);
+  showStatus('ok', 'lme_csp.csv (override): ' + res.msg, res.details);
   return true;
 }
 function readFile(file, onLoad) {
@@ -2550,9 +2645,8 @@ function readFile(file, onLoad) {
 }
 
 function maybeRender() {
-  if (!RAW.length) return;
+  if (!RAW.length && !LIVE_RAW.length && !CSP_RAW.length) return;
   showContent();
-
   const steps = [
     ['freshness',        () => renderFreshness()],
     ['price grid',       () => renderPriceGrid()],
@@ -2574,8 +2668,7 @@ function maybeRender() {
   ];
   const errs = [];
   for (const [name, fn] of steps) {
-    try { fn(); }
-    catch (e) { errs.push(`${name}: ${e.message}`); console.error(name, e); }
+    try { fn(); } catch (e) { errs.push(`${name}: ${e.message}`); console.error(name, e); }
   }
   if (errs.length) showStatus('err', 'Some sections failed to render:', errs);
   if (!controlsWired) { wireControls(); controlsWired = true; }
@@ -2659,6 +2752,7 @@ function wireControls() {
   document.getElementById('parityResetBtn')?.addEventListener('click', () => {
     for (const k of Object.keys(parityEdits)) delete parityEdits[k];
     parityEdits.__usdinr = null;
+    parityEdited.clear();
     renderParity();
   });
 }
@@ -2684,6 +2778,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   autoLoadFromGitHub(true);
+  startLiveFeed();
   loadNews();
 });
 </script>
