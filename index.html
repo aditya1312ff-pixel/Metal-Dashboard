@@ -106,6 +106,50 @@
   .price-card .chg.up { color:var(--green); }
   .price-card .chg.down { color:var(--red); }
 
+  /* Parity model */
+  .parity-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; }
+  @media(max-width:1100px){ .parity-grid { grid-template-columns: 1fr; } }
+  .parity-card { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:14px; position:relative; overflow:hidden; }
+  .parity-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--copper); }
+  .parity-card.zn::before { background:var(--zinc); }
+  .parity-card.al::before { background:var(--alu); }
+  .parity-card .pc-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid #1f2837; }
+  .parity-card .pc-title { font-size:0.95rem; font-weight:700; }
+  .parity-card .pc-badge { font-size:0.6rem; font-weight:700; padding:2px 8px; border-radius:10px; }
+  .parity-card .pc-badge.bwd { background:rgba(46,204,113,0.18); color:var(--green); }
+  .parity-card .pc-badge.ctg { background:rgba(231,76,60,0.18); color:var(--red); }
+  .parity-card .pc-badge.flat{ background:rgba(124,138,160,0.18); color:var(--muted); }
+  .parity-row { display:grid; grid-template-columns: 1fr 120px; gap:8px; align-items:center; padding:6px 0; border-bottom:1px dashed #1a2334; }
+  .parity-row:last-child { border-bottom:none; }
+  .parity-row .pr-label { font-size:0.72rem; color:var(--muted); }
+  .parity-row .pr-input { background:#0e1724; border:1px solid var(--border); color:#fff; padding:4px 7px; border-radius:6px; font-size:0.72rem; font-variant-numeric:tabular-nums; text-align:right; width:100%; font-family: inherit; }
+  .parity-row .pr-input:focus { outline:none; border-color:var(--accent); }
+  .parity-row .pr-input.edited { border-color: var(--accent); background: rgba(232,163,61,0.08); }
+  .parity-row .pr-value { text-align:right; font-size:0.78rem; font-weight:600; font-variant-numeric:tabular-nums; color:#fff; }
+  .parity-row .pr-value.pos { color:var(--green); }
+  .parity-row .pr-value.neg { color:var(--red); }
+  .parity-row.pr-result { background:rgba(232,163,61,0.05); border-radius:6px; padding:8px 8px; margin-top:4px; }
+  .parity-row.pr-result .pr-label { font-size:0.72rem; color:var(--accent); font-weight:600; }
+  .parity-row.pr-result .pr-value { font-size:0.9rem; font-weight:700; }
+  .parity-card .pc-footer { margin-top:8px; font-size:0.65rem; color:var(--muted); }
+
+  /* Shared SBI TT bar inside parity */
+  .parity-sbi-bar {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    background: linear-gradient(135deg, rgba(255,107,157,0.08) 0%, rgba(255,107,157,0.03) 100%);
+    border: 1px solid rgba(255,107,157,0.35);
+    border-radius:10px; padding:10px 14px; margin-bottom:10px;
+  }
+  .parity-sbi-bar .psb-label { font-size:0.78rem; font-weight:600; color:#ff6b9d; display:inline-flex; align-items:center; gap:7px; }
+  .parity-sbi-bar .pr-input {
+    width:130px; background:#0e1724; border:1px solid var(--border); color:#fff;
+    padding:6px 10px; border-radius:8px; font-size:0.85rem; font-weight:600;
+    font-variant-numeric:tabular-nums; text-align:right; font-family:inherit;
+  }
+  .parity-sbi-bar .pr-input:focus { outline:none; border-color:#ff6b9d; }
+  .parity-sbi-bar .pr-input.edited { border-color:#ff6b9d; background: rgba(255,107,157,0.10); }
+  .parity-sbi-bar .psb-hint { font-size:0.66rem; color:var(--muted); }
+
   .csp-latest-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; }
   .csp-latest-card { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:14px; position:relative; overflow:hidden; }
   .csp-latest-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--copper); }
@@ -127,50 +171,19 @@
   .csp-latest-card .badge.ctg { background:rgba(231,76,60,0.18); color:var(--red); }
   .csp-latest-card .badge.na { background:rgba(124,138,160,0.18); color:var(--muted); }
 
-  /* Last N Days CSP table */
   .csp-days-wrap { overflow-x: auto; }
   .csp-days-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
-  .csp-days-table th {
-    text-align: right; color: var(--muted); font-weight: 600;
-    padding: 7px 10px; border-bottom: 1px solid var(--border);
-    font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.4px;
-    white-space: nowrap;
-  }
+  .csp-days-table th { text-align: right; color: var(--muted); font-weight: 600; padding: 7px 10px; border-bottom: 1px solid var(--border); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
   .csp-days-table th.metal-h { text-align: left; }
-  .csp-days-table td {
-    padding: 8px 10px; border-bottom: 1px solid #1a2334;
-    color: #c6d0de; font-variant-numeric: tabular-nums; text-align: right;
-    white-space: nowrap;
-  }
+  .csp-days-table td { padding: 8px 10px; border-bottom: 1px solid #1a2334; color: #c6d0de; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
   .csp-days-table td.metal-name { text-align: left; font-weight: 700; font-size: 0.82rem; }
   .csp-days-table td.date-cell { color: var(--muted); font-size: 0.72rem; text-align: left; }
   .csp-days-table td.pos { color: var(--green); font-weight: 600; }
   .csp-days-table td.neg { color: var(--red); font-weight: 600; }
-  .csp-days-table .pill {
-    display: inline-block; padding: 2px 8px; border-radius: 10px;
-    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.4px;
-  }
+  .csp-days-table .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.4px; }
   .csp-days-table .pill.bwd { background: rgba(46,204,113,0.18); color: var(--green); }
   .csp-days-table .pill.ctg { background: rgba(231,76,60,0.18); color: var(--red); }
   .csp-days-table .pill.flat { background: rgba(124,138,160,0.18); color: var(--muted); }
-
-  .spread-panel { display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; }
-  .spread-metal-card { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:14px; position:relative; overflow:hidden; }
-  .spread-metal-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--copper); }
-  .spread-metal-card.zn::before { background:var(--zinc); }
-  .spread-metal-card.al::before { background:var(--alu); }
-  .spread-metal-card .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-  .spread-metal-card .m-name { font-size:0.95rem; font-weight:700; }
-  .spread-metal-card .m-date { font-size:0.65rem; color:var(--muted); background:#0e1724; padding:2px 7px; border-radius:4px; }
-  .spread-metal-card .row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
-  .spread-metal-card .cell .lbl { font-size:0.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; }
-  .spread-metal-card .cell .val { font-size:0.95rem; font-weight:700; font-variant-numeric:tabular-nums; color:#fff; }
-  .spread-metal-card .spread-line { display:flex; justify-content:space-between; align-items:center; padding-top:8px; border-top:1px solid #1f2837; }
-  .spread-metal-card .spread-line .lbl { font-size:0.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
-  .spread-metal-card .spread-line .val { font-size:1.05rem; font-weight:700; font-variant-numeric:tabular-nums; }
-  .spread-metal-card .spread-line .val.pos { color:var(--green); }
-  .spread-metal-card .spread-line .val.neg { color:var(--red); }
-  .spread-metal-card .spread-line .pct { font-size:0.68rem; color:var(--muted); margin-left:6px; }
 
   .chart-wrap { position:relative; width:100%; height:230px; }
   .chart-wrap.tall { height:290px; }
@@ -299,7 +312,6 @@
     <span class="hint">Auto-loads from GitHub. Use Override buttons for local files.</span>
   </div>
 
-  <!-- SBI TT URL bar -->
   <div class="sbi-bar">
     <span class="title"><i class="fas fa-university"></i> SBI TT Sell</span>
     <input type="text" id="sbiUrl" value="https://raw.githubusercontent.com/sahilgupta/sbi-fx-ratekeeper/main/csv_files/SBI_REFERENCE_RATES_USD.csv">
@@ -331,6 +343,29 @@
       <div class="card span-12">
         <h3><i class="fas fa-coins"></i> Latest Prices <span class="sub">— grouped by category</span></h3>
         <div id="priceGrid"></div>
+      </div>
+    </div>
+
+    <!-- PARITY MODEL -->
+    <div class="grid">
+      <div class="card span-12">
+        <h3 style="justify-content:space-between;display:flex;">
+          <span><i class="fas fa-calculator"></i> Import Parity Model <span class="sub">— LME → Landed ₹ vs MCX</span></span>
+          <span class="controls">
+            <button class="btn" id="parityResetBtn" title="Reset all edits to defaults from CSVs"><i class="fas fa-undo"></i> Reset</button>
+          </span>
+        </h3>
+
+        <!-- Shared SBI TT input (USD/INR for all metals) -->
+        <div class="parity-sbi-bar">
+          <span class="psb-label"><i class="fas fa-university" style="color:var(--sbi)"></i> USD/INR (SBI TT)</span>
+          <input type="number" class="pr-input" id="parityUsdinr" step="0.01" placeholder="e.g. 96.50">
+          <span class="psb-hint">Shared across all three metals · auto-filled from SBI TT fetch · editable</span>
+        </div>
+
+        <div class="parity-grid" id="parityGrid">
+          <div class="loading"><div class="spinner"></div> Waiting for data…</div>
+        </div>
       </div>
     </div>
 
@@ -388,19 +423,6 @@
         </h3>
         <div id="cspDaysTable" class="csp-days-wrap">
           <div class="loading"><div class="spinner"></div> Waiting for lme_csp.csv…</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- LME-MCX spread snapshot -->
-    <div class="grid">
-      <div class="card span-12">
-        <h3 style="justify-content:space-between;display:flex;">
-          <span><i class="fas fa-arrows-left-right"></i> LME–MCX Spread (INR) <span class="sub">— (MCX − LME × USDINR)</span></span>
-          <span id="lmcSpreadDate" style="font-size:0.68rem;color:var(--muted);font-weight:400;"></span>
-        </h3>
-        <div class="spread-panel" id="lmcSpreadGrid">
-          <div class="loading"><div class="spinner"></div> Waiting for data…</div>
         </div>
       </div>
     </div>
@@ -610,7 +632,7 @@
 
 <script>
 /* ========================================================================
-   CONFIG — EDIT THESE IF YOUR REPO/FILE NAMES CHANGE
+   CONFIG
    ======================================================================== */
 const REPO_OWNER = 'aditya1312ff-pixel';
 const REPO_NAME  = 'Metal-Dashboard';
@@ -639,7 +661,6 @@ function parseCSVLine(line) {
   out.push(cur);
   return out.map(s => s.trim());
 }
-
 function parseNumber(s) {
   if (s == null) return null;
   s = String(s).replace(/,/g, '').replace(/[^\d.\-eE]/g, '');
@@ -647,13 +668,11 @@ function parseNumber(s) {
   const v = parseFloat(s);
   return isFinite(v) ? v : null;
 }
-
 const MONTH_NAMES = {
   january:0,february:1,march:2,april:3,may:4,june:5,july:6,
   august:7,september:8,october:9,november:10,december:11,
   jan:0,feb:1,mar:2,apr:3,jun:5,jul:6,aug:7,sep:8,sept:8,oct:9,nov:10,dec:11,
 };
-
 function parseDateLoose(s) {
   s = String(s).trim();
   let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -671,7 +690,6 @@ function parseDateLoose(s) {
   }
   return null;
 }
-
 function showStatus(kind, msg, details) {
   const el = document.getElementById('statusBanner');
   if (!el) return;
@@ -704,11 +722,29 @@ const CSP_COLORS = { Cu:'#d68b4d', Zn:'#5b8fc9', Al:'#93a2b5' };
 const LMC_METAL_MAP = { Copper:'Cu', Zinc:'Zn', Aluminium:'Al' };
 
 /* ========================================================================
+   PARITY MODEL CONFIG
+   ======================================================================== */
+const PARITY_METALS = [
+  { key:'Cu', name:'Copper',    lme3mSeries:'LME Copper',    lmeCspKey:'Cu', mcxSeries:'MCX Copper',
+    dutyPct:0,    defaultPremium:400, cls:'',   color:'#d68b4d' },
+  { key:'Zn', name:'Zinc',      lme3mSeries:'LME Zinc',      lmeCspKey:'Zn', mcxSeries:'MCX Zinc',
+    dutyPct:5.5,  defaultPremium:126, cls:'zn', color:'#5b8fc9' },
+  { key:'Al', name:'Aluminium', lme3mSeries:'LME Aluminium', lmeCspKey:'Al', mcxSeries:'MCX Aluminium',
+    dutyPct:8.25, defaultPremium:65,  cls:'al', color:'#93a2b5' },
+];
+const parityEdits = {};
+
+/* ========================================================================
    HELPERS
    ======================================================================== */
 function fmt(v, dp=2) {
   if (v == null || !isFinite(v)) return '—';
   return v.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
+}
+function numOrNull(v) {
+  if (v == null || v === '') return null;
+  const n = parseFloat(String(v).replace(/,/g,''));
+  return isFinite(n) ? n : null;
 }
 function tfCutoff(tf) {
   const now = new Date();
@@ -806,7 +842,7 @@ function parseMetalsCSV(text) {
 }
 
 /* ========================================================================
-   PARSE lme_csp.csv — tolerant
+   PARSE lme_csp.csv
    ======================================================================== */
 function parseCSPCSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
@@ -949,6 +985,247 @@ function computeLatest() {
       }
     }
   });
+}
+
+/* ========================================================================
+   PARITY MODEL
+   ======================================================================== */
+function initParityEdits() {
+  for (const m of PARITY_METALS) {
+    if (parityEdits[m.key]) continue;
+    parityEdits[m.key] = {
+      lme3m: null, basis: null, premium: m.defaultPremium,
+      dutyPct: m.dutyPct, mcx: null
+    };
+  }
+  if (parityEdits.__usdinr === undefined) parityEdits.__usdinr = null;
+}
+
+function computeParityDefaults() {
+  initParityEdits();
+
+  let sbiLatest = null;
+  if (SBI_RAW.length) sbiLatest = SBI_RAW[SBI_RAW.length-1].value;
+  if (sbiLatest == null) {
+    for (let i = RAW.length-1; i >= 0; i--) {
+      if (RAW[i].series['USDINR'] != null) { sbiLatest = RAW[i].series['USDINR']; break; }
+    }
+  }
+  if (parityEdits.__usdinr == null) parityEdits.__usdinr = sbiLatest;
+
+  for (const m of PARITY_METALS) {
+    const e = parityEdits[m.key];
+
+    let lme3m = null;
+    if (RAW.length && SERIES_NAMES.includes(m.lme3mSeries)) {
+      for (let i = RAW.length-1; i >= 0; i--) {
+        if (RAW[i].series[m.lme3mSeries] != null) { lme3m = RAW[i].series[m.lme3mSeries]; break; }
+      }
+    }
+
+    let basis = null;
+    if (CSP_RAW.length) {
+      const last = CSP_RAW[CSP_RAW.length-1];
+      const csp = last[m.lmeCspKey] || {};
+      if (csp.cash != null && csp.threeM != null) basis = csp.cash - csp.threeM;
+    }
+
+    let mcx = null;
+    if (RAW.length && SERIES_NAMES.includes(m.mcxSeries)) {
+      for (let i = RAW.length-1; i >= 0; i--) {
+        if (RAW[i].series[m.mcxSeries] != null) { mcx = RAW[i].series[m.mcxSeries]; break; }
+      }
+    }
+
+    if (e.lme3m == null) e.lme3m = lme3m;
+    if (e.basis == null) e.basis = basis;
+    if (e.mcx == null) e.mcx = mcx;
+  }
+}
+
+function parityCalc(m) {
+  const e = parityEdits[m.key];
+  const lme3m = numOrNull(e.lme3m);
+  const basis = numOrNull(e.basis) ?? 0;
+  const premium = numOrNull(e.premium) ?? 0;
+  const usdinr = numOrNull(parityEdits.__usdinr);
+  const dutyPct = numOrNull(e.dutyPct) ?? 0;
+  const mcx = numOrNull(e.mcx);
+
+  const lmeCash = lme3m != null ? lme3m + basis : null;
+  const cost = lmeCash != null ? lmeCash + premium : null;
+  const inr = (cost != null && usdinr != null) ? cost * usdinr : null;
+  const duty = inr != null ? inr * (dutyPct / 100) : null;
+  const landedMt = inr != null ? inr + (duty || 0) : null;
+  const landedKg = landedMt != null ? landedMt / 1000 : null;
+  const net = (landedKg != null && mcx != null) ? landedKg - mcx : null;
+
+  return { lmeCash, cost, inr, duty, landedMt, landedKg, net };
+}
+
+function renderParity() {
+  const grid = document.getElementById('parityGrid');
+  if (!grid) return;
+  if (!RAW.length && !CSP_RAW.length) {
+    grid.innerHTML = '<div class="loading"><div class="spinner"></div> Waiting for data…</div>';
+    return;
+  }
+  computeParityDefaults();
+
+  const usdInp = document.getElementById('parityUsdinr');
+  if (usdInp && document.activeElement !== usdInp) {
+    usdInp.value = parityEdits.__usdinr ?? '';
+  }
+
+  let html = '';
+  for (const m of PARITY_METALS) {
+    const e = parityEdits[m.key];
+    const c = parityCalc(m);
+    const basis = numOrNull(e.basis) ?? 0;
+    const badgeCls = basis > 0.5 ? 'bwd' : basis < -0.5 ? 'ctg' : 'flat';
+    const badgeTxt = basis > 0.5 ? 'Backwardation' : basis < -0.5 ? 'Contango' : 'Flat';
+
+    // Flip: negative net = good (green), positive net = bad (red)
+    const netCls = c.net == null ? '' : (c.net < 0 ? 'pos' : 'neg');
+    const netTxt = c.net != null ? '₹' + fmt(c.net, 2) : '—';
+
+    html += `<div class="parity-card ${m.cls}" data-metal="${m.key}">
+      <div class="pc-header">
+        <span class="pc-title" style="color:${m.color}">${m.name}</span>
+        <span class="pc-badge ${badgeCls}">${badgeTxt}</span>
+      </div>
+
+      <div class="parity-row">
+        <div class="pr-label">LME ${m.name} 3M (USD/t)</div>
+        <input type="number" class="pr-input" data-metal="${m.key}" data-field="lme3m" value="${e.lme3m ?? ''}" step="0.01">
+      </div>
+
+      <div class="parity-row">
+        <div class="pr-label">Basis (− Ctg / + Bwd)</div>
+        <input type="number" class="pr-input" data-metal="${m.key}" data-field="basis" value="${e.basis ?? 0}" step="0.01">
+      </div>
+
+      <div class="parity-row">
+        <div class="pr-label">LME ${m.name} Cash</div>
+        <div class="pr-value" data-calc="lmeCash">${c.lmeCash != null ? fmt(c.lmeCash, 2) : '—'}</div>
+      </div>
+
+      <div class="parity-row">
+        <div class="pr-label">Premium</div>
+        <input type="number" class="pr-input" data-metal="${m.key}" data-field="premium" value="${e.premium ?? 0}" step="0.01">
+      </div>
+
+      <div class="parity-row">
+        <div class="pr-label">Cost</div>
+        <div class="pr-value" data-calc="cost">${c.cost != null ? fmt(c.cost, 2) : '—'}</div>
+      </div>
+
+      <div class="parity-row">
+        <div class="pr-label">SBI TT (USD/INR)</div>
+        <div class="pr-value" data-calc="usdinr">${parityEdits.__usdinr != null ? fmt(parityEdits.__usdinr, 2) : '—'}</div>
+      </div>
+
+      <div class="parity-row">
+        <div class="pr-label">${m.name.toUpperCase()} INR</div>
+        <div class="pr-value" data-calc="inr">${c.inr != null ? '₹ ' + fmt(c.inr, 2) : '—'}</div>
+      </div>
+
+      <div class="parity-row">
+        <div class="pr-label">Import Duty %</div>
+        <input type="number" class="pr-input" data-metal="${m.key}" data-field="dutyPct" value="${e.dutyPct}" step="0.01">
+      </div>
+
+      <div class="parity-row">
+        <div class="pr-label">Duty Amount</div>
+        <div class="pr-value" data-calc="duty">${c.duty != null ? '₹ ' + fmt(c.duty, 2) : '—'}</div>
+      </div>
+
+      <div class="parity-row">
+        <div class="pr-label">Landed ${m.name}/MT</div>
+        <div class="pr-value" data-calc="landedMt">${c.landedMt != null ? '₹ ' + fmt(c.landedMt, 2) : '—'}</div>
+      </div>
+
+      <div class="parity-row">
+        <div class="pr-label">Landed ${m.name}/KG</div>
+        <div class="pr-value" data-calc="landedKg">${c.landedKg != null ? '₹ ' + fmt(c.landedKg, 2) : '—'}</div>
+      </div>
+
+      <div class="parity-row">
+        <div class="pr-label">${m.name} MCX (₹/kg)</div>
+        <input type="number" class="pr-input" data-metal="${m.key}" data-field="mcx" value="${e.mcx ?? ''}" step="0.01">
+      </div>
+
+      <div class="parity-row pr-result">
+        <div class="pr-label">NetDifference (Landed − MCX)</div>
+        <div class="pr-value ${netCls}" data-calc="net">${netTxt}</div>
+      </div>
+
+      <div class="pc-footer">
+        Duty: ${e.dutyPct}% ${e.dutyPct === 0 ? '(duty free)' : ''}
+      </div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+
+  grid.querySelectorAll('.pr-input').forEach(inp => {
+    inp.addEventListener('input', (ev) => {
+      const metal = ev.target.dataset.metal;
+      const field = ev.target.dataset.field;
+      if (!parityEdits[metal]) return;
+      parityEdits[metal][field] = ev.target.value === '' ? null : parseFloat(ev.target.value);
+      ev.target.classList.add('edited');
+      updateParityCard(metal);
+    });
+  });
+
+  if (usdInp && !usdInp.dataset.wired) {
+    usdInp.addEventListener('input', (ev) => {
+      parityEdits.__usdinr = ev.target.value === '' ? null : parseFloat(ev.target.value);
+      ev.target.classList.add('edited');
+      for (const mm of PARITY_METALS) updateParityCard(mm.key);
+    });
+    usdInp.dataset.wired = '1';
+  }
+}
+
+function updateParityCard(metalKey) {
+  const m = PARITY_METALS.find(x => x.key === metalKey);
+  if (!m) return;
+  const card = document.querySelector(`.parity-card[data-metal="${metalKey}"]`);
+  if (!card) return;
+  const c = parityCalc(m);
+  const e = parityEdits[metalKey];
+
+  card.querySelector('[data-calc="lmeCash"]').textContent = c.lmeCash != null ? fmt(c.lmeCash, 2) : '—';
+  card.querySelector('[data-calc="cost"]').textContent = c.cost != null ? fmt(c.cost, 2) : '—';
+
+  const usdEl = card.querySelector('[data-calc="usdinr"]');
+  if (usdEl) usdEl.textContent = parityEdits.__usdinr != null ? fmt(parityEdits.__usdinr, 2) : '—';
+
+  card.querySelector('[data-calc="inr"]').textContent = c.inr != null ? '₹ ' + fmt(c.inr, 2) : '—';
+  card.querySelector('[data-calc="duty"]').textContent = c.duty != null ? '₹ ' + fmt(c.duty, 2) : '—';
+  card.querySelector('[data-calc="landedMt"]').textContent = c.landedMt != null ? '₹ ' + fmt(c.landedMt, 2) : '—';
+  card.querySelector('[data-calc="landedKg"]').textContent = c.landedKg != null ? '₹ ' + fmt(c.landedKg, 2) : '—';
+
+  const netEl = card.querySelector('[data-calc="net"]');
+  netEl.textContent = c.net != null ? '₹' + fmt(c.net, 2) : '—';
+  netEl.classList.remove('pos', 'neg');
+  // Flipped: negative = green (good), positive = red (bad)
+  if (c.net != null) netEl.classList.add(c.net < 0 ? 'pos' : 'neg');
+
+  // Live-update duty footer
+  const footer = card.querySelector('.pc-footer');
+  if (footer) {
+    const dp = numOrNull(e.dutyPct) ?? 0;
+    footer.textContent = `Duty: ${dp}% ${dp === 0 ? '(duty free)' : ''}`;
+  }
+
+  const basis = numOrNull(e.basis) ?? 0;
+  const badge = card.querySelector('.pc-badge');
+  badge.classList.remove('bwd', 'ctg', 'flat');
+  if (basis > 0.5) { badge.classList.add('bwd'); badge.textContent = 'Backwardation'; }
+  else if (basis < -0.5) { badge.classList.add('ctg'); badge.textContent = 'Contango'; }
+  else { badge.classList.add('flat'); badge.textContent = 'Flat'; }
 }
 
 /* ========================================================================
@@ -1237,7 +1514,7 @@ function renderSbiChart() {
 }
 
 /* ========================================================================
-   LME–MCX SPREAD
+   LME–MCX SPREAD HISTORY
    ======================================================================== */
 function computeLmcSpreadSeries(metal) {
   const lmeName = `LME ${metal}`;
@@ -1253,50 +1530,6 @@ function computeLmcSpreadSeries(metal) {
     out.push({ t: r.t, date: r.date, lme, mcx, fx, lmeInrPerKg, spread });
   }
   return out;
-}
-function findLatestLmcSpread(metal) {
-  const series = computeLmcSpreadSeries(metal);
-  return series.length ? series[series.length-1] : null;
-}
-function renderLmcSpread() {
-  const grid = document.getElementById('lmcSpreadGrid');
-  const dateEl = document.getElementById('lmcSpreadDate');
-  if (!RAW.length) return;
-  const metals = [
-    { name:'Copper', cls:'', color:CSP_COLORS.Cu },
-    { name:'Zinc', cls:'zn', color:CSP_COLORS.Zn },
-    { name:'Aluminium', cls:'al', color:CSP_COLORS.Al },
-  ];
-  const lastDate = RAW[RAW.length-1].date;
-  dateEl.textContent = 'As of ' + lastDate;
-  let html = '';
-  for (const m of metals) {
-    const last = findLatestLmcSpread(m.name);
-    let spread = null, pct = null, spreadCls = '';
-    if (last) {
-      spread = last.spread;
-      pct = (spread / last.lmeInrPerKg) * 100;
-      spreadCls = spread >= 0 ? 'pos' : 'neg';
-    }
-    html += `<div class="spread-metal-card ${m.cls}">
-      <div class="header">
-        <span class="m-name" style="color:${m.color}">${m.name}</span>
-        <span class="m-date">${last ? last.date : '—'}</span>
-      </div>
-      <div class="row2">
-        <div class="cell"><div class="lbl">LME (₹/kg)</div><div class="val">${last!=null?fmt(last.lmeInrPerKg, 2):'—'}</div></div>
-        <div class="cell"><div class="lbl">MCX (₹/kg)</div><div class="val">${last!=null?fmt(last.mcx, 2):'—'}</div></div>
-      </div>
-      <div class="spread-line">
-        <span class="lbl">MCX − LME</span>
-        <span>
-          <span class="val ${spreadCls}">${spread!=null?fmt(spread, 2):'—'}</span>
-          ${pct!=null ? `<span class="pct">(${pct>=0?'+':''}${pct.toFixed(2)}%)</span>` : ''}
-        </span>
-      </div>
-    </div>`;
-  }
-  grid.innerHTML = html;
 }
 function renderLmcChart() {
   const canvas = document.getElementById('lmcChart');
@@ -2146,7 +2379,7 @@ async function loadNews() {
 }
 
 /* ========================================================================
-   SBI TT FETCH — multi-proxy
+   SBI TT FETCH
    ======================================================================== */
 async function tryFetch(url, timeoutMs = 15000) {
   const controller = new AbortController();
@@ -2205,6 +2438,9 @@ async function fetchSbiTT(url) {
       (parsed.details && parsed.details.length ? ' · ' + parsed.details[0] : '');
     statusEl.className = 'status ok';
     renderSbiChart();
+    // Refresh shared USD/INR from latest SBI TT fetch
+    parityEdits.__usdinr = SBI_RAW.length ? SBI_RAW[SBI_RAW.length-1].value : null;
+    renderParity();
   } catch (err) {
     statusEl.textContent = 'Parse error: ' + err.message;
     statusEl.className = 'status err';
@@ -2235,7 +2471,6 @@ async function autoLoadFromGitHub(silent = false) {
   let metalsOk = false, cspOk = false;
   const errs = [];
 
-  // Metals
   try {
     const txt = await fetchText(METALS_URL + '?t=' + Date.now());
     const res = parseMetalsCSV(txt);
@@ -2249,11 +2484,8 @@ async function autoLoadFromGitHub(silent = false) {
     const btnM = document.getElementById('btnMetals');
     btnM.classList.add('loaded');
     metalsOk = true;
-  } catch (e) {
-    errs.push('metals.csv: ' + e.message);
-  }
+  } catch (e) { errs.push('metals.csv: ' + e.message); }
 
-  // CSP
   try {
     const txt = await fetchText(CSP_URL + '?t=' + Date.now());
     const res = parseCSPCSV(txt);
@@ -2261,9 +2493,7 @@ async function autoLoadFromGitHub(silent = false) {
     const btnC = document.getElementById('btnCSP');
     btnC.classList.add('loaded');
     cspOk = true;
-  } catch (e) {
-    errs.push('lme_csp.csv: ' + e.message);
-  }
+  } catch (e) { errs.push('lme_csp.csv: ' + e.message); }
 
   if (btn && !silent) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh from GitHub'; }
 
@@ -2326,10 +2556,10 @@ function maybeRender() {
   const steps = [
     ['freshness',        () => renderFreshness()],
     ['price grid',       () => renderPriceGrid()],
+    ['parity model',     () => renderParity()],
     ['sbi chart',        () => renderSbiChart()],
     ['csp latest',       () => renderCSPLatest()],
     ['csp days table',   () => renderCSPDaysTable()],
-    ['lmc spread',       () => renderLmcSpread()],
     ['lmc chart',        () => renderLmcChart()],
     ['price picker',     () => populatePricePicker()],
     ['price chart',      () => renderPriceChart()],
@@ -2425,13 +2655,18 @@ function wireControls() {
   document.getElementById('corrA').addEventListener('change', renderCorrChart);
   document.getElementById('corrB').addEventListener('change', renderCorrChart);
   document.getElementById('corrWindow').addEventListener('change', renderCorrChart);
+
+  document.getElementById('parityResetBtn')?.addEventListener('click', () => {
+    for (const k of Object.keys(parityEdits)) delete parityEdits[k];
+    parityEdits.__usdinr = null;
+    renderParity();
+  });
 }
 
 /* ========================================================================
    INIT
    ======================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
-  // Override buttons (still work if you want to load a local file)
   document.getElementById('fileMetals').addEventListener('change', e => {
     const f = e.target.files[0]; if (!f) return;
     readFile(f, txt => { if (loadMetalsFile(txt)) maybeRender(); });
@@ -2441,19 +2676,14 @@ document.addEventListener('DOMContentLoaded', () => {
     readFile(f, txt => { if (loadCSPFile(txt)) maybeRender(); });
   });
 
-  // Refresh from GitHub button
   document.getElementById('btnRefreshAll').addEventListener('click', () => autoLoadFromGitHub(false));
 
-  // SBI fetch
   document.getElementById('sbiFetchBtn').addEventListener('click', () => {
     const url = document.getElementById('sbiUrl').value.trim();
     fetchSbiTT(url);
   });
 
-  // Auto-load on page load
   autoLoadFromGitHub(true);
-
-  // News
   loadNews();
 });
 </script>
