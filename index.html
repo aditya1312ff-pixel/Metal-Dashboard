@@ -348,7 +348,7 @@
     <span class="title"><i class="fas fa-university"></i> SBI TT Sell</span>
     <input type="text" id="sbiUrl" value="https://raw.githubusercontent.com/sahilgupta/sbi-fx-ratekeeper/main/csv_files/SBI_REFERENCE_RATES_USD.csv">
     <button class="btn" id="sbiFetchBtn"><i class="fas fa-cloud-download-alt"></i> Fetch</button>
-    <span class="status" id="sbiStatus">Click Fetch to load SBI TT Sell history.</span>
+    <span class="status" id="sbiStatus">Auto-loading SBI TT Sell history…</span>
   </div>
 
   <div id="statusBanner" class="status-banner"></div>
@@ -406,6 +406,19 @@
       </div>
     </div>
 
+    <!-- NALCO ALUMINIUM -->
+    <div class="grid">
+      <div class="card span-12">
+        <h3 style="justify-content:space-between;display:flex;">
+          <span><i class="fas fa-industry"></i> NALCO Aluminium <span class="sub">— revision tracking & rolling 3-day signal</span></span>
+          <span id="nalcoUpdated" style="font-size:0.65rem;color:var(--muted);font-weight:400;"></span>
+        </h3>
+        <div class="parity-grid" id="nalcoGrid">
+          <div class="loading"><div class="spinner"></div> Waiting for NALCO data…</div>
+        </div>
+      </div>
+    </div>
+
     <!-- SBI TT vs USDINR -->
     <div class="grid">
       <div class="card span-12">
@@ -424,7 +437,7 @@
           </span>
         </h3>
         <div class="chart-wrap tall" id="sbiChartWrap"><canvas id="sbiChart"></canvas></div>
-        <div id="sbiEmpty" style="text-align:center;color:var(--muted);font-size:0.78rem;padding:8px;">
+        <div id="sbiEmpty" style="text-align:center;color:var(--muted);font-size:0.78rem;padding:8px;display:none;">
           Click "Fetch" above to load SBI TT Sell history.
         </div>
       </div>
@@ -459,6 +472,50 @@
         </h3>
         <div id="cspDaysTable" class="csp-days-wrap">
           <div class="loading"><div class="spinner"></div> Waiting for lme_csp.csv…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update Today's CSP -->
+    <div class="grid">
+      <div class="card span-12">
+        <h3 style="justify-content:space-between;display:flex;">
+          <span><i class="fas fa-pen-to-square"></i> Update Today's CSP <span class="sub">— writes to lme_csp.csv on GitHub</span></span>
+          <span id="cspUpdateStatus" style="font-size:0.7rem;color:var(--muted);font-weight:400;"></span>
+        </h3>
+
+        <div class="controls" style="margin-bottom:8px;gap:12px;align-items:center;">
+          <label style="font-size:0.72rem;color:var(--muted);display:inline-flex;align-items:center;gap:6px;">
+            Date:
+            <input type="date" id="cspNewDate" class="date-input">
+          </label>
+          <span style="font-size:0.68rem;color:var(--muted);">Fill only today's values · leave blank to skip</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+          <div class="parity-card al">
+            <div class="pc-header"><span class="pc-title" style="color:#93a2b5">Aluminium</span></div>
+            <div class="parity-row"><div class="pr-label">Cash</div><input type="number" class="pr-input" id="newAlCash" step="0.01"></div>
+            <div class="parity-row"><div class="pr-label">3M</div><input type="number" class="pr-input" id="newAlThree" step="0.01"></div>
+            <div class="parity-row"><div class="pr-label">Stock</div><input type="number" class="pr-input" id="newAlStock" step="1"></div>
+          </div>
+          <div class="parity-card">
+            <div class="pc-header"><span class="pc-title" style="color:#d68b4d">Copper</span></div>
+            <div class="parity-row"><div class="pr-label">Cash</div><input type="number" class="pr-input" id="newCuCash" step="0.01"></div>
+            <div class="parity-row"><div class="pr-label">3M</div><input type="number" class="pr-input" id="newCuThree" step="0.01"></div>
+            <div class="parity-row"><div class="pr-label">Stock</div><input type="number" class="pr-input" id="newCuStock" step="1"></div>
+          </div>
+          <div class="parity-card zn">
+            <div class="pc-header"><span class="pc-title" style="color:#5b8fc9">Zinc</span></div>
+            <div class="parity-row"><div class="pr-label">Cash</div><input type="number" class="pr-input" id="newZnCash" step="0.01"></div>
+            <div class="parity-row"><div class="pr-label">3M</div><input type="number" class="pr-input" id="newZnThree" step="0.01"></div>
+            <div class="parity-row"><div class="pr-label">Stock</div><input type="number" class="pr-input" id="newZnStock" step="1"></div>
+          </div>
+        </div>
+
+        <div class="controls" style="margin-top:10px;justify-content:flex-end;">
+          <button class="btn" id="cspClearBtn" style="margin-right:8px;">Clear</button>
+          <button class="btn-refresh" id="cspSaveBtn"><i class="fas fa-cloud-upload-alt"></i> Save to GitHub</button>
         </div>
       </div>
     </div>
@@ -659,7 +716,7 @@
       </div>
     </div>
 
-    <div class="foot">Live: Google Sheet (LMEMCX) | CSP: lme_csp.csv | SBI TT: sahilgupta/sbi-fx-ratekeeper | News: Mining.com</div>
+    <div class="foot">Live: Google Sheet (LMEMCX) | CSP: lme_csp.csv | SBI TT: sahilgupta/sbi-fx-ratekeeper | News: Mining.com | NALCO: mudira.nalcoindia.co.in</div>
   </div>
 </div>
 
@@ -674,12 +731,17 @@ const METALS_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}
 const CSP_URL    = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/lme_csp.csv`;
 
 const LIVE_REAL_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vROr3cjVUMAqL9qXYAp6rxcekcbiacZmQ4JfSMOjgoEKKAxhLLDCsMddPf6G3ZgnN0b4dWl7RrghaZ9/pub?gid=0&single=true&output=csv';
-const LIVE_REFRESH_MS = 120000;    // 2 minutes
-const LIVE_TIMEOUT_MS = 45000;     // 45s timeout
+const LIVE_REFRESH_MS = 120000;
+const LIVE_TIMEOUT_MS = 45000;
+
+const WORKER_BASE = 'https://round-cake-56f6.aditya1312ff.workers.dev/?url=';
 
 const LIVE_PROXIES = [
-  { name: 'cloudflare', wrap: u => 'https://round-cake-56f6.aditya1312ff.workers.dev/?url=' + encodeURIComponent(u) },
+  { name: 'cloudflare', wrap: u => WORKER_BASE + encodeURIComponent(u) },
 ];
+
+const NALCO_URL = 'https://mudira.nalcoindia.co.in:3443/CUSTOMER/notification';
+const NALCO_REFRESH_MS = 30 * 60 * 1000;
 
 const LIVE_SYMBOL_MAP = {
   'COPPER':      { label: 'LME Copper',    group: 'lme',      unit: '$/t', role: 'lme', metal: 'Copper' },
@@ -718,7 +780,6 @@ const LIVE_GROUP_TITLES = {
    CSV PARSER + HELPERS
    ======================================================================== */
 function parseCSVLine(line) {
-  // Auto-detect delimiter: tab if the line has tabs, else comma
   const delim = line.indexOf('\t') >= 0 ? '\t' : ',';
   const out = [];
   let cur = '';
@@ -754,6 +815,8 @@ function parseDateLoose(s) {
   let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (m) return `${m[1]}-${m[2]}-${m[3]}`;
   m = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
   m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
@@ -797,6 +860,9 @@ let selectedMatrixSeries = new Set();
 let selectedPriceSeries = new Set();
 let priceFreq = 'daily', cspFreq = 'daily', csp2Freq = 'daily', lmcFreq = 'daily', sbiFreq = 'daily';
 let controlsWired = false;
+
+let NALCO_RAW = [];
+let nalcoTimer = null;
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const CSP_COLORS = { Cu:'#d68b4d', Zn:'#5b8fc9', Al:'#93a2b5' };
@@ -1228,7 +1294,7 @@ function initParityEdits() {
   for (const m of PARITY_METALS) {
     if (parityEdits[m.key]) continue;
     parityEdits[m.key] = {
-      lme3m: null, lmeCash: null, basis: null, premium: m.defaultPremium,
+      lme3m: null, basis: null, premium: m.defaultPremium,
       dutyPct: m.dutyPct, mcx: null
     };
   }
@@ -1269,12 +1335,6 @@ function computeParityDefaults() {
       if (csp.cash != null && csp.threeM != null) e.basis = csp.cash - csp.threeM;
     }
 
-    if (!parityEdited.has(m.key + '.lmeCash') && CSP_RAW.length) {
-      const last = CSP_RAW[CSP_RAW.length-1];
-      const csp = last[m.lmeCspKey] || {};
-      if (csp.cash != null) e.lmeCash = csp.cash;
-    }
-
     if (!parityEdited.has(m.key + '.mcx')) {
       const mcxSymbol = m.key === 'Cu' ? 'COPPER1!' : m.key === 'Zn' ? 'ZINC1!' : 'ALUMINIUM1!';
       let mcx = null;
@@ -1297,11 +1357,7 @@ function parityCalc(m) {
   const dutyPct = numOrNull(e.dutyPct) ?? 0;
   const mcx = numOrNull(e.mcx);
 
-  const lmeCashEdited = numOrNull(e.lmeCash);
-  const lmeCash = (parityEdited.has(m.key + '.lmeCash') && lmeCashEdited != null)
-    ? lmeCashEdited
-    : (lme3m != null ? lme3m + basis : null);
-
+  const lmeCash = lme3m != null ? lme3m + basis : null;
   const cost = lmeCash != null ? lmeCash + premium : null;
   const inr = (cost != null && usdinr != null) ? cost * usdinr : null;
   const duty = inr != null ? inr * (dutyPct / 100) : null;
@@ -1340,7 +1396,6 @@ function renderParity() {
     const mcxEdited = parityEdited.has(m.key + '.mcx');
     const lmeCls = lmeEdited ? 'edited' : 'live';
     const mcxCls = mcxEdited ? 'edited' : 'live';
-    const lmeCashCls = parityEdited.has(m.key + '.lmeCash') ? 'edited' : 'live';
 
     html += `<div class="parity-card ${m.cls}" data-metal="${m.key}">
       <div class="pc-header">
@@ -1360,7 +1415,7 @@ function renderParity() {
 
       <div class="parity-row">
         <div class="pr-label">LME ${m.name} Cash (USD/t)</div>
-        <input type="number" class="pr-input ${lmeCashCls}" data-metal="${m.key}" data-field="lmeCash" value="${e.lmeCash ?? (c.lmeCash ?? '')}" step="0.01">
+        <div class="pr-value" data-calc="lmeCash">${c.lmeCash != null ? fmt(c.lmeCash, 2) : '—'}</div>
       </div>
 
       <div class="parity-row">
@@ -1452,10 +1507,8 @@ function updateParityCard(metalKey) {
   const c = parityCalc(m);
   const e = parityEdits[metalKey];
 
-  const lmeCashInput = card.querySelector('input[data-field="lmeCash"]');
-  if (lmeCashInput && document.activeElement !== lmeCashInput) {
-    lmeCashInput.value = e.lmeCash ?? (c.lmeCash ?? '');
-  }
+  const lmeCashEl = card.querySelector('[data-calc="lmeCash"]');
+  if (lmeCashEl) lmeCashEl.textContent = c.lmeCash != null ? fmt(c.lmeCash, 2) : '—';
 
   card.querySelector('[data-calc="cost"]').textContent = c.cost != null ? fmt(c.cost, 2) : '—';
   const usdEl = card.querySelector('[data-calc="usdinr"]');
@@ -1476,17 +1529,383 @@ function updateParityCard(metalKey) {
     footer.textContent = `Duty: ${dp}% ${dp === 0 ? '(duty free)' : ''}`;
   }
 
-  let basis = numOrNull(e.basis) ?? 0;
-  if (parityEdited.has(metalKey + '.lmeCash')) {
-    const cashV = numOrNull(e.lmeCash);
-    const threeV = numOrNull(e.lme3m);
-    if (cashV != null && threeV != null) basis = cashV - threeV;
-  }
+  const basis = numOrNull(e.basis) ?? 0;
   const badge = card.querySelector('.pc-badge');
   badge.classList.remove('bwd', 'ctg', 'flat');
   if (basis > 0.5) { badge.classList.add('bwd'); badge.textContent = 'Backwardation'; }
   else if (basis < -0.5) { badge.classList.add('ctg'); badge.textContent = 'Contango'; }
   else { badge.classList.add('flat'); badge.textContent = 'Flat'; }
+}
+
+/* ========================================================================
+   NALCO ALUMINIUM SIGNAL (rolling 3-day window, fixed reference)
+   ======================================================================== */
+async function fetchNalcoNotifications() {
+  try {
+    const wrapped = WORKER_BASE + encodeURIComponent(NALCO_URL);
+    const res = await fetch(wrapped, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const html = await res.text();
+    NALCO_RAW = parseNalcoHTML(html);
+    if (!NALCO_RAW.length) throw new Error('Parsed 0 rows');
+    renderNalcoCard();
+    const upd = document.getElementById('nalcoUpdated');
+    if (upd) upd.textContent = 'Updated ' + new Date().toLocaleTimeString();
+  } catch (e) {
+    console.warn('NALCO fetch failed:', e);
+    const upd = document.getElementById('nalcoUpdated');
+    if (upd) upd.textContent = 'Error: ' + e.message;
+  }
+}
+function parseNalcoHTML(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const rows = [];
+  doc.querySelectorAll('table tr').forEach(tr => {
+    const tds = tr.querySelectorAll('td');
+    if (tds.length < 3) return;
+    const dateStr = tds[0].textContent.trim();
+    const title = tds[1].textContent.trim();
+    const details = tds[2].textContent.trim();
+    const notifDate = parseDateLoose(dateStr);
+    if (!notifDate) return;
+    const effMatch = title.match(/w\.e\.f\.?\s*(\d{1,2})[./-](\d{1,2})[./-](\d{4})/i);
+    const effDate = effMatch
+      ? `${effMatch[3]}-${effMatch[2].padStart(2,'0')}-${effMatch[1].padStart(2,'0')}`
+      : notifDate;
+    const dirMatch = details.match(/\b(increases?|decreases?|reduces?|raises?)\b/i);
+    let direction = null;
+    if (dirMatch) {
+      const w = dirMatch[1].toLowerCase();
+      direction = (w.startsWith('inc') || w.startsWith('rai')) ? 'increase' : 'decrease';
+    }
+    const magMatch = details.match(/(?:Rs\.?|₹)\s*([\d,]+)\s*\/?-?\s*(?:PMT|per\s*MT|per\s*ton)/i);
+    const magnitude = magMatch ? parseFloat(magMatch[1].replace(/,/g, '')) : null;
+    rows.push({ notifDate, effDate, direction, magnitude, title, details });
+  });
+  rows.sort((a, b) => b.effDate.localeCompare(a.effDate));
+  return rows;
+}
+function getLmeCashOn(date) {
+  let best = null;
+  for (const r of CSP_RAW) {
+    if (!r.Al || r.Al.cash == null) continue;
+    if (r.date === date) return r.Al.cash;
+    if (r.date < date) best = r;
+  }
+  return best ? best.Al.cash : null;
+}
+function countAllCspDaysAfter(date) {
+  const out = [];
+  for (const r of CSP_RAW) {
+    if (r.date > date && r.Al && r.Al.cash != null) {
+      out.push({ date: r.date, cash: r.Al.cash });
+    }
+  }
+  return out;
+}
+function computeNalcoSignal(ref, daysAll) {
+  if (ref == null) return { status: 'waiting', window: [], detail: 'No LME Cash row for reference date', cycles: 0 };
+  if (daysAll.length < 3) {
+    return {
+      status: 'waiting',
+      window: daysAll,
+      detail: `Waiting for day ${daysAll.length + 1} of 3`,
+      cycles: 0
+    };
+  }
+  for (let i = 0; i + 3 <= daysAll.length; i++) {
+    const w = daysAll.slice(i, i + 3);
+    const above = w.filter(d => d.cash > ref).length;
+    const below = w.filter(d => d.cash < ref).length;
+    if (above === 3) {
+      return {
+        status: 'up',
+        window: w,
+        detail: `Days ${w[0].date} → ${w[2].date} all above ref ${ref.toFixed(2)}`,
+        cycles: i + 1
+      };
+    }
+    if (below === 3) {
+      return {
+        status: 'down',
+        window: w,
+        detail: `Days ${w[0].date} → ${w[2].date} all below ref ${ref.toFixed(2)}`,
+        cycles: i + 1
+      };
+    }
+  }
+  const lastWin = daysAll.slice(-3);
+  const above = lastWin.filter(d => d.cash > ref).length;
+  const below = lastWin.filter(d => d.cash < ref).length;
+  return {
+    status: 'hold',
+    window: lastWin,
+    detail: `Latest window broken (${above} above, ${below} below) — sliding forward`,
+    cycles: daysAll.length - 2
+  };
+}
+function renderNalcoCard() {
+  const grid = document.getElementById('nalcoGrid');
+  if (!grid) return;
+  if (!NALCO_RAW.length) {
+    grid.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;">No NALCO data.</div>';
+    return;
+  }
+  const last = NALCO_RAW[0];
+  const eff = last.effDate;
+  const ref = getLmeCashOn(eff);
+  const allDays = countAllCspDaysAfter(eff);
+  const sig = computeNalcoSignal(ref, allDays);
+  const signal = sig.status;
+  const days = sig.window;
+  const dirTxt = last.direction === 'increase' ? 'UP' : 'DOWN';
+  const dirColor = last.direction === 'increase' ? 'var(--green)' : 'var(--red)';
+
+  const sigBadge = signal === 'up' ? 'REVISE UP'
+                 : signal === 'down' ? 'REVISE DOWN'
+                 : signal === 'hold' ? 'NO REVISION'
+                 : 'WAITING';
+  const sigCls = signal === 'up' ? 'bwd' : signal === 'down' ? 'ctg' : 'flat';
+
+  const rowsHtml = days.map((d, i) => {
+    const arrow = d.cash > ref ? '▲' : '▼';
+    const cls = d.cash > ref ? 'pos' : 'neg';
+    const tag = d.cash > ref ? 'above' : 'below';
+    return `<div class="parity-row">
+      <div class="pr-label">Day ${i+1} — ${d.date} <span style="color:var(--muted);font-size:0.62rem;">(${tag})</span></div>
+      <div class="pr-value ${cls}">${arrow} ${d.cash.toFixed(2)}</div>
+    </div>`;
+  }).join('') || '<div class="parity-row"><div class="pr-label" style="grid-column:span 2;color:var(--muted);">No CSP data after this date yet.</div></div>';
+
+  const cyclesLine = sig.cycles > 0
+    ? `<div class="parity-row"><div class="pr-label">Windows checked</div><div class="pr-value">${sig.cycles}</div></div>`
+    : '';
+
+  const recentRows = NALCO_RAW.slice(0, 5).map(r => `
+    <tr>
+      <td class="date-cell">${r.effDate}</td>
+      <td style="color:${r.direction === 'increase' ? 'var(--green)' : 'var(--red)'};font-weight:600;text-align:left;">${r.direction === 'increase' ? '▲' : '▼'} ${(r.direction || '—').toUpperCase()}</td>
+      <td style="text-align:right;">₹${r.magnitude != null ? r.magnitude.toLocaleString() : '—'}/PMT</td>
+    </tr>`).join('');
+
+  grid.innerHTML = `
+    <div class="parity-card al">
+      <div class="pc-header">
+        <span class="pc-title" style="color:${CSP_COLORS.Al}">Latest Revision · Signal</span>
+        <span class="pc-badge ${sigCls}">${sigBadge}</span>
+      </div>
+      <div class="parity-row">
+        <div class="pr-label">Effective date</div>
+        <div class="pr-value">${eff}</div>
+      </div>
+      <div class="parity-row">
+        <div class="pr-label">Direction · Magnitude</div>
+        <div class="pr-value" style="color:${dirColor}">${dirTxt} · ₹${last.magnitude != null ? last.magnitude.toLocaleString() : '—'}/PMT</div>
+      </div>
+      <div class="parity-row">
+        <div class="pr-label">Reference LME Cash</div>
+        <div class="pr-value">${ref != null ? ref.toFixed(2) + ' USD/t' : '—'}</div>
+      </div>
+      ${cyclesLine}
+      ${rowsHtml}
+      <div class="parity-row pr-result">
+        <div class="pr-label">Signal</div>
+        <div class="pr-value" style="font-size:0.72rem;">${sig.detail}</div>
+      </div>
+    </div>
+
+    <div class="parity-card al" style="grid-column:span 2;">
+      <div class="pc-header">
+        <span class="pc-title" style="color:${CSP_COLORS.Al}">Recent Revisions</span>
+      </div>
+      <table class="csp-days-table" style="width:100%;">
+        <thead><tr>
+          <th style="text-align:left;">Effective</th>
+          <th style="text-align:left;">Direction</th>
+          <th style="text-align:right;">Magnitude</th>
+        </tr></thead>
+        <tbody>${recentRows}</tbody>
+      </table>
+    </div>
+  `;
+}
+function startNalcoFeed() {
+  if (nalcoTimer) clearInterval(nalcoTimer);
+  fetchNalcoNotifications();
+  nalcoTimer = setInterval(fetchNalcoNotifications, NALCO_REFRESH_MS);
+}
+
+/* ========================================================================
+   CSP DAILY UPDATER — writes to lme_csp.csv on GitHub
+   ======================================================================== */
+const CSP_FILE_PATH = 'lme_csp.csv';
+const GITHUB_TOKEN_KEY = 'gh_pat_csp';
+
+function getGithubToken() {
+  let tok = localStorage.getItem(GITHUB_TOKEN_KEY);
+  if (!tok) {
+    tok = prompt('Paste your GitHub Personal Access Token (Contents: Read+Write on this repo).\nStored only in this browser.');
+    if (tok) {
+      tok = tok.trim();
+      localStorage.setItem(GITHUB_TOKEN_KEY, tok);
+    }
+  }
+  return tok;
+}
+function b64encodeUtf8(str) { return btoa(unescape(encodeURIComponent(str))); }
+
+async function getFileSha(token) {
+  const api = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${CSP_FILE_PATH}?ref=${REPO_BRANCH}`;
+  const res = await fetch(api, { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
+  if (!res.ok) throw new Error('SHA lookup failed: ' + res.status);
+  const json = await res.json();
+  return json.sha;
+}
+async function getFileText(token) {
+  const api = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${CSP_FILE_PATH}?ref=${REPO_BRANCH}`;
+  const res = await fetch(api, { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
+  if (!res.ok) throw new Error('File fetch failed: ' + res.status);
+  const json = await res.json();
+  const raw = atob(json.content.replace(/\s/g, ''));
+  return decodeURIComponent(escape(raw));
+}
+
+async function saveCspToGitHub() {
+  const statusEl = document.getElementById('cspUpdateStatus');
+  const btn = document.getElementById('cspSaveBtn');
+  const token = getGithubToken();
+  if (!token) { statusEl.textContent = 'No token — aborted.'; return; }
+
+  const date = document.getElementById('cspNewDate').value;
+  if (!date) { statusEl.textContent = 'Pick a date.'; return; }
+
+  const vals = {
+    CuCash:  numOrNull(document.getElementById('newCuCash').value),
+    CuThree: numOrNull(document.getElementById('newCuThree').value),
+    CuStock: numOrNull(document.getElementById('newCuStock').value),
+    ZnCash:  numOrNull(document.getElementById('newZnCash').value),
+    ZnThree: numOrNull(document.getElementById('newZnThree').value),
+    ZnStock: numOrNull(document.getElementById('newZnStock').value),
+    AlCash:  numOrNull(document.getElementById('newAlCash').value),
+    AlThree: numOrNull(document.getElementById('newAlThree').value),
+    AlStock: numOrNull(document.getElementById('newAlStock').value),
+  };
+  if (Object.values(vals).every(v => v == null)) {
+    statusEl.textContent = 'Fill at least one value.';
+    return;
+  }
+
+  btn.disabled = true;
+  statusEl.textContent = 'Saving…';
+  statusEl.style.color = 'var(--muted)';
+
+  try {
+    const currentText = await getFileText(token);
+    const sha = await getFileSha(token);
+
+    const lines = currentText.split(/\r?\n/).filter(l => l.trim().length > 0);
+    if (lines.length < 2) throw new Error('CSP file has no data rows');
+
+    const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim());
+    const dateCol = 0;
+
+    const colMap = {};
+    header.forEach((name, idx) => {
+      if (idx === dateCol) return;
+      const n = name.toLowerCase();
+      let metal = null;
+      if (/\b(copper|cu)\b/.test(n)) metal = 'Cu';
+      else if (/\b(zinc|zn)\b/.test(n)) metal = 'Zn';
+      else if (/\b(aluminium|aluminum|alu|al)\b/.test(n)) metal = 'Al';
+      if (!metal) return;
+      let field = null;
+      if (/cash|spot/.test(n)) field = 'Cash';
+      else if (/(3[\s-]?m(onth)?|three[\s-]?month)/.test(n)) field = 'Three';
+      else if (/stock|invent|warehouse/.test(n)) field = 'Stock';
+      if (!field) return;
+      colMap[metal + field] = idx;
+    });
+
+    const newRow = new Array(header.length).fill('');
+    newRow[dateCol] = date;
+    const keyMap = {
+      CuCash: 'CuCash', CuThree: 'CuThree', CuStock: 'CuStock',
+      ZnCash: 'ZnCash', ZnThree: 'ZnThree', ZnStock: 'ZnStock',
+      AlCash: 'AlCash', AlThree: 'AlThree', AlStock: 'AlStock',
+    };
+    for (const [inputKey, colKey] of Object.entries(keyMap)) {
+      const v = vals[inputKey];
+      if (v == null) continue;
+      const idx = colMap[colKey];
+      if (idx != null) newRow[idx] = v;
+    }
+
+    const newLine = newRow.map(c => typeof c === 'string' && c.includes(',') ? `"${c}"` : c).join(',');
+    let replaced = false;
+    const outLines = lines.map((l, i) => {
+      if (i === 0) return l;
+      const firstCell = parseCSVLine(l)[0];
+      const d = parseDateLoose(firstCell);
+      if (d === date) { replaced = true; return newLine; }
+      return l;
+    });
+
+    let finalText;
+    if (replaced) finalText = outLines.join('\n') + '\n';
+    else finalText = lines.join('\n') + '\n' + newLine + '\n';
+
+    const putRes = await fetch(
+      `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${CSP_FILE_PATH}`,
+      {
+        method: 'PUT',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `CSP update ${date}`,
+          content: b64encodeUtf8(finalText),
+          sha,
+          branch: REPO_BRANCH,
+        }),
+      }
+    );
+    if (!putRes.ok) throw new Error('Commit failed: ' + putRes.status);
+
+    statusEl.textContent = (replaced ? 'Replaced ' : 'Added ') + date + ' ✓';
+    statusEl.style.color = 'var(--green)';
+
+    setTimeout(async () => {
+      try {
+        const txt = await fetchText(CSP_URL + '?t=' + Date.now());
+        const r = parseCSPCSV(txt);
+        if (r.ok) {
+          renderCSPLatest();
+          renderCSPDaysTable();
+          renderNalcoCard();
+          renderCSP();
+          renderCSP2();
+        }
+      } catch (e) { console.warn('Refresh after save failed:', e); }
+    }, 3000);
+
+  } catch (e) {
+    console.error(e);
+    statusEl.textContent = 'Error: ' + e.message;
+    statusEl.style.color = 'var(--red)';
+    if (/401|403/.test(e.message)) {
+      localStorage.removeItem(GITHUB_TOKEN_KEY);
+      statusEl.textContent = 'Token invalid — cleared. Reload to re-enter.';
+    }
+  } finally {
+    btn.disabled = false;
+  }
+}
+function wireCspUpdater() {
+  const dateInput = document.getElementById('cspNewDate');
+  if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
+  document.getElementById('cspSaveBtn')?.addEventListener('click', saveCspToGitHub);
+  document.getElementById('cspClearBtn')?.addEventListener('click', () => {
+    ['newCuCash','newCuThree','newCuStock','newZnCash','newZnThree','newZnStock','newAlCash','newAlThree','newAlStock']
+      .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  });
 }
 
 /* ========================================================================
@@ -1631,7 +2050,6 @@ function renderSbiChart() {
     if (sbiChart) { sbiChart.destroy(); sbiChart = null; }
     canvas.style.display = 'none';
     emptyEl.style.display = 'block';
-    emptyEl.textContent = 'Fetch SBI TT and load metals.csv (with USDINR column) to see comparison.';
     return;
   }
   canvas.style.display = 'block';
@@ -2696,9 +3114,11 @@ function maybeRender() {
     ['freshness',        () => renderFreshness()],
     ['price grid',       () => renderPriceGrid()],
     ['parity model',     () => renderParity()],
+    ['nalco card',       () => renderNalcoCard()],
     ['sbi chart',        () => renderSbiChart()],
     ['csp latest',       () => renderCSPLatest()],
     ['csp days table',   () => renderCSPDaysTable()],
+    ['csp updater',      () => wireCspUpdater()],
     ['lmc chart',        () => renderLmcChart()],
     ['price picker',     () => populatePricePicker()],
     ['price chart',      () => renderPriceChart()],
@@ -2825,6 +3245,16 @@ document.addEventListener('DOMContentLoaded', () => {
   autoLoadFromGitHub(true);
   startLiveFeed();
   loadNews();
+  startNalcoFeed();
+
+  fetchSbiTT(document.getElementById('sbiUrl').value.trim());
+  let lastSbiFetch = Date.now();
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && Date.now() - lastSbiFetch > 10 * 60 * 1000) {
+      lastSbiFetch = Date.now();
+      fetchSbiTT(document.getElementById('sbiUrl').value.trim());
+    }
+  });
 });
 </script>
 </body>
