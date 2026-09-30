@@ -947,7 +947,7 @@ async function fetchLive() {
     if (updatedEl) updatedEl.textContent = 'Updated ' + liveLastFetch.toLocaleTimeString();
 
     renderPriceGrid();
-    renderParity();   // parity now updates from live every cycle
+    renderParity();
   } catch (e) {
     clearTimeout(timer);
     console.error('Live fetch failed:', e);
@@ -1198,7 +1198,7 @@ function initParityEdits() {
   for (const m of PARITY_METALS) {
     if (parityEdits[m.key]) continue;
     parityEdits[m.key] = {
-      lme3m: null, basis: null, premium: m.defaultPremium,
+      lme3m: null, lmeCash: null, basis: null, premium: m.defaultPremium,
       dutyPct: m.dutyPct, mcx: null
     };
   }
@@ -1242,6 +1242,13 @@ function computeParityDefaults() {
       if (csp.cash != null && csp.threeM != null) e.basis = csp.cash - csp.threeM;
     }
 
+    // LME Cash — from CSP unless user edited
+    if (!parityEdited.has(m.key + '.lmeCash') && CSP_RAW.length) {
+      const last = CSP_RAW[CSP_RAW.length-1];
+      const csp = last[m.lmeCspKey] || {};
+      if (csp.cash != null) e.lmeCash = csp.cash;
+    }
+
     // MCX — refresh from live unless user edited
     if (!parityEdited.has(m.key + '.mcx')) {
       const mcxSymbol = m.key === 'Cu' ? 'COPPER1!' : m.key === 'Zn' ? 'ZINC1!' : 'ALUMINIUM1!';
@@ -1265,7 +1272,12 @@ function parityCalc(m) {
   const dutyPct = numOrNull(e.dutyPct) ?? 0;
   const mcx = numOrNull(e.mcx);
 
-  const lmeCash = lme3m != null ? lme3m + basis : null;
+  // If user edited LME Cash directly, use that. Otherwise compute from 3M + basis.
+  const lmeCashEdited = numOrNull(e.lmeCash);
+  const lmeCash = (parityEdited.has(m.key + '.lmeCash') && lmeCashEdited != null)
+    ? lmeCashEdited
+    : (lme3m != null ? lme3m + basis : null);
+
   const cost = lmeCash != null ? lmeCash + premium : null;
   const inr = (cost != null && usdinr != null) ? cost * usdinr : null;
   const duty = inr != null ? inr * (dutyPct / 100) : null;
@@ -1304,6 +1316,7 @@ function renderParity() {
     const mcxEdited = parityEdited.has(m.key + '.mcx');
     const lmeCls = lmeEdited ? 'edited' : 'live';
     const mcxCls = mcxEdited ? 'edited' : 'live';
+    const lmeCashCls = parityEdited.has(m.key + '.lmeCash') ? 'edited' : 'live';
 
     html += `<div class="parity-card ${m.cls}" data-metal="${m.key}">
       <div class="pc-header">
@@ -1322,8 +1335,8 @@ function renderParity() {
       </div>
 
       <div class="parity-row">
-        <div class="pr-label">LME ${m.name} Cash</div>
-        <div class="pr-value" data-calc="lmeCash">${c.lmeCash != null ? fmt(c.lmeCash, 2) : '—'}</div>
+        <div class="pr-label">LME ${m.name} Cash (USD/t)</div>
+        <input type="number" class="pr-input ${lmeCashCls}" data-metal="${m.key}" data-field="lmeCash" value="${e.lmeCash ?? (c.lmeCash ?? '')}" step="0.01">
       </div>
 
       <div class="parity-row">
@@ -1415,7 +1428,12 @@ function updateParityCard(metalKey) {
   const c = parityCalc(m);
   const e = parityEdits[metalKey];
 
-  card.querySelector('[data-calc="lmeCash"]').textContent = c.lmeCash != null ? fmt(c.lmeCash, 2) : '—';
+  // LME Cash input — sync only if user isn't currently typing in it
+  const lmeCashInput = card.querySelector('input[data-field="lmeCash"]');
+  if (lmeCashInput && document.activeElement !== lmeCashInput) {
+    lmeCashInput.value = e.lmeCash ?? (c.lmeCash ?? '');
+  }
+
   card.querySelector('[data-calc="cost"]').textContent = c.cost != null ? fmt(c.cost, 2) : '—';
   const usdEl = card.querySelector('[data-calc="usdinr"]');
   if (usdEl) usdEl.textContent = parityEdits.__usdinr != null ? fmt(parityEdits.__usdinr, 2) : '—';
@@ -1435,7 +1453,13 @@ function updateParityCard(metalKey) {
     footer.textContent = `Duty: ${dp}% ${dp === 0 ? '(duty free)' : ''}`;
   }
 
-  const basis = numOrNull(e.basis) ?? 0;
+  // Effective basis for badge: if LME Cash edited, derive from cash - 3M
+  let basis = numOrNull(e.basis) ?? 0;
+  if (parityEdited.has(metalKey + '.lmeCash')) {
+    const cashV = numOrNull(e.lmeCash);
+    const threeV = numOrNull(e.lme3m);
+    if (cashV != null && threeV != null) basis = cashV - threeV;
+  }
   const badge = card.querySelector('.pc-badge');
   badge.classList.remove('bwd', 'ctg', 'flat');
   if (basis > 0.5) { badge.classList.add('bwd'); badge.textContent = 'Backwardation'; }
@@ -2537,7 +2561,6 @@ async function fetchSbiTT(url) {
       (parsed.details && parsed.details.length ? ' · ' + parsed.details[0] : '');
     statusEl.className = 'status ok';
     renderSbiChart();
-    // Only update parity USD/INR if user hasn't manually edited it
     if (!parityEdited.has('__usdinr')) {
       parityEdits.__usdinr = SBI_RAW.length ? SBI_RAW[SBI_RAW.length-1].value : null;
       renderParity();
