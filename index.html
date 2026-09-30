@@ -1,232 +1,3 @@
-Parity badge lock
-"Failed" on everything — including google.com — means the requests aren't leaving the browser at all. That's almost never a code problem. Let's find the actual cause. Do these in order:
-
-1. Open DevTools → Console tab
-With the test page open, press F12 → click Console. Look for red lines. They'll say something like:
-
-net::ERR_BLOCKED_BY_CLIENT → extension blocking
-
-net::ERR_INTERNET_DISCONNECTED → offline
-
-Access to fetch ... blocked by CORS policy → CORS
-
-net::ERR_NAME_NOT_RESOLVED → DNS
-
-net::ERR_CONNECTION_REFUSED → proxy/firewall
-
-Tell me which one appears. This single line tells us everything.
-
-2. Check the Network tab
-Same DevTools → Network tab → reload. Every request should appear. Look at the Status column:
-
-Blocked → extension/firewall
-
-Failed → no connection
-
-(canceled) → something killed it
-
-200 but page says failed → parsing bug (unlikely here)
-
-3. Try these three things in order
-A. Open in Incognito with extensions disabled
-
-Ctrl+Shift+N (Chrome) → paste the file path → open. Incognito disables extensions by default. If it works here → an extension (uBlock, Privacy Badger, Brave shields, corporate proxy add-on) is the cause.
-
-B. Serve over http:// instead of file://
-
-If the file is opened as file:///.../test.html, some browsers refuse cross-origin fetches. In a terminal:
-
-bash
-cd /folder/with/test.html
-python3 -m http.server 8000
-Then open http://localhost:8000/test.html in the browser.
-
-C. Try a different browser or network
-
-Chrome → Edge or Firefox
-
-Or switch from Wi-Fi to mobile hotspot
-
-If it works on a different network → your ISP/router/VPN is stripping cross-origin requests. If it works in a different browser → browser config issue.
-
-4. The most common cause of "everything failed"
-In order of likelihood:
-
-Ad blocker / privacy extension (uBlock, Brave shields, AdGuard, DNS-level Pi-hole) — kills 3rd-party fetches silently.
-
-Corporate/college network or VPN — proxies everything through a filter.
-
-File opened as file:// with strict CORS.
-
-Browser is offline — but you'd notice elsewhere.
-
-Antivirus web shield (Kaspersky, Bitdefender) intercepting HTTPS.
-
-5. What I need from you
-Paste any one of these and I can point at the exact fix:
-
-The red error lines from DevTools → Console
-
-OR the Status column from DevTools → Network
-
-OR just tell me: did it work in incognito? Did it work over http://localhost? Did it work on a different network/browser?
-
-Right now I can't tell if the blocker is your extension, your network, your browser, or your file protocol. One of the three checks above will reveal it in 30 seconds.
-
-This response is AI-generated, for reference only.
-in the dashboard give option to edit lme cash also in all the metals in parity part
-To make LME Cash editable in the parity cards, you need to change one thing: currently lmeCash is a computed value (lme3m + basis), shown as a read-only <div>. To let users edit it, you make it an <input>, and when edited it should drive the calculation instead of lme3m + basis.
-
-Here are the exact changes to the file you uploaded.
-
-1. Add lmeCash to the parity state
-Find initParityEdits():
-
-js
-function initParityEdits() {
-  for (const m of PARITY_METALS) {
-    if (parityEdits[m.key]) continue;
-    parityEdits[m.key] = {
-      lme3m: null, basis: null, premium: m.defaultPremium,
-      dutyPct: m.dutyPct, mcx: null
-    };
-  }
-  if (parityEdits.__usdinr === undefined) parityEdits.__usdinr = null;
-}
-Replace with:
-
-js
-function initParityEdits() {
-  for (const m of PARITY_METALS) {
-    if (parityEdits[m.key]) continue;
-    parityEdits[m.key] = {
-      lme3m: null, lmeCash: null, basis: null, premium: m.defaultPremium,
-      dutyPct: m.dutyPct, mcx: null
-    };
-  }
-  if (parityEdits.__usdinr === undefined) parityEdits.__usdinr = null;
-}
-2. In computeParityDefaults(), populate lmeCash from CSP
-After the existing basis block inside the for (const m of PARITY_METALS) loop, add:
-
-js
-    // LME Cash — from CSP unless user edited
-    if (!parityEdited.has(m.key + '.lmeCash') && CSP_RAW.length) {
-      const last = CSP_RAW[CSP_RAW.length-1];
-      const csp = last[m.lmeCspKey] || {};
-      if (csp.cash != null) e.lmeCash = csp.cash;
-    }
-3. In parityCalc(), use edited lmeCash if present
-Replace the current parityCalc body:
-
-js
-function parityCalc(m) {
-  const e = parityEdits[m.key];
-  const lme3m = numOrNull(e.lme3m);
-  const basis = numOrNull(e.basis) ?? 0;
-  const premium = numOrNull(e.premium) ?? 0;
-  const usdinr = numOrNull(parityEdits.__usdinr);
-  const dutyPct = numOrNull(e.dutyPct) ?? 0;
-  const mcx = numOrNull(e.mcx);
-
-  const lmeCash = lme3m != null ? lme3m + basis : null;
-  const cost = lmeCash != null ? lmeCash + premium : null;
-  ...
-with:
-
-js
-function parityCalc(m) {
-  const e = parityEdits[m.key];
-  const lme3m = numOrNull(e.lme3m);
-  const basis = numOrNull(e.basis) ?? 0;
-  const premium = numOrNull(e.premium) ?? 0;
-  const usdinr = numOrNull(parityEdits.__usdinr);
-  const dutyPct = numOrNull(e.dutyPct) ?? 0;
-  const mcx = numOrNull(e.mcx);
-
-  // If user edited LME Cash directly, use that. Otherwise compute from 3M + basis.
-  const lmeCashEdited = numOrNull(e.lmeCash);
-  const lmeCash = (parityEdited.has(m.key + '.lmeCash') && lmeCashEdited != null)
-    ? lmeCashEdited
-    : (lme3m != null ? lme3m + basis : null);
-
-  const cost = lmeCash != null ? lmeCash + premium : null;
-  const inr = (cost != null && usdinr != null) ? cost * usdinr : null;
-  const duty = inr != null ? inr * (dutyPct / 100) : null;
-  const landedMt = inr != null ? inr + (duty || 0) : null;
-  const landedKg = landedMt != null ? landedMt / 1000 : null;
-  const net = (landedKg != null && mcx != null) ? landedKg - mcx : null;
-
-  return { lmeCash, cost, inr, duty, landedMt, landedKg, net };
-}
-4. In renderParity(), make LME Cash an input
-Find the LME Cash row:
-
-js
-      <div class="parity-row">
-        <div class="pr-label">LME ${m.name} Cash</div>
-        <div class="pr-value" data-calc="lmeCash">${c.lmeCash != null ? fmt(c.lmeCash, 2) : '—'}</div>
-      </div>
-Replace with:
-
-js
-      <div class="parity-row">
-        <div class="pr-label">LME ${m.name} Cash</div>
-        <input type="number" class="pr-input ${parityEdited.has(m.key+'.lmeCash') ? 'edited' : 'live'}" data-metal="${m.key}" data-field="lmeCash" value="${e.lmeCash ?? (c.lmeCash ?? '')}" step="0.01">
-      </div>
-The existing .pr-input event handler in renderParity() will automatically pick this up — it saves parityEdits[metal].lmeCash, marks it as edited, and calls updateParityCard(). No extra wiring needed.
-
-5. In updateParityCard(), update the input value instead of a div
-Find:
-
-js
-  card.querySelector('[data-calc="lmeCash"]').textContent = c.lmeCash != null ? fmt(c.lmeCash, 2) : '—';
-Replace with:
-
-js
-  const lmeCashInput = card.querySelector('input[data-field="lmeCash"]');
-  if (lmeCashInput && document.activeElement !== lmeCashInput) {
-    lmeCashInput.value = e.lmeCash ?? (c.lmeCash ?? '');
-  }
-This respects what the user is currently typing (doesn't overwrite mid-edit), but keeps it in sync when other fields change.
-
-6. Bonus — link the badge to edited LME Cash too
-Right now the Backwardation/Contango badge uses basis only. If a user edits LME Cash directly, they may want the badge to reflect that. Optional — but if you want it: in updateParityCard(), where the badge is set, compute an effective basis:
-
-js
-  // Effective basis: if LME Cash was edited and 3M is known, derive basis
-  let basis = numOrNull(e.basis) ?? 0;
-  if (parityEdited.has(metalKey + '.lmeCash')) {
-    const cashV = numOrNull(e.lmeCash);
-    const threeV = numOrNull(e.lme3m);
-    if (cashV != null && threeV != null) basis = cashV - threeV;
-  }
-Then use that basis for the badge classification below. Leave the rest of the badge code the same.
-
-What you get
-Field	Before	After
-LME 3M	Editable	Editable
-Basis	Editable	Editable
-LME Cash	Read-only, computed	Editable, auto-filled from CSP, drives Cost
-Premium	Editable	Editable
-Duty %	Editable	Editable
-MCX	Editable	Editable
-Behavior:
-
-On load, LME Cash is taken from the last CSP row (cash column) — same as before.
-
-If a user edits it, parityEdited marks it, and all downstream values (Cost → INR → Duty → Landed → Net) recompute from the edited cash.
-
-Reset button clears the edit and it falls back to CSP / computed value.
-
-Live refresh (every 2 min) will not overwrite it once edited.
-
-No CSS changes needed — .pr-input styling already handles inputs in that column, and the edited/live classes give you the amber/green highlight you already have on the other editable fields.
-
-give final code
-Here's your final file with editable LME Cash added to all three parity cards. Everything else is unchanged.
-
-html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1176,7 +947,7 @@ async function fetchLive() {
     if (updatedEl) updatedEl.textContent = 'Updated ' + liveLastFetch.toLocaleTimeString();
 
     renderPriceGrid();
-    renderParity();
+    renderParity();   // parity now updates from live every cycle
   } catch (e) {
     clearTimeout(timer);
     console.error('Live fetch failed:', e);
@@ -1427,7 +1198,7 @@ function initParityEdits() {
   for (const m of PARITY_METALS) {
     if (parityEdits[m.key]) continue;
     parityEdits[m.key] = {
-      lme3m: null, lmeCash: null, basis: null, premium: m.defaultPremium,
+      lme3m: null, basis: null, premium: m.defaultPremium,
       dutyPct: m.dutyPct, mcx: null
     };
   }
@@ -1471,13 +1242,6 @@ function computeParityDefaults() {
       if (csp.cash != null && csp.threeM != null) e.basis = csp.cash - csp.threeM;
     }
 
-    // LME Cash — from CSP unless user edited
-    if (!parityEdited.has(m.key + '.lmeCash') && CSP_RAW.length) {
-      const last = CSP_RAW[CSP_RAW.length-1];
-      const csp = last[m.lmeCspKey] || {};
-      if (csp.cash != null) e.lmeCash = csp.cash;
-    }
-
     // MCX — refresh from live unless user edited
     if (!parityEdited.has(m.key + '.mcx')) {
       const mcxSymbol = m.key === 'Cu' ? 'COPPER1!' : m.key === 'Zn' ? 'ZINC1!' : 'ALUMINIUM1!';
@@ -1501,12 +1265,7 @@ function parityCalc(m) {
   const dutyPct = numOrNull(e.dutyPct) ?? 0;
   const mcx = numOrNull(e.mcx);
 
-  // If user edited LME Cash directly, use that. Otherwise compute from 3M + basis.
-  const lmeCashEdited = numOrNull(e.lmeCash);
-  const lmeCash = (parityEdited.has(m.key + '.lmeCash') && lmeCashEdited != null)
-    ? lmeCashEdited
-    : (lme3m != null ? lme3m + basis : null);
-
+  const lmeCash = lme3m != null ? lme3m + basis : null;
   const cost = lmeCash != null ? lmeCash + premium : null;
   const inr = (cost != null && usdinr != null) ? cost * usdinr : null;
   const duty = inr != null ? inr * (dutyPct / 100) : null;
@@ -1545,7 +1304,6 @@ function renderParity() {
     const mcxEdited = parityEdited.has(m.key + '.mcx');
     const lmeCls = lmeEdited ? 'edited' : 'live';
     const mcxCls = mcxEdited ? 'edited' : 'live';
-    const lmeCashCls = parityEdited.has(m.key + '.lmeCash') ? 'edited' : 'live';
 
     html += `<div class="parity-card ${m.cls}" data-metal="${m.key}">
       <div class="pc-header">
@@ -1564,8 +1322,8 @@ function renderParity() {
       </div>
 
       <div class="parity-row">
-        <div class="pr-label">LME ${m.name} Cash (USD/t)</div>
-        <input type="number" class="pr-input ${lmeCashCls}" data-metal="${m.key}" data-field="lmeCash" value="${e.lmeCash ?? (c.lmeCash ?? '')}" step="0.01">
+        <div class="pr-label">LME ${m.name} Cash</div>
+        <div class="pr-value" data-calc="lmeCash">${c.lmeCash != null ? fmt(c.lmeCash, 2) : '—'}</div>
       </div>
 
       <div class="parity-row">
@@ -1657,12 +1415,7 @@ function updateParityCard(metalKey) {
   const c = parityCalc(m);
   const e = parityEdits[metalKey];
 
-  // LME Cash input — sync only if user isn't currently typing in it
-  const lmeCashInput = card.querySelector('input[data-field="lmeCash"]');
-  if (lmeCashInput && document.activeElement !== lmeCashInput) {
-    lmeCashInput.value = e.lmeCash ?? (c.lmeCash ?? '');
-  }
-
+  card.querySelector('[data-calc="lmeCash"]').textContent = c.lmeCash != null ? fmt(c.lmeCash, 2) : '—';
   card.querySelector('[data-calc="cost"]').textContent = c.cost != null ? fmt(c.cost, 2) : '—';
   const usdEl = card.querySelector('[data-calc="usdinr"]');
   if (usdEl) usdEl.textContent = parityEdits.__usdinr != null ? fmt(parityEdits.__usdinr, 2) : '—';
@@ -1682,13 +1435,7 @@ function updateParityCard(metalKey) {
     footer.textContent = `Duty: ${dp}% ${dp === 0 ? '(duty free)' : ''}`;
   }
 
-  // Effective basis for badge: if LME Cash edited, derive from cash - 3M
-  let basis = numOrNull(e.basis) ?? 0;
-  if (parityEdited.has(metalKey + '.lmeCash')) {
-    const cashV = numOrNull(e.lmeCash);
-    const threeV = numOrNull(e.lme3m);
-    if (cashV != null && threeV != null) basis = cashV - threeV;
-  }
+  const basis = numOrNull(e.basis) ?? 0;
   const badge = card.querySelector('.pc-badge');
   badge.classList.remove('bwd', 'ctg', 'flat');
   if (basis > 0.5) { badge.classList.add('bwd'); badge.textContent = 'Backwardation'; }
@@ -2790,6 +2537,7 @@ async function fetchSbiTT(url) {
       (parsed.details && parsed.details.length ? ' · ' + parsed.details[0] : '');
     statusEl.className = 'status ok';
     renderSbiChart();
+    // Only update parity USD/INR if user hasn't manually edited it
     if (!parityEdited.has('__usdinr')) {
       parityEdits.__usdinr = SBI_RAW.length ? SBI_RAW[SBI_RAW.length-1].value : null;
       renderParity();
@@ -3036,424 +2784,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-What changed (only the parity section)
-#	Function	Change
-1	initParityEdits()	Added lmeCash: null to each metal's state
-2	computeParityDefaults()	New block that pulls lmeCash from the last CSP row if the user hasn't edited it
-3	parityCalc()	If lmeCash was user-edited, uses it directly; otherwise falls back to lme3m + basis
-4	renderParity()	The "LME Cash" row is now a <input type="number"> (with .edited / .live class), instead of a read-only <div>
-5	updateParityCard()	Updates the LME Cash input value (not a div), respects what the user is typing
-6	updateParityCard()	Badge now derives effective basis from cash - 3M when LME Cash is edited, so the Contango/Backwardation tag stays consistent with the user's input
-Everything else — live feed, CSP parsing, SBI, news, charts, sentiment, trend — is untouched. On load, LME Cash still auto-fills from the last CSP row; only when you type in it does it lock to your value and drive the downstream Cost →
-
-some error in live prices
-I need to see the actual error. Open the dashboard, press F12 → Console tab, and tell me one of these:
-
-A red error line — copy the full text.
-
-What the Latest Prices section shows — empty? wrong values? missing metals?
-
-What the Live pill at the top says — "Live · N symbols", "Stale", "error", or stuck on "paused"?
-
-While you check, here's the most likely culprit and a quick diagnostic.
-
-Most likely cause
-The live feed fetches from a Google Apps Script URL:
-
-text
-https://script.google.com/macros/s/AKfycbynNKaXnesHgbtzHC1udvwi7mmkGkRi2akYZCueRy9PFdN6aWVi3g79ThZsFyoceVs/exec
-Apps Script CORS-blocks non-browser requests, and if your Google Sheet's deployment was ever re-published (new /exec URL) or set to "Only myself", the fetch silently returns an HTML login page → parseLiveCSV finds zero rows → throws Empty parse → pill goes red.
-
-30-second check
-Open this in a new browser tab:
-
-text
-https://script.google.com/macros/s/AKfycbynNKaXnesHgbtzHC1udvwi7mmkGkRi2akYZCueRy9PFdN6aWVi3g79ThZsFyoceVs/exec
-Tell me what you see:
-
-You see	Meaning	Fix
-CSV text (time,symbol,price …)	Endpoint is fine, error is elsewhere	Keep reading below
-A Google login page	Deployment is private	Re-deploy as "Anyone"
-"Script function not found"	Deployment broken	Re-deploy Apps Script
-Blank / 404	URL changed	Get the new /exec URL
-Error: ... message	Apps Script threw	Fix the Apps Script
-If the endpoint returns CSV correctly
-Then the problem is client-side. In the Console, look for one of these and tell me which:
-
-Live fetch failed: TypeError: Failed to fetch → CORS blocked by your network/extension (this was your earlier "everything failed" issue too — probably the same root cause).
-
-Live fetch failed: Error: HTTP 404 → URL dead.
-
-Live fetch failed: Error: Empty parse → endpoint responded but the CSV header doesn't match time/symbol/price patterns.
-
-Live fetch failed: AbortError → 45s timeout exceeded.
-
-No error but grid stays empty → LIVE_SYMBOL_MAP doesn't match the symbols your sheet returns. Open the CSV in the new tab and compare the symbol column against this list: COPPER, ZINC, ALUMINIUM, COPPER1!, ZINC1!, ALUMINIUM1!, XAUUSD, SILVER, DXY, US02Y, US05Y, US10Y.
-
-Meanwhile — quick patch that shows the real error on-screen
-If you want to see the error without DevTools, replace fetchLive()'s catch block:
-
-js
-} catch (e) {
-    clearTimeout(timer);
-    console.error('Live fetch failed:', e);
-    liveLastError = true;
-    const pill = document.getElementById('liveStatus');
-    if (pill) {
-      pill.className = 'live-pill error';
-      pill.innerHTML = `<span class="live-dot error"></span> ${e.name}: ${e.message}`;
-    }
-    // also dump into the price grid so it's unmissable
-    const grid = document.getElementById('priceGrid');
-    if (grid && !LIVE_RAW.length) {
-      grid.innerHTML = `<div style="color:var(--red);font-size:0.8rem;padding:12px;font-family:monospace;">
-        Live feed failed → <strong>${e.name}</strong>: ${e.message}<br>
-        Endpoint: <span style="color:var(--muted);">${LIVE_SHEET_URL}</span>
-      </div>`;
-    }
-  }
-Reload and the pill itself will tell you the exact error type. Paste that back to me and I can pinpoint the fix immediately.
-
-So: what does the endpoint URL show in a new tab, and what's the red error in the Console?
-
-Good — I can see exactly what's happening. Everything loads except the live feed:
-
-✅ Freshness: 2026-09-29 (1.2d · fresh) → metals.csv loaded fine
-
-✅ Range: 2017-12-21 → 2026-09-29 → series parsed fine
-
-❌ Live: error (red pill top-right)
-
-❌ Latest Prices: "Waiting for live data…" → no symbols received
-
-So the GitHub CSVs work, but the Google Apps Script endpoint is failing. Let's confirm it in one step.
-
-Step 1 — Test the endpoint directly
-Open this URL in a new browser tab (not the dashboard):
-
-text
-https://script.google.com/macros/s/AKfycbynNKaXnesHgbtzHC1udvwi7mmkGkRi2akYZCueRy9PFdN6aWVi3g79ThZsFyoceVs/exec
-Tell me what you see. It's one of:
-
-What shows	Root cause	Fix
-CSV text with columns like time,symbol,price	Endpoint fine → problem is client-side (network/proxy blocking script.google.com)	See Step 3
-Google sign-in page	Deployment is set to "Only myself"	Re-deploy the Apps Script as Anyone
-"Script function not found: doGet"	Deployment is broken or the function is missing	Re-deploy Apps Script
-Blank page / 404	URL changed (Apps Script was re-published)	Get the new /exec URL
-Error message from Apps Script	Script itself threw	Fix the Apps Script code
-"Sorry, unable to open the file…"	Sheet permissions issue	Share the sheet with "Anyone with link"
-Step 2 — If the endpoint is fine, check the Console
-Open the dashboard, press F12 → Console tab, look for a red line starting with Live fetch failed:.
-
-Paste me that exact line. It will say one of:
-
-TypeError: Failed to fetch → network/CORS/extension blocking script.google.com
-
-AbortError: The user aborted a request → 45s timeout (endpoint too slow)
-
-Error: HTTP 404 → URL dead
-
-Error: HTTP 401/403 → deployment private
-
-Error: Empty parse → endpoint returned HTML (usually a login/consent page) or the CSV header doesn't match time|symbol|price
-
-Step 3 — If it's Failed to fetch (most common)
-script.google.com is often blocked by:
-
-Chrome extensions (uBlock Origin, Privacy Badger, Brave shields, AdGuard)
-
-Corporate / college networks
-
-DNS-level blockers (Pi-hole, NextDNS)
-
-Some VPNs
-
-Quick tests:
-
-Open the dashboard in an Incognito window (extensions off) — does the live pill go green?
-
-Open it on a mobile hotspot (different network) — does it go green?
-
-Try in Firefox or Edge — same result?
-
-If it works in any of those, the fix is to whitelist script.google.com in your extension or network.
-
-Step 4 — If the endpoint truly returns HTML (not CSV)
-Sometimes Apps Script returns the "You need permission" HTML even when you're logged in, because the deployment is scoped wrong. In that case:
-
-Open the Apps Script editor
-
-Deploy → Manage deployments
-
-Edit the deployment → set Execute as: Me, Who has access: Anyone
-
-Deploy (this creates a new URL)
-
-Copy the new /exec URL into LIVE_SHEET_URL in your dashboard code
-
-Hard-reload the dashboard (Ctrl+Shift+R)
-
-Fastest possible diagnostic
-If you don't want to hunt through tabs, paste this into the dashboard's Console and press Enter:
-
-js
-fetch('https://script.google.com/macros/s/AKfycbynNKaXnesHgbtzHC1udvwi7mmkGkRi2akYZCueRy9PFdN6aWVi3g79ThZsFyoceVs/exec')
-  .then(r => r.text())
-  .then(t => console.log('LEN:', t.length, '\nFIRST 500 CHARS:\n', t.slice(0,500)))
-  .catch(e => console.error('FAILED:', e.name, e.message));
-That prints either the CSV (proving the endpoint works) or the exact failure. Paste the output here and I'll tell you the fix in one message.
-
-Same screenshot — so the live feed is still erroring. I can't fix it blind; I need the actual error text. Two things to do, takes 30 seconds total.
-
-1. Test the endpoint in a new tab
-Copy-paste this into your browser's address bar and open it:
-
-text
-https://script.google.com/macros/s/AKfycbynNKaXnesHgbtzHC1udvwi7mmkGkRi2akYZCueRy9PFdN6aWVi3g79ThZsFyoceVs/exec
-Tell me what appears — CSV text, a Google login page, a "Script function not found" message, a blank page, or an error.
-
-2. Run this in the dashboard's Console
-On the dashboard, press F12 → click Console → paste this line and hit Enter:
-
-js
-fetch('https://script.google.com/macros/s/AKfycbynNKaXnesHgbtzHC1udvwi7mmkGkRi2akYZCueRy9PFdN6aWVi3g79ThZsFyoceVs/exec').then(r=>r.text()).then(t=>console.log('OK len='+t.length+'\n---\n'+t.slice(0,600))).catch(e=>console.error('FAIL '+e.name+': '+e.message));
-Copy whatever it prints and paste it here.
-
-Also look for the line starting with Live fetch failed: in red — that's your exact error.
-
-Without one of those two outputs I'm guessing. The pattern (GitHub CSVs load, live feed red) almost always means one of:
-
-Apps Script deployment is private → returns login HTML instead of CSV
-
-Your network/extension blocks script.google.com
-
-The /exec URL was re-deployed and the old one is dead
-
-Any of those three will show up clearly in the two checks above. Run them and send me the result — one line is all I need.
-
-have you changed something in live prices?
-No — I didn't touch the live prices code at all. The only changes I made were in the Parity Model section:
-
-initParityEdits() — added lmeCash field
-
-computeParityDefaults() — added a block that fills lmeCash from CSP
-
-parityCalc() — uses edited lmeCash if present
-
-renderParity() — LME Cash became an input
-
-updateParityCard() — updates LME Cash input + badge uses edited cash
-
-Everything in the live feed is identical to your original file:
-
-LIVE_SHEET_URL — same URL, unchanged
-
-LIVE_REFRESH_MS, LIVE_TIMEOUT_MS — unchanged
-
-parseLiveCSV(), computeLiveLatest(), fetchLive(), startLiveFeed() — byte-for-byte the same
-
-LIVE_SYMBOL_MAP — unchanged
-
-renderPriceGrid() — unchanged
-
-So if live prices are erroring, it's the same error that was there before my changes — it just wasn't visible until now because the rest of the dashboard was loading.
-
-To prove it
-Diff the two versions on this one line in fetchLive():
-
-Your original:
-
-js
-const res = await fetch(LIVE_SHEET_URL, {
-  signal: controller.signal,
-  cache: 'no-store',
-  redirect: 'follow'
-});
-My final file:
-
-js
-const res = await fetch(LIVE_SHEET_URL, {
-  signal: controller.signal,
-  cache: 'no-store',
-  redirect: 'follow'
-});
-Identical. Same for everything else in the live path.
-
-The real issue
-The Apps Script endpoint AKfycbynNKaXnesHgbtzHC1udvwi7mmkGkRi2akYZCueRy9PFdN6aWVi3g79ThZsFyoceVs is not returning usable CSV from your current network/browser. That was true before I touched the file too.
-
-I still can't fix it without seeing either:
-
-What that URL shows in a new tab — CSV, login page, error, or blank?
-
-The Console line starting Live fetch failed: — the exact error name and message.
-
-Paste one of those two and I'll give you the fix in a single reply. Right now anything I say is a guess.
-
-what should i do now
-Here's the simplest path — three short steps, each one takes under a minute.
-
-Step 1 — Check if the Apps Script endpoint still works
-Paste this into your browser's address bar and open it in a new tab:
-
-text
-https://script.google.com/macros/s/AKfycbynNKaXnesHgbtzHC1udvwi7mmkGkRi2akYZCueRy9PFdN6aWVi3g79ThZsFyoceVs/exec
-You'll see one of these. Note which one:
-
-A) CSV text like time,symbol,price — endpoint is fine, go to Step 3
-
-B) A Google login page — the deployment is private, go to Step 2
-
-C) "Script function not found" or similar error — deployment broken, go to Step 2
-
-D) Blank page or 404 — URL is dead, go to Step 2
-
-E) "Sorry, unable to open the file" — Sheet permissions, go to Step 2
-
-Step 2 — Re-deploy the Apps Script (only if Step 1 showed B/C/D/E)
-Open the Apps Script editor for that sheet: https://script.google.com → find the project
-
-Click Deploy → Manage deployments
-
-Click the pencil (edit) icon on your deployment
-
-Set:
-
-Execute as: Me
-
-Who has access: Anyone
-
-Click Deploy
-
-Copy the new Web app URL (it may differ from the old one)
-
-Open the dashboard's HTML, find this line:
-
-js
-const LIVE_SHEET_URL = 'https://script.google.com/macros/s/AKfy.../exec';
-Replace it with the new URL
-
-Save and reload the dashboard
-
-Step 3 — If Step 1 showed CSV (endpoint is fine)
-Then your browser/network is blocking it. Test in this order:
-
-Open the dashboard in an Incognito window (Ctrl+Shift+N) — does the red pill go green?
-
-If yes → a browser extension is blocking it. Disable uBlock/Brave Shields/Privacy Badger/AdGuard for this page.
-
-If no → try on mobile hotspot (different network). If it works there, your Wi-Fi/router/VPN is filtering script.google.com.
-
-Step 4 — If nothing above works
-Just remove the live feed. Your dashboard is fully functional without it — all the charts, parity, CSP, news, sentiment run off metals.csv and lme_csp.csv from GitHub, not the live sheet.
-
-To hide the live section cleanly, in the HTML find this block and delete it:
-
-html
-<!-- Latest Prices (LIVE) -->
-<div class="grid">
-  <div class="card span-12">
-    <h3 style="justify-content:space-between;display:flex;">
-      <span><i class="fas fa-coins"></i> Latest Prices <span class="sub">— live from Google Sheet</span></span>
-      <span class="controls">
-        <span id="liveUpdated" style="font-size:0.68rem;color:var(--muted);"></span>
-      </span>
-    </h3>
-    <div id="priceGrid"></div>
-  </div>
-</div>
-And in the <script>, at the bottom where it says:
-
-js
-startLiveFeed();
-delete that line. The red pill will stop showing and the rest works as before.
-
-What I recommend right now
-Do Step 1. Open that URL. Just tell me which letter (A/B/C/D/E) you see. That single answer tells us whether the problem is the sheet, the deployment, or your browser — and then the fix is one line.
-
-Don't guess or re-edit code yet. Just open the URL and tell me what it shows.
-
-This response is AI-generated, for reference only.
-this csv downloaded
-That's the whole problem. The endpoint is working — it's returning CSV. But two things are wrong with the data that make the parser fail:
-
-What's actually broken
-Your CSV has no comma separators — the columns are separated by tabs, not commas. Look at the image: Time Symbol Price Message are wide apart, which means tab-delimited, not comma-delimited.
-
-Your parser expects commas — parseCSVLine() splits on ,. With tab-delimited input, the whole row becomes one cell → symbol and price never get extracted → parseLiveCSV returns empty → "Empty parse" error → red pill.
-
-Two ways to fix it
-Option A — Fix the Apps Script (cleanest)
-In your Apps Script, when you build the CSV, join columns with commas:
-
-js
-// What you probably have (tab):
-rows.push([time, symbol, price, message].join('\t'));
-
-// Change to comma:
-rows.push([time, symbol, price, message].join(','));
-If you can find the line that builds the output, replace the \t with ,. Then re-deploy and the existing dashboard will just work.
-
-Option B — Fix the dashboard to accept both (safest, no Apps Script changes)
-Change parseCSVLine() in the dashboard to split on either comma or tab:
-
-Find this in the <script>:
-
-js
-function parseCSVLine(line) {
-  const out = [];
-  let cur = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') {
-      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if (ch === ',' && !inQuotes) {
-      out.push(cur); cur = '';
-    } else {
-      cur += ch;
-    }
-  }
-  out.push(cur);
-  return out.map(s => s.trim());
-}
-Replace with:
-
-js
-function parseCSVLine(line) {
-  // Auto-detect delimiter: tab if the line has tabs, else comma
-  const delim = line.indexOf('\t') >= 0 ? '\t' : ',';
-  const out = [];
-  let cur = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') {
-      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if (ch === delim && !inQuotes) {
-      out.push(cur); cur = '';
-    } else {
-      cur += ch;
-    }
-  }
-  out.push(cur);
-  return out.map(s => s.trim());
-}
-This makes every CSV reader in the dashboard accept tabs too — the live feed, metals.csv, lme_csp.csv, SBI. No downside since comma files still work.
-
-After the fix
-Reload the dashboard. You should see:
-
-Green pill: Live · 12 symbols
-
-Latest Prices cards filled with LME Copper, LME Zinc, LME Aluminium, MCX Copper, MCX Zinc, MCX Aluminium, Gold, Silver, DXY, US 2Y, US 5Y, US 10Y
-
-One more thing to check after it works
-Your screenshot shows every row is LME Zinc with slightly different prices and the same date 2026-09-2. That suggests the sheet is appending a new row every few seconds (a tick log), not a snapshot. Your computeLiveLatest() keeps the last row per symbol — that's fine for a snapshot — but if the sheet is a tick log you'll want to confirm all 12 symbols appear eventually. If they don't, the Apps Script filter might only be writing Zinc rows, which is a separate problem to fix in the sheet/script itself.
-
-Recommendation: apply Option B (the one-line delimiter fix) — it's non-destructive and makes the dashboard robust to both formats. Then reload and tell me if the pill goes green.
-
-
-!DOCTYPE html.txt
