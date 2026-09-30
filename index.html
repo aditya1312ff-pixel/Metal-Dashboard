@@ -673,9 +673,13 @@ const REPO_BRANCH = 'main';
 const METALS_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/metals.csv`;
 const CSP_URL    = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/lme_csp.csv`;
 
-const LIVE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbynNKaXnesHgbtzHC1udvwi7mmkGkRi2akYZCueRy9PFdN6aWVi3g79ThZsFyoceVs/exec';
+const LIVE_REAL_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vROr3cjVUMAqL9qXYAp6rxcekcbiacZmQ4JfSMOjgoEKKAxhLLDCsMddPf6G3ZgnN0b4dWl7RrghaZ9/pub?gid=0&single=true&output=csv';
 const LIVE_REFRESH_MS = 120000;    // 2 minutes
 const LIVE_TIMEOUT_MS = 45000;     // 45s timeout
+
+const LIVE_PROXIES = [
+  { name: 'cloudflare', wrap: u => 'https://round-cake-56f6.aditya1312ff.workers.dev/?url=' + encodeURIComponent(u) },
+];
 
 const LIVE_SYMBOL_MAP = {
   'COPPER':      { label: 'LME Copper',    group: 'lme',      unit: '$/t', role: 'lme', metal: 'Copper' },
@@ -684,12 +688,20 @@ const LIVE_SYMBOL_MAP = {
   'COPPER1!':    { label: 'MCX Copper',    group: 'mcx', unit: '₹/kg', role: 'mcx', metal: 'Copper' },
   'ZINC1!':      { label: 'MCX Zinc',      group: 'mcx', unit: '₹/kg', role: 'mcx', metal: 'Zinc' },
   'ALUMINIUM1!': { label: 'MCX Aluminium', group: 'mcx', unit: '₹/kg', role: 'mcx', metal: 'Aluminium' },
+  'ALUMINII1':   { label: 'MCX Alu Mini',  group: 'mcx', unit: '₹/kg', role: 'mcx', metal: 'Aluminium' },
   'XAUUSD':      { label: 'Gold Spot',     group: 'precious', unit: '$/oz' },
   'SILVER':      { label: 'Silver Spot',   group: 'precious', unit: '$/oz' },
+  'SILVER1!':    { label: 'MCX Silver',    group: 'mcx', unit: '₹/kg' },
+  'GOLDMI!':     { label: 'MCX Gold Mini', group: 'mcx', unit: '₹/10g' },
+  'SILVERMI!':   { label: 'MCX Silver Mini', group: 'mcx', unit: '₹/kg' },
+  'GOLDM2!':     { label: 'MCX Gold (2nd)', group: 'mcx', unit: '₹/10g' },
+  'SILVERM2!':   { label: 'MCX Silver (2nd)', group: 'mcx', unit: '₹/kg' },
   'DXY':         { label: 'Dollar Index',  group: 'fx',       unit: '' },
+  'USDINR':      { label: 'USD/INR',       group: 'fx',       unit: '' },
   'US02Y':       { label: 'US 2Y Yield',   group: 'yield',    unit: '%' },
   'US05Y':       { label: 'US 5Y Yield',   group: 'yield',    unit: '%' },
   'US10Y':       { label: 'US 10Y Yield',  group: 'yield',    unit: '%' },
+  'US30Y':       { label: 'US 30Y Yield',  group: 'yield',    unit: '%' },
 };
 
 const LIVE_GROUP_ORDER = ['lme','mcx','precious','fx','yield'];
@@ -706,6 +718,8 @@ const LIVE_GROUP_TITLES = {
    CSV PARSER + HELPERS
    ======================================================================== */
 function parseCSVLine(line) {
+  // Auto-detect delimiter: tab if the line has tabs, else comma
+  const delim = line.indexOf('\t') >= 0 ? '\t' : ',';
   const out = [];
   let cur = '';
   let inQuotes = false;
@@ -714,7 +728,7 @@ function parseCSVLine(line) {
     if (ch === '"') {
       if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
       else inQuotes = !inQuotes;
-    } else if (ch === ',' && !inQuotes) {
+    } else if (ch === delim && !inQuotes) {
       out.push(cur); cur = '';
     } else {
       cur += ch;
@@ -800,7 +814,7 @@ const PARITY_METALS = [
     dutyPct:8.25, defaultPremium:65,  cls:'al', color:'#93a2b5' },
 ];
 const parityEdits = {};
-const parityEdited = new Set();   // tracks fields the user manually edited
+const parityEdited = new Set();
 
 /* ========================================================================
    HELPERS
@@ -919,20 +933,37 @@ function computeLiveLatest(rows) {
   }
   return out;
 }
+async function fetchLiveOnce(timeoutMs) {
+  let lastErr = null;
+  for (const p of LIVE_PROXIES) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(p.wrap(LIVE_REAL_URL), {
+        signal: controller.signal,
+        cache: 'no-store',
+        redirect: 'follow'
+      });
+      clearTimeout(timer);
+      if (!res.ok) { lastErr = new Error('HTTP ' + res.status); continue; }
+      const txt = await res.text();
+      if (!txt || txt.length < 50 || !/symbol/i.test(txt)) {
+        lastErr = new Error('Not CSV'); continue;
+      }
+      return { txt, proxy: p.name };
+    } catch (e) {
+      clearTimeout(timer);
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('All proxies failed');
+}
 async function fetchLive() {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), LIVE_TIMEOUT_MS);
   try {
-    const res = await fetch(LIVE_SHEET_URL, {
-      signal: controller.signal,
-      cache: 'no-store',
-      redirect: 'follow'
-    });
-    clearTimeout(timer);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const txt = await res.text();
+    const { txt, proxy } = await fetchLiveOnce(LIVE_TIMEOUT_MS);
     const rows = parseLiveCSV(txt);
     if (!rows.length) throw new Error('Empty parse');
+
     LIVE_RAW = rows;
     LIVE_LATEST = computeLiveLatest(rows);
     liveLastFetch = new Date();
@@ -941,15 +972,14 @@ async function fetchLive() {
     const pill = document.getElementById('liveStatus');
     if (pill) {
       pill.className = 'live-pill';
-      pill.innerHTML = `<span class="live-dot"></span> Live · ${Object.keys(LIVE_LATEST).length} symbols`;
+      pill.innerHTML = `<span class="live-dot"></span> Live · ${Object.keys(LIVE_LATEST).length} symbols · ${proxy}`;
     }
     const updatedEl = document.getElementById('liveUpdated');
     if (updatedEl) updatedEl.textContent = 'Updated ' + liveLastFetch.toLocaleTimeString();
 
     renderPriceGrid();
-    renderParity();   // parity now updates from live every cycle
+    renderParity();
   } catch (e) {
-    clearTimeout(timer);
     console.error('Live fetch failed:', e);
     liveLastError = true;
     const pill = document.getElementById('liveStatus');
@@ -959,7 +989,7 @@ async function fetchLive() {
         pill.innerHTML = `<span class="live-dot stale"></span> Stale · last ok ${liveLastFetch.toLocaleTimeString()}`;
       } else {
         pill.className = 'live-pill error';
-        pill.innerHTML = `<span class="live-dot error"></span> Live: error`;
+        pill.innerHTML = `<span class="live-dot error"></span> ${e.name}: ${e.message}`;
       }
     }
   }
@@ -980,7 +1010,7 @@ function renderPriceGrid() {
   for (const sym of Object.keys(LIVE_LATEST)) {
     const meta = LIVE_SYMBOL_MAP[sym];
     if (!meta) continue;
-    const g = meta.group;
+    const g = meta.group || 'other';
     if (!groups[g]) groups[g] = [];
     groups[g].push({ symbol: sym, ...LIVE_LATEST[sym], meta });
   }
@@ -1198,7 +1228,7 @@ function initParityEdits() {
   for (const m of PARITY_METALS) {
     if (parityEdits[m.key]) continue;
     parityEdits[m.key] = {
-      lme3m: null, basis: null, premium: m.defaultPremium,
+      lme3m: null, lmeCash: null, basis: null, premium: m.defaultPremium,
       dutyPct: m.dutyPct, mcx: null
     };
   }
@@ -1207,7 +1237,6 @@ function initParityEdits() {
 function computeParityDefaults() {
   initParityEdits();
 
-  // SBI TT / USD-INR — only set if not user-edited
   if (!parityEdited.has('__usdinr')) {
     let sbiLatest = null;
     if (SBI_RAW.length) sbiLatest = SBI_RAW[SBI_RAW.length-1].value;
@@ -1222,7 +1251,6 @@ function computeParityDefaults() {
   for (const m of PARITY_METALS) {
     const e = parityEdits[m.key];
 
-    // LME 3M — refresh from live unless user edited
     if (!parityEdited.has(m.key + '.lme3m')) {
       const lmeSymbol = m.key === 'Cu' ? 'COPPER' : m.key === 'Zn' ? 'ZINC' : 'ALUMINIUM';
       let lme3m = null;
@@ -1235,14 +1263,18 @@ function computeParityDefaults() {
       e.lme3m = lme3m;
     }
 
-    // Basis — from CSP (unless user edited)
     if (!parityEdited.has(m.key + '.basis') && CSP_RAW.length) {
       const last = CSP_RAW[CSP_RAW.length-1];
       const csp = last[m.lmeCspKey] || {};
       if (csp.cash != null && csp.threeM != null) e.basis = csp.cash - csp.threeM;
     }
 
-    // MCX — refresh from live unless user edited
+    if (!parityEdited.has(m.key + '.lmeCash') && CSP_RAW.length) {
+      const last = CSP_RAW[CSP_RAW.length-1];
+      const csp = last[m.lmeCspKey] || {};
+      if (csp.cash != null) e.lmeCash = csp.cash;
+    }
+
     if (!parityEdited.has(m.key + '.mcx')) {
       const mcxSymbol = m.key === 'Cu' ? 'COPPER1!' : m.key === 'Zn' ? 'ZINC1!' : 'ALUMINIUM1!';
       let mcx = null;
@@ -1265,7 +1297,11 @@ function parityCalc(m) {
   const dutyPct = numOrNull(e.dutyPct) ?? 0;
   const mcx = numOrNull(e.mcx);
 
-  const lmeCash = lme3m != null ? lme3m + basis : null;
+  const lmeCashEdited = numOrNull(e.lmeCash);
+  const lmeCash = (parityEdited.has(m.key + '.lmeCash') && lmeCashEdited != null)
+    ? lmeCashEdited
+    : (lme3m != null ? lme3m + basis : null);
+
   const cost = lmeCash != null ? lmeCash + premium : null;
   const inr = (cost != null && usdinr != null) ? cost * usdinr : null;
   const duty = inr != null ? inr * (dutyPct / 100) : null;
@@ -1304,6 +1340,7 @@ function renderParity() {
     const mcxEdited = parityEdited.has(m.key + '.mcx');
     const lmeCls = lmeEdited ? 'edited' : 'live';
     const mcxCls = mcxEdited ? 'edited' : 'live';
+    const lmeCashCls = parityEdited.has(m.key + '.lmeCash') ? 'edited' : 'live';
 
     html += `<div class="parity-card ${m.cls}" data-metal="${m.key}">
       <div class="pc-header">
@@ -1322,8 +1359,8 @@ function renderParity() {
       </div>
 
       <div class="parity-row">
-        <div class="pr-label">LME ${m.name} Cash</div>
-        <div class="pr-value" data-calc="lmeCash">${c.lmeCash != null ? fmt(c.lmeCash, 2) : '—'}</div>
+        <div class="pr-label">LME ${m.name} Cash (USD/t)</div>
+        <input type="number" class="pr-input ${lmeCashCls}" data-metal="${m.key}" data-field="lmeCash" value="${e.lmeCash ?? (c.lmeCash ?? '')}" step="0.01">
       </div>
 
       <div class="parity-row">
@@ -1415,7 +1452,11 @@ function updateParityCard(metalKey) {
   const c = parityCalc(m);
   const e = parityEdits[metalKey];
 
-  card.querySelector('[data-calc="lmeCash"]').textContent = c.lmeCash != null ? fmt(c.lmeCash, 2) : '—';
+  const lmeCashInput = card.querySelector('input[data-field="lmeCash"]');
+  if (lmeCashInput && document.activeElement !== lmeCashInput) {
+    lmeCashInput.value = e.lmeCash ?? (c.lmeCash ?? '');
+  }
+
   card.querySelector('[data-calc="cost"]').textContent = c.cost != null ? fmt(c.cost, 2) : '—';
   const usdEl = card.querySelector('[data-calc="usdinr"]');
   if (usdEl) usdEl.textContent = parityEdits.__usdinr != null ? fmt(parityEdits.__usdinr, 2) : '—';
@@ -1435,7 +1476,12 @@ function updateParityCard(metalKey) {
     footer.textContent = `Duty: ${dp}% ${dp === 0 ? '(duty free)' : ''}`;
   }
 
-  const basis = numOrNull(e.basis) ?? 0;
+  let basis = numOrNull(e.basis) ?? 0;
+  if (parityEdited.has(metalKey + '.lmeCash')) {
+    const cashV = numOrNull(e.lmeCash);
+    const threeV = numOrNull(e.lme3m);
+    if (cashV != null && threeV != null) basis = cashV - threeV;
+  }
   const badge = card.querySelector('.pc-badge');
   badge.classList.remove('bwd', 'ctg', 'flat');
   if (basis > 0.5) { badge.classList.add('bwd'); badge.textContent = 'Backwardation'; }
@@ -2537,7 +2583,6 @@ async function fetchSbiTT(url) {
       (parsed.details && parsed.details.length ? ' · ' + parsed.details[0] : '');
     statusEl.className = 'status ok';
     renderSbiChart();
-    // Only update parity USD/INR if user hasn't manually edited it
     if (!parityEdited.has('__usdinr')) {
       parityEdits.__usdinr = SBI_RAW.length ? SBI_RAW[SBI_RAW.length-1].value : null;
       renderParity();
