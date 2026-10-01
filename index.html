@@ -943,6 +943,14 @@ const PARITY_METALS = [
   { key:'Al', name:'Aluminium', lme3mSeries:'LME Aluminium', lmeCspKey:'Al', mcxSeries:'MCX Aluminium',
     dutyPct:8.25, defaultPremium:65,  defaultFreight:1500, cls:'al', color:'#93a2b5' },
 ];
+
+/* Default duty & freight (used only when nothing saved/edited yet) */
+const PARITY_FIXED = {
+  Cu: { dutyPct: 0,    freight: 0    },   // Copper: duty free, no freight
+  Zn: { dutyPct: 5.5,  freight: 0    },   // Zinc: 5.5% duty, no freight
+  Al: { dutyPct: 8.25, freight: 1500 },   // Aluminium: 8.25% duty, ₹1500/MT freight
+};
+
 const parityEdits = {};
 const parityEdited = new Set();
 
@@ -1300,11 +1308,16 @@ async function fetchSbiFromPdf() {
    ======================================================================== */
 function initParityEdits() {
   for (const m of PARITY_METALS) {
-    if (parityEdits[m.key]) continue;
-    parityEdits[m.key] = {
-      lme3m: null, basis: null, premium: m.defaultPremium,
-      dutyPct: m.dutyPct, freight: m.defaultFreight ?? 0, mcx: null
-    };
+    const fx = PARITY_FIXED[m.key] || { dutyPct: m.dutyPct, freight: m.defaultFreight ?? 0 };
+    if (!parityEdits[m.key]) {
+      parityEdits[m.key] = {
+        lme3m: null, basis: null, premium: m.defaultPremium,
+        dutyPct: fx.dutyPct, freight: fx.freight, mcx: null
+      };
+    }
+    // If user has never edited duty/freight, keep defaults from PARITY_FIXED (so fresh load shows them)
+    if (!parityEdited.has(m.key + '.dutyPct')) parityEdits[m.key].dutyPct = fx.dutyPct;
+    if (!parityEdited.has(m.key + '.freight')) parityEdits[m.key].freight = fx.freight;
   }
   if (parityEdits.__usdinr === undefined) parityEdits.__usdinr = null;
 }
@@ -1448,7 +1461,7 @@ function renderParity() {
       ev.target.classList.add('edited');
       ev.target.classList.remove('live');
       updateParityCard(metal);
-      if (field === 'basis' || field === 'premium') scheduleSaveParityOverrides();
+      if (field === 'basis' || field === 'premium' || field === 'dutyPct' || field === 'freight') scheduleSaveParityOverrides();
     });
   });
   if (usdInp && !usdInp.dataset.wired) {
@@ -1492,7 +1505,7 @@ function updateParityCard(metalKey) {
 }
 
 /* ========================================================================
-   PARITY OVERRIDES (basis + premium) — shared via GitHub
+   PARITY OVERRIDES (basis + premium + duty + freight) — shared via GitHub
    ======================================================================== */
 async function loadParityOverrides() {
   try {
@@ -1520,6 +1533,26 @@ async function loadParityOverrides() {
         parityEdited.add(k + '.premium');
       }
     }
+    // Duty %
+    for (const k of ['Cu','Zn','Al']) {
+      const key = k + '_dutyPct';
+      if (parityEdited.has(k + '.dutyPct')) continue;
+      if (typeof data[key] === 'number' && isFinite(data[key])) {
+        if (!parityEdits[k]) parityEdits[k] = {};
+        parityEdits[k].dutyPct = data[key];
+        parityEdited.add(k + '.dutyPct');
+      }
+    }
+    // Freight
+    for (const k of ['Cu','Zn','Al']) {
+      const key = k + '_freight';
+      if (parityEdited.has(k + '.freight')) continue;
+      if (typeof data[key] === 'number' && isFinite(data[key])) {
+        if (!parityEdits[k]) parityEdits[k] = {};
+        parityEdits[k].freight = data[key];
+        parityEdited.add(k + '.freight');
+      }
+    }
     renderParity();
   } catch (e) {
     console.warn('parity_overrides.json load failed:', e);
@@ -1540,6 +1573,12 @@ async function saveParityOverrides() {
     Cu_premium: numOrNull(parityEdits.Cu?.premium),
     Zn_premium: numOrNull(parityEdits.Zn?.premium),
     Al_premium: numOrNull(parityEdits.Al?.premium),
+    Cu_dutyPct: numOrNull(parityEdits.Cu?.dutyPct),
+    Zn_dutyPct: numOrNull(parityEdits.Zn?.dutyPct),
+    Al_dutyPct: numOrNull(parityEdits.Al?.dutyPct),
+    Cu_freight: numOrNull(parityEdits.Cu?.freight),
+    Zn_freight: numOrNull(parityEdits.Zn?.freight),
+    Al_freight: numOrNull(parityEdits.Al?.freight),
   };
   const api = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${OVERRIDES_FILE_PATH}`;
   try {
@@ -1551,7 +1590,7 @@ async function saveParityOverrides() {
       method: 'PUT',
       headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message: `Parity overrides: Cu=b${body.Cu_basis ?? 'auto'}/p${body.Cu_premium ?? 'auto'} Zn=b${body.Zn_basis ?? 'auto'}/p${body.Zn_premium ?? 'auto'} Al=b${body.Al_basis ?? 'auto'}/p${body.Al_premium ?? 'auto'}`,
+        message: `Parity overrides: Cu=b${body.Cu_basis ?? 'auto'}/p${body.Cu_premium ?? 'auto'}/d${body.Cu_dutyPct ?? 'auto'}/f${body.Cu_freight ?? 'auto'} Zn=b${body.Zn_basis ?? 'auto'}/p${body.Zn_premium ?? 'auto'}/d${body.Zn_dutyPct ?? 'auto'}/f${body.Zn_freight ?? 'auto'} Al=b${body.Al_basis ?? 'auto'}/p${body.Al_premium ?? 'auto'}/d${body.Al_dutyPct ?? 'auto'}/f${body.Al_freight ?? 'auto'}`,
         content: b64encodeUtf8(JSON.stringify(body, null, 2)),
         branch: REPO_BRANCH,
         ...(sha ? { sha } : {}),
@@ -2839,6 +2878,7 @@ function wireControls() {
     for (const k of Object.keys(parityEdits)) delete parityEdits[k];
     parityEdits.__usdinr = null;
     parityEdited.clear();
+    initParityEdits();          // re-applies fixed default duty/freight
     scheduleSaveParityOverrides();
     renderParity();
   });
