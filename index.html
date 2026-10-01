@@ -1454,7 +1454,7 @@ function renderParity() {
       ev.target.classList.add('edited');
       ev.target.classList.remove('live');
       updateParityCard(metal);
-      if (field === 'basis') scheduleSaveParityOverrides();
+      if (field === 'basis' || field === 'premium') scheduleSaveParityOverrides();
     });
   });
   if (usdInp && !usdInp.dataset.wired) {
@@ -1498,24 +1498,33 @@ function updateParityCard(metalKey) {
 }
 
 /* ========================================================================
-   PARITY BASIS OVERRIDES — shared via GitHub (FIXED)
+   PARITY OVERRIDES (basis + premium) — shared via GitHub
    ======================================================================== */
 async function loadParityOverrides() {
   try {
     const res = await fetch(OVERRIDES_URL + Date.now(), { cache: 'no-store' });
     if (!res.ok) return;
     const data = await res.json();
+
+    // Basis
     for (const k of ['Cu','Zn','Al']) {
       const key = k + '_basis';
-      // Only apply if the user hasn't manually edited this session
       if (parityEdited.has(k + '.basis')) continue;
       if (typeof data[key] === 'number' && isFinite(data[key])) {
         if (!parityEdits[k]) parityEdits[k] = {};
         parityEdits[k].basis = data[key];
         parityEdited.add(k + '.basis');
       }
-      // Note: we deliberately DO NOT delete the flag when value is null.
-      // Once a field has been touched by the user (in any session), it stays dirty.
+    }
+    // Premium
+    for (const k of ['Cu','Zn','Al']) {
+      const key = k + '_premium';
+      if (parityEdited.has(k + '.premium')) continue;
+      if (typeof data[key] === 'number' && isFinite(data[key])) {
+        if (!parityEdits[k]) parityEdits[k] = {};
+        parityEdits[k].premium = data[key];
+        parityEdited.add(k + '.premium');
+      }
     }
     renderParity();
   } catch (e) {
@@ -1530,11 +1539,13 @@ function scheduleSaveParityOverrides() {
 async function saveParityOverrides() {
   const token = getGithubToken();
   if (!token) { console.warn('No token — parity overrides not saved.'); return; }
-  // FIXED: save whatever is in parityEdits, regardless of the "edited" flag
   const body = {
     Cu_basis: numOrNull(parityEdits.Cu?.basis),
     Zn_basis: numOrNull(parityEdits.Zn?.basis),
     Al_basis: numOrNull(parityEdits.Al?.basis),
+    Cu_premium: numOrNull(parityEdits.Cu?.premium),
+    Zn_premium: numOrNull(parityEdits.Zn?.premium),
+    Al_premium: numOrNull(parityEdits.Al?.premium),
   };
   const api = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${OVERRIDES_FILE_PATH}`;
   try {
@@ -1546,7 +1557,7 @@ async function saveParityOverrides() {
       method: 'PUT',
       headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message: `Parity basis: Cu=${body.Cu_basis ?? 'auto'} Zn=${body.Zn_basis ?? 'auto'} Al=${body.Al_basis ?? 'auto'}`,
+        message: `Parity overrides: Cu=b${body.Cu_basis ?? 'auto'}/p${body.Cu_premium ?? 'auto'} Zn=b${body.Zn_basis ?? 'auto'}/p${body.Zn_premium ?? 'auto'} Al=b${body.Al_basis ?? 'auto'}/p${body.Al_premium ?? 'auto'}`,
         content: b64encodeUtf8(JSON.stringify(body, null, 2)),
         branch: REPO_BRANCH,
         ...(sha ? { sha } : {}),
