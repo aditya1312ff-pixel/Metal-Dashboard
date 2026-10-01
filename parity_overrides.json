@@ -1,8 +1,8 @@
 {
-  "Cu_basis": 0,
-  "Zn_basis": 0,
-  "Al_basis": 0,
+  "Cu_basis": 33.5,
+  "Zn_basis": 79,
+  "Al_basis": -1.5,
   "Cu_premium": 285,
   "Zn_premium": 126,
-  "Al_premium": 72
+  "Al_premium": 65
 }
