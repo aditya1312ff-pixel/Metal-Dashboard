@@ -155,8 +155,6 @@
   .parity-card .pc-badge.bwd { background:rgba(46,204,113,0.18); color:var(--green); }
   .parity-card .pc-badge.ctg { background:rgba(231,76,60,0.18); color:var(--red); }
   .parity-card .pc-badge.flat{ background:rgba(124,138,160,0.18); color:var(--muted); }
-  .parity-card .pc-badge.locked { box-shadow: 0 0 0 1px var(--accent); }
-  .parity-card .pc-badge[data-badge] { user-select:none; }
   .parity-row { display:grid; grid-template-columns: 1fr 120px; gap:8px; align-items:center; padding:6px 0; border-bottom:1px dashed #1a2334; position:relative; }
   .parity-row:last-child { border-bottom:none; }
   .parity-row .pr-label { font-size:0.72rem; color:var(--muted); }
@@ -353,7 +351,7 @@
 
   <div class="sbi-bar">
     <span class="title"><i class="fas fa-university"></i> SBI TT Sell</span>
-    <button class="btn small" id="sbiPdfBtn" title="Latest USD/INR TT SELL from SBI PDF"><i class="fas fa-file-pdf"></i> PDF</button>
+    <button class="btn small" id="sbiPdfBtn" title="Latest USD/INR from SBI PDF"><i class="fas fa-file-pdf"></i> PDF</button>
     <button class="btn small" id="sbiCsvBtn" title="Historical SBI TT Sell from GitHub CSV"><i class="fas fa-file-csv"></i> CSV</button>
     <input type="text" id="sbiUrl" value="https://raw.githubusercontent.com/sahilgupta/sbi-fx-ratekeeper/main/csv_files/SBI_REFERENCE_RATES_USD.csv">
     <span class="status" id="sbiStatus">Loading…</span>
@@ -398,7 +396,7 @@
         <h3 style="justify-content:space-between;display:flex;">
           <span><i class="fas fa-calculator"></i> Import Parity Model <span class="sub">— LME → Landed ₹ vs MCX</span></span>
           <span class="controls">
-            <button class="btn" id="parityResetBtn" title="Reset all edits and badge overrides"><i class="fas fa-undo"></i> Reset</button>
+            <button class="btn" id="parityResetBtn" title="Reset all edits"><i class="fas fa-undo"></i> Reset</button>
           </span>
         </h3>
 
@@ -761,13 +759,13 @@ const NALCO_URL = 'https://mudira.nalcoindia.co.in:3443/CUSTOMER/notification';
 const NALCO_REFRESH_MS = 30 * 60 * 1000;
 
 const LIVE_SYMBOL_MAP = {
-  'COPPER':      { label: 'LME Copper',    group: 'lme',      unit: '$/t', role: 'lme', metal: 'Copper' },
-  'ZINC':        { label: 'LME Zinc',      group: 'lme',      unit: '$/t', role: 'lme', metal: 'Zinc' },
-  'ALUMINIUM':   { label: 'LME Aluminium', group: 'lme',      unit: '$/t', role: 'lme', metal: 'Aluminium' },
-  'COPPER1!':    { label: 'MCX Copper',    group: 'mcx', unit: '₹/kg', role: 'mcx', metal: 'Copper' },
-  'ZINC1!':      { label: 'MCX Zinc',      group: 'mcx', unit: '₹/kg', role: 'mcx', metal: 'Zinc' },
-  'ALUMINIUM1!': { label: 'MCX Aluminium', group: 'mcx', unit: '₹/kg', role: 'mcx', metal: 'Aluminium' },
-  'ALUMINII1':   { label: 'MCX Alu Mini',  group: 'mcx', unit: '₹/kg', role: 'mcx', metal: 'Aluminium' },
+  'COPPER':      { label: 'LME Copper',    group: 'lme',      unit: '$/t' },
+  'ZINC':        { label: 'LME Zinc',      group: 'lme',      unit: '$/t' },
+  'ALUMINIUM':   { label: 'LME Aluminium', group: 'lme',      unit: '$/t' },
+  'COPPER1!':    { label: 'MCX Copper',    group: 'mcx', unit: '₹/kg' },
+  'ZINC1!':      { label: 'MCX Zinc',      group: 'mcx', unit: '₹/kg' },
+  'ALUMINIUM1!': { label: 'MCX Aluminium', group: 'mcx', unit: '₹/kg' },
+  'ALUMINII1':   { label: 'MCX Alu Mini',  group: 'mcx', unit: '₹/kg' },
   'XAUUSD':      { label: 'Gold Spot',     group: 'precious', unit: '$/oz' },
   'SILVER':      { label: 'Silver Spot',   group: 'precious', unit: '$/oz' },
   'SILVER1!':    { label: 'MCX Silver',    group: 'mcx', unit: '₹/kg' },
@@ -953,11 +951,7 @@ const PARITY_METALS = [
 ];
 const parityEdits = {};
 const parityEdited = new Set();
-const parityBadgeLock = {};   // { Cu:'bwd'|'ctg'|'flat' } — shared override via GitHub
 
-/* ========================================================================
-   SAFE STORAGE (works in sandboxed iframes)
-   ======================================================================== */
 const SAFE_STORE = (() => {
   const mem = {};
   let ok = false;
@@ -969,6 +963,7 @@ const SAFE_STORE = (() => {
   };
 })();
 const GITHUB_TOKEN_KEY = 'gh_pat_csp';
+const CSP_FILE_PATH = 'lme_csp.csv';
 
 /* ========================================================================
    LIVE FEED
@@ -1173,10 +1168,6 @@ function parseCSPCSV(text) {
   CSP_RAW = rows;
   return { ok: true, msg: `Loaded ${rows.length} CSP rows`, details: detectedCols.map(c => 'Detected: ' + c) };
 }
-
-/* ========================================================================
-   COMPUTE LATEST
-   ======================================================================== */
 function computeLatest() {
   latest = {};
   SERIES_NAMES.forEach(name => {
@@ -1195,7 +1186,7 @@ function computeLatest() {
 }
 
 /* ========================================================================
-   SBI — CSV (history) + PDF (latest)
+   SBI — CSV history + PDF latest
    ======================================================================== */
 function parseSBICSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
@@ -1227,7 +1218,6 @@ function parseSBICSV(text) {
     rows: dedup
   };
 }
-
 async function fetchSbiFromCsv(url) {
   const statusEl = document.getElementById('sbiStatus');
   if (!url) { statusEl.textContent = 'No CSV URL.'; statusEl.className = 'status err'; return; }
@@ -1270,7 +1260,6 @@ async function fetchSbiFromCsv(url) {
     statusEl.className = 'status err';
   }
 }
-
 async function fetchSbiFromPdf() {
   const statusEl = document.getElementById('sbiStatus');
   statusEl.textContent = 'Fetching SBI PDF…'; statusEl.className = 'status';
@@ -1387,6 +1376,14 @@ function parityCalc(m) {
   const net = (landedKg != null && mcx != null) ? landedKg - mcx : null;
   return { lmeCash, cost, inr, duty, subtotal, landedMt, landedKg, net };
 }
+
+/* Badge derived purely from basis: > 0 Bwd, < 0 Ctg, = 0 Flat */
+function badgeFromBasis(basis) {
+  if (basis > 0) return { cls: 'bwd', txt: 'Backwardation' };
+  if (basis < 0) return { cls: 'ctg', txt: 'Contango' };
+  return { cls: 'flat', txt: 'Flat' };
+}
+
 function renderParity() {
   const grid = document.getElementById('parityGrid');
   if (!grid) return;
@@ -1405,11 +1402,7 @@ function renderParity() {
     const e = parityEdits[m.key];
     const c = parityCalc(m);
     const basis = numOrNull(e.basis) ?? 0;
-    const locked = parityBadgeLock[m.key];
-    const autoCls = basis > 0.5 ? 'bwd' : basis < -0.5 ? 'ctg' : 'flat';
-    const autoTxt = basis > 0.5 ? 'Backwardation' : basis < -0.5 ? 'Contango' : 'Flat';
-    const badgeCls = locked || autoCls;
-    const badgeTxt = locked ? (locked === 'bwd' ? 'Backwardation' : locked === 'ctg' ? 'Contango' : 'Flat') : autoTxt;
+    const badge = badgeFromBasis(basis);
     const netCls = c.net == null ? '' : (c.net < 0 ? 'pos' : 'neg');
     const netTxt = c.net != null ? '₹' + fmt(c.net, 2) : '—';
     const lmeCls = parityEdited.has(m.key + '.lme3m') ? 'edited' : 'live';
@@ -1417,22 +1410,36 @@ function renderParity() {
     html += `<div class="parity-card ${m.cls}" data-metal="${m.key}">
       <div class="pc-header">
         <span class="pc-title" style="color:${m.color}">${m.name}</span>
-        <span class="pc-badge ${badgeCls} ${locked ? 'locked' : ''}" data-metal="${m.key}" data-badge="1" style="cursor:pointer;" title="Click to cycle: Auto → Bwd → Ctg → Flat">${badgeTxt}</span>
+        <span class="pc-badge ${badge.cls}">${badge.txt}</span>
       </div>
-      <div class="parity-row"><div class="pr-label">LME ${m.name} 3M (USD/t)</div><input type="number" class="pr-input ${lmeCls}" data-metal="${m.key}" data-field="lme3m" value="${e.lme3m ?? ''}" step="0.01"></div>
-      <div class="parity-row"><div class="pr-label">Basis (− Ctg / + Bwd)</div><input type="number" class="pr-input ${parityEdited.has(m.key+'.basis') ? 'edited' : ''}" data-metal="${m.key}" data-field="basis" value="${e.basis ?? 0}" step="0.01"></div>
-      <div class="parity-row"><div class="pr-label">LME ${m.name} Cash (USD/t)</div><div class="pr-value" data-calc="lmeCash">${c.lmeCash != null ? fmt(c.lmeCash, 2) : '—'}</div></div>
-      <div class="parity-row"><div class="pr-label">Premium</div><input type="number" class="pr-input ${parityEdited.has(m.key+'.premium') ? 'edited' : ''}" data-metal="${m.key}" data-field="premium" value="${e.premium ?? 0}" step="0.01"></div>
-      <div class="parity-row"><div class="pr-label">Cost</div><div class="pr-value" data-calc="cost">${c.cost != null ? fmt(c.cost, 2) : '—'}</div></div>
-      <div class="parity-row"><div class="pr-label">SBI TT (USD/INR)</div><div class="pr-value" data-calc="usdinr">${parityEdits.__usdinr != null ? fmt(parityEdits.__usdinr, 2) : '—'}</div></div>
-      <div class="parity-row"><div class="pr-label">${m.name.toUpperCase()} INR</div><div class="pr-value" data-calc="inr">${c.inr != null ? '₹ ' + fmt(c.inr, 2) : '—'}</div></div>
-      <div class="parity-row"><div class="pr-label">Import Duty %</div><input type="number" class="pr-input ${parityEdited.has(m.key+'.dutyPct') ? 'edited' : ''}" data-metal="${m.key}" data-field="dutyPct" value="${e.dutyPct}" step="0.01"></div>
-      <div class="parity-row"><div class="pr-label">Duty Amount</div><div class="pr-value" data-calc="duty">${c.duty != null ? '₹ ' + fmt(c.duty, 2) : '—'}</div></div>
-      <div class="parity-row"><div class="pr-label">Freight (₹/MT)</div><input type="number" class="pr-input ${parityEdited.has(m.key+'.freight') ? 'edited' : ''}" data-metal="${m.key}" data-field="freight" value="${e.freight ?? 0}" step="1"></div>
-      <div class="parity-row"><div class="pr-label">Landed ${m.name}/MT</div><div class="pr-value" data-calc="landedMt">${c.landedMt != null ? '₹ ' + fmt(c.landedMt, 2) : '—'}</div></div>
-      <div class="parity-row"><div class="pr-label">Landed ${m.name}/KG</div><div class="pr-value" data-calc="landedKg">${c.landedKg != null ? '₹ ' + fmt(c.landedKg, 2) : '—'}</div></div>
-      <div class="parity-row"><div class="pr-label">${m.name} MCX (₹/kg)</div><input type="number" class="pr-input ${mcxCls}" data-metal="${m.key}" data-field="mcx" value="${e.mcx ?? ''}" step="0.01"></div>
-      <div class="parity-row pr-result"><div class="pr-label">NetDifference (Landed − MCX)</div><div class="pr-value ${netCls}" data-calc="net">${netTxt}</div></div>
+      <div class="parity-row"><div class="pr-label">LME ${m.name} 3M (USD/t)</div>
+        <input type="number" class="pr-input ${lmeCls}" data-metal="${m.key}" data-field="lme3m" value="${e.lme3m ?? ''}" step="0.01"></div>
+      <div class="parity-row"><div class="pr-label">Basis (− Ctg / + Bwd)</div>
+        <input type="number" class="pr-input ${parityEdited.has(m.key+'.basis') ? 'edited' : ''}" data-metal="${m.key}" data-field="basis" value="${e.basis ?? 0}" step="0.01"></div>
+      <div class="parity-row"><div class="pr-label">LME ${m.name} Cash (USD/t)</div>
+        <div class="pr-value" data-calc="lmeCash">${c.lmeCash != null ? fmt(c.lmeCash, 2) : '—'}</div></div>
+      <div class="parity-row"><div class="pr-label">Premium</div>
+        <input type="number" class="pr-input ${parityEdited.has(m.key+'.premium') ? 'edited' : ''}" data-metal="${m.key}" data-field="premium" value="${e.premium ?? 0}" step="0.01"></div>
+      <div class="parity-row"><div class="pr-label">Cost</div>
+        <div class="pr-value" data-calc="cost">${c.cost != null ? fmt(c.cost, 2) : '—'}</div></div>
+      <div class="parity-row"><div class="pr-label">SBI TT (USD/INR)</div>
+        <div class="pr-value" data-calc="usdinr">${parityEdits.__usdinr != null ? fmt(parityEdits.__usdinr, 2) : '—'}</div></div>
+      <div class="parity-row"><div class="pr-label">${m.name.toUpperCase()} INR</div>
+        <div class="pr-value" data-calc="inr">${c.inr != null ? '₹ ' + fmt(c.inr, 2) : '—'}</div></div>
+      <div class="parity-row"><div class="pr-label">Import Duty %</div>
+        <input type="number" class="pr-input ${parityEdited.has(m.key+'.dutyPct') ? 'edited' : ''}" data-metal="${m.key}" data-field="dutyPct" value="${e.dutyPct}" step="0.01"></div>
+      <div class="parity-row"><div class="pr-label">Duty Amount</div>
+        <div class="pr-value" data-calc="duty">${c.duty != null ? '₹ ' + fmt(c.duty, 2) : '—'}</div></div>
+      <div class="parity-row"><div class="pr-label">Freight (₹/MT)</div>
+        <input type="number" class="pr-input ${parityEdited.has(m.key+'.freight') ? 'edited' : ''}" data-metal="${m.key}" data-field="freight" value="${e.freight ?? 0}" step="1"></div>
+      <div class="parity-row"><div class="pr-label">Landed ${m.name}/MT</div>
+        <div class="pr-value" data-calc="landedMt">${c.landedMt != null ? '₹ ' + fmt(c.landedMt, 2) : '—'}</div></div>
+      <div class="parity-row"><div class="pr-label">Landed ${m.name}/KG</div>
+        <div class="pr-value" data-calc="landedKg">${c.landedKg != null ? '₹ ' + fmt(c.landedKg, 2) : '—'}</div></div>
+      <div class="parity-row"><div class="pr-label">${m.name} MCX (₹/kg)</div>
+        <input type="number" class="pr-input ${mcxCls}" data-metal="${m.key}" data-field="mcx" value="${e.mcx ?? ''}" step="0.01"></div>
+      <div class="parity-row pr-result"><div class="pr-label">NetDifference (Landed − MCX)</div>
+        <div class="pr-value ${netCls}" data-calc="net">${netTxt}</div></div>
       <div class="pc-footer">Duty: ${e.dutyPct}% ${e.dutyPct === 0 ? '(duty free)' : ''} · Freight ₹${e.freight}/MT</div>
     </div>`;
   }
@@ -1447,18 +1454,7 @@ function renderParity() {
       ev.target.classList.add('edited');
       ev.target.classList.remove('live');
       updateParityCard(metal);
-    });
-  });
-  grid.querySelectorAll('.pc-badge[data-badge]').forEach(b => {
-    b.addEventListener('click', (ev) => {
-      const metal = ev.target.dataset.metal;
-      const cycle = { auto:'bwd', bwd:'ctg', ctg:'flat', flat:'auto' };
-      const cur = parityBadgeLock[metal] || 'auto';
-      const next = cycle[cur];
-      if (next === 'auto') delete parityBadgeLock[metal];
-      else parityBadgeLock[metal] = next;
-      updateParityCard(metal);
-      scheduleSaveParityOverrides();
+      if (field === 'basis') scheduleSaveParityOverrides();
     });
   });
   if (usdInp && !usdInp.dataset.wired) {
@@ -1494,20 +1490,15 @@ function updateParityCard(metalKey) {
   const footer = card.querySelector('.pc-footer');
   if (footer) { const dp = numOrNull(e.dutyPct) ?? 0; footer.textContent = `Duty: ${dp}% ${dp === 0 ? '(duty free)' : ''} · Freight ₹${e.freight}/MT`; }
   const basis = numOrNull(e.basis) ?? 0;
-  const locked = parityBadgeLock[metalKey];
-  const autoCls = basis > 0.5 ? 'bwd' : basis < -0.5 ? 'ctg' : 'flat';
-  const autoTxt = basis > 0.5 ? 'Backwardation' : basis < -0.5 ? 'Contango' : 'Flat';
-  const cls = locked || autoCls;
-  const txt = locked ? (locked === 'bwd' ? 'Backwardation' : locked === 'ctg' ? 'Contango' : 'Flat') : autoTxt;
-  const badge = card.querySelector('.pc-badge');
-  badge.classList.remove('bwd', 'ctg', 'flat');
-  badge.classList.add(cls);
-  badge.textContent = txt;
-  badge.classList.toggle('locked', !!locked);
+  const badge = badgeFromBasis(basis);
+  const badgeEl = card.querySelector('.pc-badge');
+  badgeEl.classList.remove('bwd', 'ctg', 'flat');
+  badgeEl.classList.add(badge.cls);
+  badgeEl.textContent = badge.txt;
 }
 
 /* ========================================================================
-   PARITY OVERRIDES — shared via GitHub
+   PARITY BASIS OVERRIDES — shared via GitHub
    ======================================================================== */
 async function loadParityOverrides() {
   try {
@@ -1515,8 +1506,15 @@ async function loadParityOverrides() {
     if (!res.ok) return;
     const data = await res.json();
     for (const k of ['Cu','Zn','Al']) {
-      if (['bwd','ctg','flat'].includes(data[k])) parityBadgeLock[k] = data[k];
-      else delete parityBadgeLock[k];
+      const key = k + '_basis';
+      if (parityEdited.has(k + '.basis')) continue;
+      if (typeof data[key] === 'number' && isFinite(data[key])) {
+        if (!parityEdits[k]) parityEdits[k] = {};
+        parityEdits[k].basis = data[key];
+        parityEdited.add(k + '.basis');
+      } else {
+        parityEdited.delete(k + '.basis');
+      }
     }
     renderParity();
   } catch (e) {
@@ -1532,9 +1530,9 @@ async function saveParityOverrides() {
   const token = getGithubToken();
   if (!token) return;
   const body = {
-    Cu: parityBadgeLock.Cu || null,
-    Zn: parityBadgeLock.Zn || null,
-    Al: parityBadgeLock.Al || null,
+    Cu_basis: parityEdited.has('Cu.basis') ? (numOrNull(parityEdits.Cu?.basis) ?? null) : null,
+    Zn_basis: parityEdited.has('Zn.basis') ? (numOrNull(parityEdits.Zn?.basis) ?? null) : null,
+    Al_basis: parityEdited.has('Al.basis') ? (numOrNull(parityEdits.Al?.basis) ?? null) : null,
   };
   const api = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${OVERRIDES_FILE_PATH}`;
   try {
@@ -1546,7 +1544,7 @@ async function saveParityOverrides() {
       method: 'PUT',
       headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message: `Parity overrides: Cu=${body.Cu||'auto'} Zn=${body.Zn||'auto'} Al=${body.Al||'auto'}`,
+        message: `Parity basis: Cu=${body.Cu_basis ?? 'auto'} Zn=${body.Zn_basis ?? 'auto'} Al=${body.Al_basis ?? 'auto'}`,
         content: b64encodeUtf8(JSON.stringify(body, null, 2)),
         branch: REPO_BRANCH,
         ...(sha ? { sha } : {}),
@@ -1559,7 +1557,7 @@ async function saveParityOverrides() {
 }
 
 /* ========================================================================
-   NALCO ALUMINIUM SIGNAL
+   NALCO
    ======================================================================== */
 async function fetchNalcoNotifications() {
   try {
@@ -1688,7 +1686,6 @@ function startNalcoFeed() {
 /* ========================================================================
    CSP DAILY UPDATER
    ======================================================================== */
-const CSP_FILE_PATH = 'lme_csp.csv';
 function getGithubToken() {
   let tok = SAFE_STORE.getItem(GITHUB_TOKEN_KEY);
   if (!tok) {
@@ -1698,7 +1695,6 @@ function getGithubToken() {
   return tok;
 }
 function b64encodeUtf8(str) { return btoa(unescape(encodeURIComponent(str))); }
-
 async function getFileSha(token) {
   const api = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${CSP_FILE_PATH}?ref=${REPO_BRANCH}`;
   const res = await fetch(api, { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
@@ -1713,7 +1709,6 @@ async function getFileText(token) {
   const raw = atob(json.content.replace(/\s/g, ''));
   return decodeURIComponent(escape(raw));
 }
-
 async function saveCspToGitHub() {
   const statusEl = document.getElementById('cspUpdateStatus');
   const btn = document.getElementById('cspSaveBtn');
@@ -1885,10 +1880,6 @@ function renderCSPLatest() {
   }
   grid.innerHTML = html;
 }
-
-/* ========================================================================
-   LAST N DAYS CSP TABLE
-   ======================================================================== */
 function renderCSPDaysTable() {
   const wrap = document.getElementById('cspDaysTable');
   if (!wrap) return;
@@ -2841,7 +2832,6 @@ function wireControls() {
     for (const k of Object.keys(parityEdits)) delete parityEdits[k];
     parityEdits.__usdinr = null;
     parityEdited.clear();
-    for (const k of Object.keys(parityBadgeLock)) delete parityBadgeLock[k];
     scheduleSaveParityOverrides();
     renderParity();
   });
