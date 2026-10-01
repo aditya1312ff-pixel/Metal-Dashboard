@@ -6,6 +6,13 @@
 <title>Non-Ferrous Metals Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+</script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
@@ -58,25 +65,22 @@
   .live-dot.paused { background:var(--muted); animation:none; }
   .live-dot.stale { background:var(--amber); animation:none; }
   .live-dot.error { background:var(--red); animation:none; }
-  @keyframes pulse {
-    0%, 100% { opacity:1; }
-    50% { opacity:0.35; }
-  }
+  @keyframes pulse { 0%, 100% { opacity:1; } 50% { opacity:0.35; } }
 
   .sbi-bar {
     background: linear-gradient(135deg, #1c2536 0%, #161d2b 100%);
     border: 1px solid var(--sbi);
-    border-radius: 12px; padding: 12px 16px; margin-bottom: 18px;
+    border-radius: 12px; padding: 10px 14px; margin-bottom: 18px;
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   }
   .sbi-bar .title { font-size: 0.8rem; color: var(--sbi); font-weight: 600; white-space:nowrap; }
   .sbi-bar input[type=text] {
-    flex: 1; min-width: 260px; background:#0e1724; border:1px solid var(--border);
-    color:var(--text); padding:7px 12px; border-radius:8px; font-size:0.72rem;
+    flex: 1; min-width: 240px; background:#0e1724; border:1px solid var(--border);
+    color:var(--text); padding:6px 10px; border-radius:8px; font-size:0.7rem;
     font-family: monospace;
   }
   .sbi-bar input[type=text]:focus { outline:none; border-color:var(--sbi); }
-  .sbi-bar .status { font-size:0.7rem; color:var(--muted); flex-basis:100%; }
+  .sbi-bar .status { font-size:0.68rem; color:var(--muted); flex-basis:100%; }
   .sbi-bar .status.ok { color:var(--green); }
   .sbi-bar .status.err { color:var(--red); }
   .sbi-bar .status.warn { color:var(--amber); }
@@ -151,6 +155,8 @@
   .parity-card .pc-badge.bwd { background:rgba(46,204,113,0.18); color:var(--green); }
   .parity-card .pc-badge.ctg { background:rgba(231,76,60,0.18); color:var(--red); }
   .parity-card .pc-badge.flat{ background:rgba(124,138,160,0.18); color:var(--muted); }
+  .parity-card .pc-badge.locked { box-shadow: 0 0 0 1px var(--accent); }
+  .parity-card .pc-badge[data-badge] { user-select:none; }
   .parity-row { display:grid; grid-template-columns: 1fr 120px; gap:8px; align-items:center; padding:6px 0; border-bottom:1px dashed #1a2334; position:relative; }
   .parity-row:last-child { border-bottom:none; }
   .parity-row .pr-label { font-size:0.72rem; color:var(--muted); }
@@ -347,9 +353,10 @@
 
   <div class="sbi-bar">
     <span class="title"><i class="fas fa-university"></i> SBI TT Sell</span>
+    <button class="btn small" id="sbiPdfBtn" title="Latest USD/INR TT SELL from SBI PDF"><i class="fas fa-file-pdf"></i> PDF</button>
+    <button class="btn small" id="sbiCsvBtn" title="Historical SBI TT Sell from GitHub CSV"><i class="fas fa-file-csv"></i> CSV</button>
     <input type="text" id="sbiUrl" value="https://raw.githubusercontent.com/sahilgupta/sbi-fx-ratekeeper/main/csv_files/SBI_REFERENCE_RATES_USD.csv">
-    <button class="btn" id="sbiFetchBtn"><i class="fas fa-cloud-download-alt"></i> Fetch</button>
-    <span class="status" id="sbiStatus">Auto-loading SBI TT Sell history…</span>
+    <span class="status" id="sbiStatus">Loading…</span>
   </div>
 
   <div id="statusBanner" class="status-banner"></div>
@@ -391,14 +398,14 @@
         <h3 style="justify-content:space-between;display:flex;">
           <span><i class="fas fa-calculator"></i> Import Parity Model <span class="sub">— LME → Landed ₹ vs MCX</span></span>
           <span class="controls">
-            <button class="btn" id="parityResetBtn" title="Reset all edits to defaults"><i class="fas fa-undo"></i> Reset</button>
+            <button class="btn" id="parityResetBtn" title="Reset all edits and badge overrides"><i class="fas fa-undo"></i> Reset</button>
           </span>
         </h3>
 
         <div class="parity-sbi-bar">
           <span class="psb-label"><i class="fas fa-university" style="color:var(--sbi)"></i> USD/INR (SBI TT)</span>
           <input type="number" class="pr-input" id="parityUsdinr" step="0.01" placeholder="e.g. 96.50">
-          <span class="psb-hint">Shared across all three metals · auto-filled from SBI TT fetch · editable</span>
+          <span class="psb-hint">Auto-filled from SBI PDF · editable</span>
         </div>
 
         <div class="parity-grid" id="parityGrid">
@@ -439,7 +446,7 @@
         </h3>
         <div class="chart-wrap tall" id="sbiChartWrap"><canvas id="sbiChart"></canvas></div>
         <div id="sbiEmpty" style="text-align:center;color:var(--muted);font-size:0.78rem;padding:8px;display:none;">
-          Click "Fetch" above to load SBI TT Sell history.
+          Click CSV to load SBI TT Sell history.
         </div>
       </div>
     </div>
@@ -477,7 +484,7 @@
       </div>
     </div>
 
-    <!-- Update Today's CSP (hidden; opened via "Update CSP" button in top bar) -->
+    <!-- Update Today's CSP -->
     <div class="grid" id="cspUpdaterCard" style="display:none;">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
@@ -725,7 +732,7 @@
       </div>
     </div>
 
-    <div class="foot">Live: Google Sheet (LMEMCX) | CSP: lme_csp.csv | SBI TT: sahilgupta/sbi-fx-ratekeeper | News: Mining.com | NALCO: mudira.nalcoindia.co.in</div>
+    <div class="foot">Live: Google Sheet (LMEMCX) | CSP: lme_csp.csv | SBI TT: sbi.bank.in PDF + sahilgupta CSV | News: Mining.com | NALCO: mudira.nalcoindia.co.in</div>
   </div>
 </div>
 
@@ -738,16 +745,17 @@ const REPO_NAME  = 'Metal-Dashboard';
 const REPO_BRANCH = 'main';
 const METALS_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/metals.csv`;
 const CSP_URL    = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/lme_csp.csv`;
+const OVERRIDES_FILE_PATH = 'parity_overrides.json';
+const OVERRIDES_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/${OVERRIDES_FILE_PATH}?t=`;
 
 const LIVE_REAL_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vROr3cjVUMAqL9qXYAp6rxcekcbiacZmQ4JfSMOjgoEKKAxhLLDCsMddPf6G3ZgnN0b4dWl7RrghaZ9/pub?gid=0&single=true&output=csv';
 const LIVE_REFRESH_MS = 120000;
 const LIVE_TIMEOUT_MS = 45000;
 
 const WORKER_BASE = 'https://round-cake-56f6.aditya1312ff.workers.dev/?url=';
+const LIVE_PROXIES = [{ name: 'cloudflare', wrap: u => WORKER_BASE + encodeURIComponent(u) }];
 
-const LIVE_PROXIES = [
-  { name: 'cloudflare', wrap: u => WORKER_BASE + encodeURIComponent(u) },
-];
+const SBI_PDF_URL = 'https://sbi.bank.in/documents/16012/1400784/FOREX_CARD_RATES.pdf';
 
 const NALCO_URL = 'https://mudira.nalcoindia.co.in:3443/CUSTOMER/notification';
 const NALCO_REFRESH_MS = 30 * 60 * 1000;
@@ -774,35 +782,23 @@ const LIVE_SYMBOL_MAP = {
   'US10Y':       { label: 'US 10Y Yield',  group: 'yield',    unit: '%' },
   'US30Y':       { label: 'US 30Y Yield',  group: 'yield',    unit: '%' },
 };
-
 const LIVE_GROUP_ORDER = ['lme','mcx','precious','fx','yield'];
 const LIVE_GROUP_TITLES = {
-  lme: 'Base Metals — LME',
-  mcx: 'Base Metals — MCX',
-  precious: 'Precious Metals',
-  fx: 'FX',
-  yield: 'US Yields',
-  other: 'Other',
+  lme: 'Base Metals — LME', mcx: 'Base Metals — MCX', precious: 'Precious Metals',
+  fx: 'FX', yield: 'US Yields', other: 'Other',
 };
 
 /* ========================================================================
-   CSV PARSER + HELPERS
+   HELPERS
    ======================================================================== */
 function parseCSVLine(line) {
   const delim = line.indexOf('\t') >= 0 ? '\t' : ',';
-  const out = [];
-  let cur = '';
-  let inQuotes = false;
+  const out = []; let cur = ''; let inQuotes = false;
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
-    if (ch === '"') {
-      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if (ch === delim && !inQuotes) {
-      out.push(cur); cur = '';
-    } else {
-      cur += ch;
-    }
+    if (ch === '"') { if (inQuotes && line[i+1] === '"') { cur += '"'; i++; } else inQuotes = !inQuotes; }
+    else if (ch === delim && !inQuotes) { out.push(cur); cur = ''; }
+    else cur += ch;
   }
   out.push(cur);
   return out.map(s => s.trim());
@@ -840,61 +836,18 @@ function showStatus(kind, msg, details) {
   const el = document.getElementById('statusBanner');
   if (!el) return;
   let html = msg;
-  if (details && details.length) {
-    html += '<ul>' + details.map(d => `<li>${d}</li>`).join('') + '</ul>';
-  }
+  if (details && details.length) html += '<ul>' + details.map(d => `<li>${d}</li>`).join('') + '</ul>';
   el.className = 'status-banner ' + kind;
   el.innerHTML = html;
 }
-
-/* ========================================================================
-   STATE
-   ======================================================================== */
-let RAW = [];
-let SERIES_NAMES = [];
-let latest = {};
-let CSP_RAW = [];
-let SBI_RAW = [];
-let LIVE_RAW = [];
-let LIVE_LATEST = {};
-let liveTimer = null;
-let liveLastFetch = null;
-let liveLastError = false;
-let seasonChart, corrChart, cspChart, csp2Chart, lmcChart, priceChart, sbiChart;
-let currentSeasonMetal = 'copper';
-let currentCSP = 'Cu', currentCSP2 = 'Cu', currentLMC = 'Copper';
-let selectedMatrixSeries = new Set();
-let selectedPriceSeries = new Set();
-let priceFreq = 'daily', cspFreq = 'daily', csp2Freq = 'daily', lmcFreq = 'daily', sbiFreq = 'daily';
-let controlsWired = false;
-
-let NALCO_RAW = [];
-let nalcoTimer = null;
-
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const CSP_COLORS = { Cu:'#d68b4d', Zn:'#5b8fc9', Al:'#93a2b5' };
-const LMC_METAL_MAP = { Copper:'Cu', Zinc:'Zn', Aluminium:'Al' };
-
-/* ========================================================================
-   PARITY MODEL CONFIG
-   ======================================================================== */
-const PARITY_METALS = [
-  { key:'Cu', name:'Copper',    lme3mSeries:'LME Copper',    lmeCspKey:'Cu', mcxSeries:'MCX Copper',
-    dutyPct:0,    defaultPremium:400, cls:'',   color:'#d68b4d' },
-  { key:'Zn', name:'Zinc',      lme3mSeries:'LME Zinc',      lmeCspKey:'Zn', mcxSeries:'MCX Zinc',
-    dutyPct:5.5,  defaultPremium:126, cls:'zn', color:'#5b8fc9' },
-  { key:'Al', name:'Aluminium', lme3mSeries:'LME Aluminium', lmeCspKey:'Al', mcxSeries:'MCX Aluminium',
-    dutyPct:8.25, defaultPremium:65,  cls:'al', color:'#93a2b5' },
-];
-const parityEdits = {};
-const parityEdited = new Set();
-
-/* ========================================================================
-   HELPERS
-   ======================================================================== */
 function fmt(v, dp=2) {
   if (v == null || !isFinite(v)) return '—';
   return v.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
+}
+function numOrNull(v) {
+  if (v == null || v === '') return null;
+  const n = parseFloat(String(v).replace(/,/g,''));
+  return isFinite(n) ? n : null;
 }
 function isYield(name) { return /^us\s*\d+\s*y$/i.test(name.replace(/[^A-Za-z0-9]/g,' ')); }
 function categorize(name) {
@@ -905,11 +858,6 @@ function categorize(name) {
   if (/^(usdinr|dollar\s+index|dxy)$/i.test(name)) return 'fx';
   if (/^us\s+\d+\s*y$/i.test(name)) return 'yield';
   return 'other';
-}
-function numOrNull(v) {
-  if (v == null || v === '') return null;
-  const n = parseFloat(String(v).replace(/,/g,''));
-  return isFinite(n) ? n : null;
 }
 function tfCutoff(tf) {
   const now = new Date();
@@ -974,6 +922,55 @@ function resampleWeekly(series) {
 }
 
 /* ========================================================================
+   STATE
+   ======================================================================== */
+let RAW = [], SERIES_NAMES = [], latest = {};
+let CSP_RAW = [], SBI_RAW = [], LIVE_RAW = [], LIVE_LATEST = {};
+let liveTimer = null, liveLastFetch = null, liveLastError = false;
+let seasonChart, corrChart, cspChart, csp2Chart, lmcChart, priceChart, sbiChart;
+let currentSeasonMetal = 'copper';
+let currentCSP = 'Cu', currentCSP2 = 'Cu', currentLMC = 'Copper';
+let selectedMatrixSeries = new Set();
+let selectedPriceSeries = new Set();
+let priceFreq = 'daily', cspFreq = 'daily', csp2Freq = 'daily', lmcFreq = 'daily', sbiFreq = 'daily';
+let controlsWired = false;
+let NALCO_RAW = [], nalcoTimer = null;
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const CSP_COLORS = { Cu:'#d68b4d', Zn:'#5b8fc9', Al:'#93a2b5' };
+const LMC_METAL_MAP = { Copper:'Cu', Zinc:'Zn', Aluminium:'Al' };
+
+/* ========================================================================
+   PARITY MODEL CONFIG
+   ======================================================================== */
+const PARITY_METALS = [
+  { key:'Cu', name:'Copper',    lme3mSeries:'LME Copper',    lmeCspKey:'Cu', mcxSeries:'MCX Copper',
+    dutyPct:0,    defaultPremium:400, defaultFreight:0,    cls:'',   color:'#d68b4d' },
+  { key:'Zn', name:'Zinc',      lme3mSeries:'LME Zinc',      lmeCspKey:'Zn', mcxSeries:'MCX Zinc',
+    dutyPct:5.5,  defaultPremium:126, defaultFreight:0,    cls:'zn', color:'#5b8fc9' },
+  { key:'Al', name:'Aluminium', lme3mSeries:'LME Aluminium', lmeCspKey:'Al', mcxSeries:'MCX Aluminium',
+    dutyPct:8.25, defaultPremium:65,  defaultFreight:1500, cls:'al', color:'#93a2b5' },
+];
+const parityEdits = {};
+const parityEdited = new Set();
+const parityBadgeLock = {};   // { Cu:'bwd'|'ctg'|'flat' } — shared override via GitHub
+
+/* ========================================================================
+   SAFE STORAGE (works in sandboxed iframes)
+   ======================================================================== */
+const SAFE_STORE = (() => {
+  const mem = {};
+  let ok = false;
+  try { localStorage.setItem('__t','1'); localStorage.removeItem('__t'); ok = true; } catch (e) { ok = false; }
+  return {
+    getItem: k => ok ? localStorage.getItem(k) : (mem[k] ?? null),
+    setItem: (k, v) => { if (ok) try { localStorage.setItem(k, v); } catch (e) { mem[k] = v; } else mem[k] = v; },
+    removeItem: k => { if (ok) try { localStorage.removeItem(k); } catch (e) { delete mem[k]; } else delete mem[k]; },
+  };
+})();
+const GITHUB_TOKEN_KEY = 'gh_pat_csp';
+
+/* ========================================================================
    LIVE FEED
    ======================================================================== */
 function parseLiveCSV(text) {
@@ -1000,10 +997,7 @@ function parseLiveCSV(text) {
 }
 function computeLiveLatest(rows) {
   const out = {};
-  for (const r of rows) {
-    if (!LIVE_SYMBOL_MAP[r.symbol]) continue;
-    out[r.symbol] = { price: r.price, time: r.time };
-  }
+  for (const r of rows) { if (!LIVE_SYMBOL_MAP[r.symbol]) continue; out[r.symbol] = { price: r.price, time: r.time }; }
   return out;
 }
 async function fetchLiveOnce(timeoutMs) {
@@ -1012,22 +1006,13 @@ async function fetchLiveOnce(timeoutMs) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const res = await fetch(p.wrap(LIVE_REAL_URL), {
-        signal: controller.signal,
-        cache: 'no-store',
-        redirect: 'follow'
-      });
+      const res = await fetch(p.wrap(LIVE_REAL_URL), { signal: controller.signal, cache: 'no-store', redirect: 'follow' });
       clearTimeout(timer);
       if (!res.ok) { lastErr = new Error('HTTP ' + res.status); continue; }
       const txt = await res.text();
-      if (!txt || txt.length < 50 || !/symbol/i.test(txt)) {
-        lastErr = new Error('Not CSV'); continue;
-      }
+      if (!txt || txt.length < 50 || !/symbol/i.test(txt)) { lastErr = new Error('Not CSV'); continue; }
       return { txt, proxy: p.name };
-    } catch (e) {
-      clearTimeout(timer);
-      lastErr = e;
-    }
+    } catch (e) { clearTimeout(timer); lastErr = e; }
   }
   throw lastErr || new Error('All proxies failed');
 }
@@ -1036,12 +1021,10 @@ async function fetchLive() {
     const { txt, proxy } = await fetchLiveOnce(LIVE_TIMEOUT_MS);
     const rows = parseLiveCSV(txt);
     if (!rows.length) throw new Error('Empty parse');
-
     LIVE_RAW = rows;
     LIVE_LATEST = computeLiveLatest(rows);
     liveLastFetch = new Date();
     liveLastError = false;
-
     const pill = document.getElementById('liveStatus');
     if (pill) {
       pill.className = 'live-pill';
@@ -1049,7 +1032,6 @@ async function fetchLive() {
     }
     const updatedEl = document.getElementById('liveUpdated');
     if (updatedEl) updatedEl.textContent = 'Updated ' + liveLastFetch.toLocaleTimeString();
-
     renderPriceGrid();
     renderParity();
   } catch (e) {
@@ -1072,10 +1054,6 @@ function startLiveFeed() {
   fetchLive();
   liveTimer = setInterval(fetchLive, LIVE_REFRESH_MS);
 }
-
-/* ========================================================================
-   RENDER PRICE GRID
-   ======================================================================== */
 function renderPriceGrid() {
   const el = document.getElementById('priceGrid');
   if (!el) return;
@@ -1090,7 +1068,6 @@ function renderPriceGrid() {
   for (const g of Object.keys(groups)) {
     groups[g].sort((a, b) => (a.meta?.label || a.symbol).localeCompare(b.meta?.label || b.symbol));
   }
-
   let html = '';
   for (const g of LIVE_GROUP_ORDER) {
     if (!groups[g] || !groups[g].length) continue;
@@ -1106,11 +1083,7 @@ function renderPriceGrid() {
           <div class="chg"><span class="live-dot"></span> live</div>
         </div>`;
     }).join('');
-    html += `
-      <div style="margin-bottom:14px;">
-        <div class="price-group-title ${g}">${LIVE_GROUP_TITLES[g]}</div>
-        <div class="price-grid">${cards}</div>
-      </div>`;
+    html += `<div style="margin-bottom:14px;"><div class="price-group-title ${g}">${LIVE_GROUP_TITLES[g]}</div><div class="price-grid">${cards}</div></div>`;
   }
   el.innerHTML = html || '<div style="color:var(--muted);padding:20px;">Waiting for live data…</div>';
 }
@@ -1141,11 +1114,7 @@ function parseMetalsCSV(text) {
   }
   rows.sort((a,b) => a.t - b.t);
   RAW = rows;
-  return {
-    ok: true,
-    msg: `Loaded ${rows.length} rows × ${SERIES_NAMES.length} series`,
-    details: badDates ? [`${badDates} rows skipped (unparsable date)`] : null
-  };
+  return { ok: true, msg: `Loaded ${rows.length} rows × ${SERIES_NAMES.length} series`, details: badDates ? [`${badDates} rows skipped`] : null };
 }
 
 /* ========================================================================
@@ -1155,11 +1124,8 @@ function parseCSPCSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
   if (!lines.length) return { ok:false, msg:'lme_csp.csv is empty' };
   const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim());
-  if (header.length < 2) return { ok:false, msg:'lme_csp.csv needs at least 2 columns' };
-
   let dateCol = header.findIndex(h => /date|time|day|timestamp/i.test(h));
   if (dateCol < 0) dateCol = 0;
-
   const map = {};
   const detectedCols = [];
   header.forEach((name, idx) => {
@@ -1175,11 +1141,10 @@ function parseCSPCSV(text) {
     else if (/(3[\s-]?m(onth)?|three[\s-]?month)/.test(n)) field = 'three';
     else if (/stock|invent|warehouse|lme.?stock/.test(n)) field = 'stock';
     if (!field) return;
-    if (!map[metal]) map[metal] = { cash: null, three: null, stock: null };
+    if (!map[metal]) map[metal] = {};
     map[metal][field] = idx;
     detectedCols.push(`${metal}.${field} ← "${name}"`);
   });
-
   if (!Object.keys(map).length) {
     const rest = header.map((h, i) => ({h, i})).filter(x => x.i !== dateCol);
     if (rest.length >= 9) {
@@ -1188,19 +1153,7 @@ function parseCSPCSV(text) {
       });
     }
   }
-
-  if (!Object.keys(map).length) {
-    return {
-      ok: false,
-      msg: 'Could not detect LME metal columns in lme_csp.csv',
-      details: [
-        'Header: ' + header.join(' | '),
-        'Need columns with: copper/cu, zinc/zn, aluminium/aluminum/alu',
-        'And field keywords: cash/spot, 3-month/3m, stock/inventory'
-      ]
-    };
-  }
-
+  if (!Object.keys(map).length) return { ok:false, msg:'Could not detect LME columns', details:['Header: ' + header.join(' | ')] };
   const rows = [];
   let badDates = 0;
   for (let i = 1; i < lines.length; i++) {
@@ -1218,58 +1171,7 @@ function parseCSPCSV(text) {
   }
   rows.sort((a,b) => a.t - b.t);
   CSP_RAW = rows;
-  return {
-    ok: true,
-    msg: `Loaded ${rows.length} CSP rows (metals: ${Object.keys(map).join(', ')})`,
-    details: [
-      ...detectedCols.map(c => 'Detected: ' + c),
-      badDates ? `${badDates} rows skipped (unparsable date)` : null
-    ].filter(Boolean)
-  };
-}
-
-/* ========================================================================
-   PARSE SBI TT Sell CSV
-   ======================================================================== */
-function parseSBICSV(text) {
-  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
-  if (!lines.length) return { ok:false, msg:'SBI CSV is empty' };
-  const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim().toUpperCase());
-
-  const dateIdx = header.findIndex(h => /^DATE$/.test(h));
-  const ttSellIdx = header.findIndex(h => /^TT\s*SELL$/.test(h));
-  if (dateIdx < 0) return { ok:false, msg:'SBI CSV: no DATE column found',
-                             details: ['Header: ' + header.join(' | ')] };
-  if (ttSellIdx < 0) return { ok:false, msg:'SBI CSV: no "TT SELL" column found',
-                               details: ['Header: ' + header.join(' | ')] };
-
-  const out = [];
-  let zeroSkipped = 0, badDates = 0;
-  for (let i = 1; i < lines.length; i++) {
-    const parts = parseCSVLine(lines[i]);
-    if (parts.length <= Math.max(dateIdx, ttSellIdx)) continue;
-    const d = parseDateLoose(parts[dateIdx]);
-    if (!d) { badDates++; continue; }
-    const v = parseNumber(parts[ttSellIdx]);
-    if (v == null || v === 0) { zeroSkipped++; continue; }
-    out.push({ date: d, t: new Date(d + 'T00:00:00Z').getTime(), value: v });
-  }
-  out.sort((a,b) => a.t - b.t);
-
-  const byDate = new Map();
-  for (const p of out) byDate.set(p.date, p);
-  const dedup = [...byDate.values()].sort((a,b) => a.t - b.t);
-
-  return {
-    ok: true,
-    msg: `Loaded ${dedup.length} SBI TT Sell rows`,
-    details: [
-      dedup.length ? `Range: ${dedup[0].date} → ${dedup[dedup.length-1].date}` : null,
-      zeroSkipped ? `${zeroSkipped} rows skipped (TT SELL = 0.00)` : null,
-      badDates ? `${badDates} rows skipped (unparsable date)` : null
-    ].filter(Boolean),
-    rows: dedup
-  };
+  return { ok: true, msg: `Loaded ${rows.length} CSP rows`, details: detectedCols.map(c => 'Detected: ' + c) };
 }
 
 /* ========================================================================
@@ -1282,9 +1184,7 @@ function computeLatest() {
       const v = RAW[i].series[name];
       if (v != null) {
         let prev = null;
-        for (let k = i - 1; k >= 0; k--) {
-          if (RAW[k].series[name] != null) { prev = RAW[k].series[name]; break; }
-        }
+        for (let k = i - 1; k >= 0; k--) { if (RAW[k].series[name] != null) { prev = RAW[k].series[name]; break; } }
         const change = prev ? v - prev : 0;
         const pct = prev ? (change / prev) * 100 : 0;
         latest[name] = { value: v, date: RAW[i].date, change, pct };
@@ -1295,6 +1195,124 @@ function computeLatest() {
 }
 
 /* ========================================================================
+   SBI — CSV (history) + PDF (latest)
+   ======================================================================== */
+function parseSBICSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (!lines.length) return { ok:false, msg:'SBI CSV is empty' };
+  const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim().toUpperCase());
+  const dateIdx = header.findIndex(h => /^DATE$/.test(h));
+  const ttSellIdx = header.findIndex(h => /^TT\s*SELL$/.test(h));
+  if (dateIdx < 0) return { ok:false, msg:'SBI CSV: no DATE column' };
+  if (ttSellIdx < 0) return { ok:false, msg:'SBI CSV: no TT SELL column' };
+  const out = [];
+  let zeroSkipped = 0;
+  for (let i = 1; i < lines.length; i++) {
+    const parts = parseCSVLine(lines[i]);
+    if (parts.length <= Math.max(dateIdx, ttSellIdx)) continue;
+    const d = parseDateLoose(parts[dateIdx]);
+    if (!d) continue;
+    const v = parseNumber(parts[ttSellIdx]);
+    if (v == null || v === 0) { zeroSkipped++; continue; }
+    out.push({ date: d, t: new Date(d + 'T00:00:00Z').getTime(), value: v });
+  }
+  out.sort((a,b) => a.t - b.t);
+  const byDate = new Map();
+  for (const p of out) byDate.set(p.date, p);
+  const dedup = [...byDate.values()];
+  return {
+    ok: true,
+    msg: `Loaded ${dedup.length} SBI rows`,
+    details: [zeroSkipped ? `${zeroSkipped} zero rows skipped` : null].filter(Boolean),
+    rows: dedup
+  };
+}
+
+async function fetchSbiFromCsv(url) {
+  const statusEl = document.getElementById('sbiStatus');
+  if (!url) { statusEl.textContent = 'No CSV URL.'; statusEl.className = 'status err'; return; }
+  statusEl.textContent = 'Fetching CSV…'; statusEl.className = 'status';
+  const proxies = [
+    { name: 'direct',        wrap: u => u },
+    { name: 'codetabs',      wrap: u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u) },
+    { name: 'allorigins',    wrap: u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u) },
+    { name: 'corsproxy.io',  wrap: u => 'https://corsproxy.io/?' + encodeURIComponent(u) },
+  ];
+  let text = null, usedProxy = '';
+  for (const p of proxies) {
+    try {
+      statusEl.textContent = `Fetching CSV via ${p.name}…`;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 15000);
+      const res = await fetch(p.wrap(url), { signal: controller.signal, cache: 'no-store' });
+      clearTimeout(timer);
+      if (!res.ok) continue;
+      const t = await res.text();
+      if (t && t.length > 100) { text = t; usedProxy = p.name; break; }
+    } catch (e) { /* next */ }
+  }
+  if (!text) { statusEl.textContent = 'CSV fetch failed on all proxies.'; statusEl.className = 'status err'; return; }
+  try {
+    const parsed = parseSBICSV(text);
+    if (!parsed.ok) throw new Error(parsed.msg);
+    const pdfLatest = SBI_RAW.length ? SBI_RAW[SBI_RAW.length-1] : null;
+    SBI_RAW = parsed.rows;
+    if (pdfLatest && (!SBI_RAW.length || pdfLatest.t > SBI_RAW[SBI_RAW.length-1].t)) SBI_RAW.push(pdfLatest);
+    statusEl.textContent = `${parsed.msg} · via ${usedProxy}` + (parsed.details.length ? ' · ' + parsed.details[0] : '');
+    statusEl.className = 'status ok';
+    renderSbiChart();
+    if (!parityEdited.has('__usdinr')) {
+      const last = SBI_RAW[SBI_RAW.length-1];
+      if (last) { parityEdits.__usdinr = last.value; renderParity(); }
+    }
+  } catch (e) {
+    statusEl.textContent = 'CSV parse error: ' + e.message;
+    statusEl.className = 'status err';
+  }
+}
+
+async function fetchSbiFromPdf() {
+  const statusEl = document.getElementById('sbiStatus');
+  statusEl.textContent = 'Fetching SBI PDF…'; statusEl.className = 'status';
+  try {
+    if (!window.pdfjsLib) throw new Error('pdf.js not loaded');
+    const wrapped = WORKER_BASE + encodeURIComponent(SBI_PDF_URL);
+    const res = await fetch(wrapped, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const buf = await res.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    const page = await pdf.getPage(1);
+    const textContent = await page.getTextContent();
+    const text = textContent.items.map(it => it.str).join(' ');
+    const idx = text.indexOf('USD/INR');
+    if (idx < 0) throw new Error('USD/INR not found');
+    const after = text.slice(idx + 'USD/INR'.length, idx + 200);
+    const nums = (after.match(/\d+(?:\.\d+)?/g) || []).map(parseFloat).filter(v => v > 0);
+    if (nums.length < 2) throw new Error('Not enough numbers');
+    const ttSell = nums[1];
+    const dateMatch = text.match(/(\d{2})-(\d{2})-(\d{4})/);
+    const dateStr = dateMatch ? `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}` : '';
+    if (!isFinite(ttSell)) throw new Error('TT SELL parse failed');
+    const pdfRow = {
+      date: dateStr || new Date().toISOString().slice(0,10),
+      t: dateStr ? new Date(dateStr + 'T00:00:00Z').getTime() : Date.now(),
+      value: ttSell,
+    };
+    const byDate = new Map(SBI_RAW.map(r => [r.date, r]));
+    byDate.set(pdfRow.date, pdfRow);
+    SBI_RAW = [...byDate.values()].sort((a,b) => a.t - b.t);
+    statusEl.textContent = `USD/INR TT SELL = ${ttSell} (PDF${dateStr ? ' · ' + dateStr : ''})`;
+    statusEl.className = 'status ok';
+    if (!parityEdited.has('__usdinr')) { parityEdits.__usdinr = ttSell; renderParity(); }
+    renderSbiChart();
+  } catch (e) {
+    console.error('SBI PDF fetch failed:', e);
+    statusEl.textContent = 'SBI PDF error: ' + e.message;
+    statusEl.className = 'status err';
+  }
+}
+
+/* ========================================================================
    PARITY MODEL
    ======================================================================== */
 function initParityEdits() {
@@ -1302,14 +1320,13 @@ function initParityEdits() {
     if (parityEdits[m.key]) continue;
     parityEdits[m.key] = {
       lme3m: null, basis: null, premium: m.defaultPremium,
-      dutyPct: m.dutyPct, mcx: null
+      dutyPct: m.dutyPct, freight: m.defaultFreight ?? 0, mcx: null
     };
   }
   if (parityEdits.__usdinr === undefined) parityEdits.__usdinr = null;
 }
 function computeParityDefaults() {
   initParityEdits();
-
   if (!parityEdited.has('__usdinr')) {
     let sbiLatest = null;
     if (SBI_RAW.length) sbiLatest = SBI_RAW[SBI_RAW.length-1].value;
@@ -1320,10 +1337,8 @@ function computeParityDefaults() {
     }
     parityEdits.__usdinr = sbiLatest;
   }
-
   for (const m of PARITY_METALS) {
     const e = parityEdits[m.key];
-
     if (!parityEdited.has(m.key + '.lme3m')) {
       const lmeSymbol = m.key === 'Cu' ? 'COPPER' : m.key === 'Zn' ? 'ZINC' : 'ALUMINIUM';
       let lme3m = null;
@@ -1335,13 +1350,11 @@ function computeParityDefaults() {
       }
       e.lme3m = lme3m;
     }
-
     if (!parityEdited.has(m.key + '.basis') && CSP_RAW.length) {
       const last = CSP_RAW[CSP_RAW.length-1];
       const csp = last[m.lmeCspKey] || {};
       if (csp.cash != null && csp.threeM != null) e.basis = csp.cash - csp.threeM;
     }
-
     if (!parityEdited.has(m.key + '.mcx')) {
       const mcxSymbol = m.key === 'Cu' ? 'COPPER1!' : m.key === 'Zn' ? 'ZINC1!' : 'ALUMINIUM1!';
       let mcx = null;
@@ -1362,17 +1375,17 @@ function parityCalc(m) {
   const premium = numOrNull(e.premium) ?? 0;
   const usdinr = numOrNull(parityEdits.__usdinr);
   const dutyPct = numOrNull(e.dutyPct) ?? 0;
+  const freight = numOrNull(e.freight) ?? 0;
   const mcx = numOrNull(e.mcx);
-
   const lmeCash = lme3m != null ? lme3m + basis : null;
   const cost = lmeCash != null ? lmeCash + premium : null;
   const inr = (cost != null && usdinr != null) ? cost * usdinr : null;
   const duty = inr != null ? inr * (dutyPct / 100) : null;
-  const landedMt = inr != null ? inr + (duty || 0) : null;
+  const subtotal = inr != null ? inr + (duty || 0) : null;
+  const landedMt = subtotal != null ? subtotal + freight : null;
   const landedKg = landedMt != null ? landedMt / 1000 : null;
   const net = (landedKg != null && mcx != null) ? landedKg - mcx : null;
-
-  return { lmeCash, cost, inr, duty, landedMt, landedKg, net };
+  return { lmeCash, cost, inr, duty, subtotal, landedMt, landedKg, net };
 }
 function renderParity() {
   const grid = document.getElementById('parityGrid');
@@ -1382,107 +1395,48 @@ function renderParity() {
     return;
   }
   computeParityDefaults();
-
   const usdInp = document.getElementById('parityUsdinr');
   if (usdInp && document.activeElement !== usdInp) {
     usdInp.value = parityEdits.__usdinr ?? '';
     usdInp.classList.toggle('edited', parityEdited.has('__usdinr'));
   }
-
   let html = '';
   for (const m of PARITY_METALS) {
     const e = parityEdits[m.key];
     const c = parityCalc(m);
     const basis = numOrNull(e.basis) ?? 0;
-    const badgeCls = basis > 0.5 ? 'bwd' : basis < -0.5 ? 'ctg' : 'flat';
-    const badgeTxt = basis > 0.5 ? 'Backwardation' : basis < -0.5 ? 'Contango' : 'Flat';
+    const locked = parityBadgeLock[m.key];
+    const autoCls = basis > 0.5 ? 'bwd' : basis < -0.5 ? 'ctg' : 'flat';
+    const autoTxt = basis > 0.5 ? 'Backwardation' : basis < -0.5 ? 'Contango' : 'Flat';
+    const badgeCls = locked || autoCls;
+    const badgeTxt = locked ? (locked === 'bwd' ? 'Backwardation' : locked === 'ctg' ? 'Contango' : 'Flat') : autoTxt;
     const netCls = c.net == null ? '' : (c.net < 0 ? 'pos' : 'neg');
     const netTxt = c.net != null ? '₹' + fmt(c.net, 2) : '—';
-
-    const lmeEdited = parityEdited.has(m.key + '.lme3m');
-    const mcxEdited = parityEdited.has(m.key + '.mcx');
-    const lmeCls = lmeEdited ? 'edited' : 'live';
-    const mcxCls = mcxEdited ? 'edited' : 'live';
-
+    const lmeCls = parityEdited.has(m.key + '.lme3m') ? 'edited' : 'live';
+    const mcxCls = parityEdited.has(m.key + '.mcx') ? 'edited' : 'live';
     html += `<div class="parity-card ${m.cls}" data-metal="${m.key}">
       <div class="pc-header">
         <span class="pc-title" style="color:${m.color}">${m.name}</span>
-        <span class="pc-badge ${badgeCls}">${badgeTxt}</span>
+        <span class="pc-badge ${badgeCls} ${locked ? 'locked' : ''}" data-metal="${m.key}" data-badge="1" style="cursor:pointer;" title="Click to cycle: Auto → Bwd → Ctg → Flat">${badgeTxt}</span>
       </div>
-
-      <div class="parity-row">
-        <div class="pr-label">LME ${m.name} 3M (USD/t)</div>
-        <input type="number" class="pr-input ${lmeCls}" data-metal="${m.key}" data-field="lme3m" value="${e.lme3m ?? ''}" step="0.01">
-      </div>
-
-      <div class="parity-row">
-        <div class="pr-label">Basis (− Ctg / + Bwd)</div>
-        <input type="number" class="pr-input ${parityEdited.has(m.key+'.basis') ? 'edited' : ''}" data-metal="${m.key}" data-field="basis" value="${e.basis ?? 0}" step="0.01">
-      </div>
-
-      <div class="parity-row">
-        <div class="pr-label">LME ${m.name} Cash (USD/t)</div>
-        <div class="pr-value" data-calc="lmeCash">${c.lmeCash != null ? fmt(c.lmeCash, 2) : '—'}</div>
-      </div>
-
-      <div class="parity-row">
-        <div class="pr-label">Premium</div>
-        <input type="number" class="pr-input ${parityEdited.has(m.key+'.premium') ? 'edited' : ''}" data-metal="${m.key}" data-field="premium" value="${e.premium ?? 0}" step="0.01">
-      </div>
-
-      <div class="parity-row">
-        <div class="pr-label">Cost</div>
-        <div class="pr-value" data-calc="cost">${c.cost != null ? fmt(c.cost, 2) : '—'}</div>
-      </div>
-
-      <div class="parity-row">
-        <div class="pr-label">SBI TT (USD/INR)</div>
-        <div class="pr-value" data-calc="usdinr">${parityEdits.__usdinr != null ? fmt(parityEdits.__usdinr, 2) : '—'}</div>
-      </div>
-
-      <div class="parity-row">
-        <div class="pr-label">${m.name.toUpperCase()} INR</div>
-        <div class="pr-value" data-calc="inr">${c.inr != null ? '₹ ' + fmt(c.inr, 2) : '—'}</div>
-      </div>
-
-      <div class="parity-row">
-        <div class="pr-label">Import Duty %</div>
-        <input type="number" class="pr-input ${parityEdited.has(m.key+'.dutyPct') ? 'edited' : ''}" data-metal="${m.key}" data-field="dutyPct" value="${e.dutyPct}" step="0.01">
-      </div>
-
-      <div class="parity-row">
-        <div class="pr-label">Duty Amount</div>
-        <div class="pr-value" data-calc="duty">${c.duty != null ? '₹ ' + fmt(c.duty, 2) : '—'}</div>
-      </div>
-
-      <div class="parity-row">
-        <div class="pr-label">Landed ${m.name}/MT</div>
-        <div class="pr-value" data-calc="landedMt">${c.landedMt != null ? '₹ ' + fmt(c.landedMt, 2) : '—'}</div>
-      </div>
-
-      <div class="parity-row">
-        <div class="pr-label">Landed ${m.name}/KG</div>
-        <div class="pr-value" data-calc="landedKg">${c.landedKg != null ? '₹ ' + fmt(c.landedKg, 2) : '—'}</div>
-      </div>
-
-      <div class="parity-row">
-        <div class="pr-label">${m.name} MCX (₹/kg)</div>
-        <input type="number" class="pr-input ${mcxCls}" data-metal="${m.key}" data-field="mcx" value="${e.mcx ?? ''}" step="0.01">
-      </div>
-
-      <div class="parity-row pr-result">
-        <div class="pr-label">NetDifference (Landed − MCX)</div>
-        <div class="pr-value ${netCls}" data-calc="net">${netTxt}</div>
-      </div>
-
-      <div class="pc-footer">
-        Duty: ${e.dutyPct}% ${e.dutyPct === 0 ? '(duty free)' : ''}
-        ${LIVE_LATEST[m.key === 'Cu' ? 'COPPER' : m.key === 'Zn' ? 'ZINC' : 'ALUMINIUM'] || LIVE_LATEST[m.key === 'Cu' ? 'COPPER1!' : m.key === 'Zn' ? 'ZINC1!' : 'ALUMINIUM1!'] ? ' · <span style="color:var(--green)">live</span>' : ''}
-      </div>
+      <div class="parity-row"><div class="pr-label">LME ${m.name} 3M (USD/t)</div><input type="number" class="pr-input ${lmeCls}" data-metal="${m.key}" data-field="lme3m" value="${e.lme3m ?? ''}" step="0.01"></div>
+      <div class="parity-row"><div class="pr-label">Basis (− Ctg / + Bwd)</div><input type="number" class="pr-input ${parityEdited.has(m.key+'.basis') ? 'edited' : ''}" data-metal="${m.key}" data-field="basis" value="${e.basis ?? 0}" step="0.01"></div>
+      <div class="parity-row"><div class="pr-label">LME ${m.name} Cash (USD/t)</div><div class="pr-value" data-calc="lmeCash">${c.lmeCash != null ? fmt(c.lmeCash, 2) : '—'}</div></div>
+      <div class="parity-row"><div class="pr-label">Premium</div><input type="number" class="pr-input ${parityEdited.has(m.key+'.premium') ? 'edited' : ''}" data-metal="${m.key}" data-field="premium" value="${e.premium ?? 0}" step="0.01"></div>
+      <div class="parity-row"><div class="pr-label">Cost</div><div class="pr-value" data-calc="cost">${c.cost != null ? fmt(c.cost, 2) : '—'}</div></div>
+      <div class="parity-row"><div class="pr-label">SBI TT (USD/INR)</div><div class="pr-value" data-calc="usdinr">${parityEdits.__usdinr != null ? fmt(parityEdits.__usdinr, 2) : '—'}</div></div>
+      <div class="parity-row"><div class="pr-label">${m.name.toUpperCase()} INR</div><div class="pr-value" data-calc="inr">${c.inr != null ? '₹ ' + fmt(c.inr, 2) : '—'}</div></div>
+      <div class="parity-row"><div class="pr-label">Import Duty %</div><input type="number" class="pr-input ${parityEdited.has(m.key+'.dutyPct') ? 'edited' : ''}" data-metal="${m.key}" data-field="dutyPct" value="${e.dutyPct}" step="0.01"></div>
+      <div class="parity-row"><div class="pr-label">Duty Amount</div><div class="pr-value" data-calc="duty">${c.duty != null ? '₹ ' + fmt(c.duty, 2) : '—'}</div></div>
+      <div class="parity-row"><div class="pr-label">Freight (₹/MT)</div><input type="number" class="pr-input ${parityEdited.has(m.key+'.freight') ? 'edited' : ''}" data-metal="${m.key}" data-field="freight" value="${e.freight ?? 0}" step="1"></div>
+      <div class="parity-row"><div class="pr-label">Landed ${m.name}/MT</div><div class="pr-value" data-calc="landedMt">${c.landedMt != null ? '₹ ' + fmt(c.landedMt, 2) : '—'}</div></div>
+      <div class="parity-row"><div class="pr-label">Landed ${m.name}/KG</div><div class="pr-value" data-calc="landedKg">${c.landedKg != null ? '₹ ' + fmt(c.landedKg, 2) : '—'}</div></div>
+      <div class="parity-row"><div class="pr-label">${m.name} MCX (₹/kg)</div><input type="number" class="pr-input ${mcxCls}" data-metal="${m.key}" data-field="mcx" value="${e.mcx ?? ''}" step="0.01"></div>
+      <div class="parity-row pr-result"><div class="pr-label">NetDifference (Landed − MCX)</div><div class="pr-value ${netCls}" data-calc="net">${netTxt}</div></div>
+      <div class="pc-footer">Duty: ${e.dutyPct}% ${e.dutyPct === 0 ? '(duty free)' : ''} · Freight ₹${e.freight}/MT</div>
     </div>`;
   }
   grid.innerHTML = html;
-
   grid.querySelectorAll('.pr-input').forEach(inp => {
     inp.addEventListener('input', (ev) => {
       const metal = ev.target.dataset.metal;
@@ -1495,7 +1449,18 @@ function renderParity() {
       updateParityCard(metal);
     });
   });
-
+  grid.querySelectorAll('.pc-badge[data-badge]').forEach(b => {
+    b.addEventListener('click', (ev) => {
+      const metal = ev.target.dataset.metal;
+      const cycle = { auto:'bwd', bwd:'ctg', ctg:'flat', flat:'auto' };
+      const cur = parityBadgeLock[metal] || 'auto';
+      const next = cycle[cur];
+      if (next === 'auto') delete parityBadgeLock[metal];
+      else parityBadgeLock[metal] = next;
+      updateParityCard(metal);
+      scheduleSaveParityOverrides();
+    });
+  });
   if (usdInp && !usdInp.dataset.wired) {
     usdInp.addEventListener('input', (ev) => {
       parityEdits.__usdinr = ev.target.value === '' ? null : parseFloat(ev.target.value);
@@ -1513,10 +1478,8 @@ function updateParityCard(metalKey) {
   if (!card) return;
   const c = parityCalc(m);
   const e = parityEdits[metalKey];
-
   const lmeCashEl = card.querySelector('[data-calc="lmeCash"]');
   if (lmeCashEl) lmeCashEl.textContent = c.lmeCash != null ? fmt(c.lmeCash, 2) : '—';
-
   card.querySelector('[data-calc="cost"]').textContent = c.cost != null ? fmt(c.cost, 2) : '—';
   const usdEl = card.querySelector('[data-calc="usdinr"]');
   if (usdEl) usdEl.textContent = parityEdits.__usdinr != null ? fmt(parityEdits.__usdinr, 2) : '—';
@@ -1524,24 +1487,75 @@ function updateParityCard(metalKey) {
   card.querySelector('[data-calc="duty"]').textContent = c.duty != null ? '₹ ' + fmt(c.duty, 2) : '—';
   card.querySelector('[data-calc="landedMt"]').textContent = c.landedMt != null ? '₹ ' + fmt(c.landedMt, 2) : '—';
   card.querySelector('[data-calc="landedKg"]').textContent = c.landedKg != null ? '₹ ' + fmt(c.landedKg, 2) : '—';
-
   const netEl = card.querySelector('[data-calc="net"]');
   netEl.textContent = c.net != null ? '₹' + fmt(c.net, 2) : '—';
   netEl.classList.remove('pos', 'neg');
   if (c.net != null) netEl.classList.add(c.net < 0 ? 'pos' : 'neg');
-
   const footer = card.querySelector('.pc-footer');
-  if (footer) {
-    const dp = numOrNull(e.dutyPct) ?? 0;
-    footer.textContent = `Duty: ${dp}% ${dp === 0 ? '(duty free)' : ''}`;
-  }
-
+  if (footer) { const dp = numOrNull(e.dutyPct) ?? 0; footer.textContent = `Duty: ${dp}% ${dp === 0 ? '(duty free)' : ''} · Freight ₹${e.freight}/MT`; }
   const basis = numOrNull(e.basis) ?? 0;
+  const locked = parityBadgeLock[metalKey];
+  const autoCls = basis > 0.5 ? 'bwd' : basis < -0.5 ? 'ctg' : 'flat';
+  const autoTxt = basis > 0.5 ? 'Backwardation' : basis < -0.5 ? 'Contango' : 'Flat';
+  const cls = locked || autoCls;
+  const txt = locked ? (locked === 'bwd' ? 'Backwardation' : locked === 'ctg' ? 'Contango' : 'Flat') : autoTxt;
   const badge = card.querySelector('.pc-badge');
   badge.classList.remove('bwd', 'ctg', 'flat');
-  if (basis > 0.5) { badge.classList.add('bwd'); badge.textContent = 'Backwardation'; }
-  else if (basis < -0.5) { badge.classList.add('ctg'); badge.textContent = 'Contango'; }
-  else { badge.classList.add('flat'); badge.textContent = 'Flat'; }
+  badge.classList.add(cls);
+  badge.textContent = txt;
+  badge.classList.toggle('locked', !!locked);
+}
+
+/* ========================================================================
+   PARITY OVERRIDES — shared via GitHub
+   ======================================================================== */
+async function loadParityOverrides() {
+  try {
+    const res = await fetch(OVERRIDES_URL + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return;
+    const data = await res.json();
+    for (const k of ['Cu','Zn','Al']) {
+      if (['bwd','ctg','flat'].includes(data[k])) parityBadgeLock[k] = data[k];
+      else delete parityBadgeLock[k];
+    }
+    renderParity();
+  } catch (e) {
+    console.warn('parity_overrides.json load failed:', e);
+  }
+}
+let overridesSaveTimer = null;
+function scheduleSaveParityOverrides() {
+  clearTimeout(overridesSaveTimer);
+  overridesSaveTimer = setTimeout(saveParityOverrides, 400);
+}
+async function saveParityOverrides() {
+  const token = getGithubToken();
+  if (!token) return;
+  const body = {
+    Cu: parityBadgeLock.Cu || null,
+    Zn: parityBadgeLock.Zn || null,
+    Al: parityBadgeLock.Al || null,
+  };
+  const api = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${OVERRIDES_FILE_PATH}`;
+  try {
+    const cur = await fetch(api + '?ref=' + REPO_BRANCH, {
+      headers: { Authorization: 'Bearer ' + token }, cache: 'no-store',
+    });
+    const sha = cur.ok ? (await cur.json()).sha : undefined;
+    const putRes = await fetch(api, {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: `Parity overrides: Cu=${body.Cu||'auto'} Zn=${body.Zn||'auto'} Al=${body.Al||'auto'}`,
+        content: b64encodeUtf8(JSON.stringify(body, null, 2)),
+        branch: REPO_BRANCH,
+        ...(sha ? { sha } : {}),
+      }),
+    });
+    if (!putRes.ok) throw new Error('HTTP ' + putRes.status);
+  } catch (e) {
+    console.warn('Save parity overrides failed:', e);
+  }
 }
 
 /* ========================================================================
@@ -1576,15 +1590,10 @@ function parseNalcoHTML(html) {
     const notifDate = parseDateLoose(dateStr);
     if (!notifDate) return;
     const effMatch = title.match(/w\.e\.f\.?\s*(\d{1,2})[./-](\d{1,2})[./-](\d{4})/i);
-    const effDate = effMatch
-      ? `${effMatch[3]}-${effMatch[2].padStart(2,'0')}-${effMatch[1].padStart(2,'0')}`
-      : notifDate;
+    const effDate = effMatch ? `${effMatch[3]}-${effMatch[2].padStart(2,'0')}-${effMatch[1].padStart(2,'0')}` : notifDate;
     const dirMatch = details.match(/\b(increases?|decreases?|reduces?|raises?)\b/i);
     let direction = null;
-    if (dirMatch) {
-      const w = dirMatch[1].toLowerCase();
-      direction = (w.startsWith('inc') || w.startsWith('rai')) ? 'increase' : 'decrease';
-    }
+    if (dirMatch) { const w = dirMatch[1].toLowerCase(); direction = (w.startsWith('inc') || w.startsWith('rai')) ? 'increase' : 'decrease'; }
     const magMatch = details.match(/(?:Rs\.?|₹)\s*([\d,]+)\s*\/?-?\s*(?:PMT|per\s*MT|per\s*ton)/i);
     const magnitude = magMatch ? parseFloat(magMatch[1].replace(/,/g, '')) : null;
     rows.push({ notifDate, effDate, direction, magnitude, title, details });
@@ -1604,60 +1613,29 @@ function getLmeCashOn(date) {
 function countAllCspDaysAfter(date) {
   const out = [];
   for (const r of CSP_RAW) {
-    if (r.date > date && r.Al && r.Al.cash != null) {
-      out.push({ date: r.date, cash: r.Al.cash });
-    }
+    if (r.date > date && r.Al && r.Al.cash != null) out.push({ date: r.date, cash: r.Al.cash });
   }
   return out;
 }
 function computeNalcoSignal(ref, daysAll) {
   if (ref == null) return { status: 'waiting', window: [], detail: 'No LME Cash row for reference date', cycles: 0 };
-  if (daysAll.length < 3) {
-    return {
-      status: 'waiting',
-      window: daysAll,
-      detail: `Waiting for day ${daysAll.length + 1} of 3`,
-      cycles: 0
-    };
-  }
+  if (daysAll.length < 3) return { status: 'waiting', window: daysAll, detail: `Waiting for day ${daysAll.length + 1} of 3`, cycles: 0 };
   for (let i = 0; i + 3 <= daysAll.length; i++) {
     const w = daysAll.slice(i, i + 3);
     const above = w.filter(d => d.cash > ref).length;
     const below = w.filter(d => d.cash < ref).length;
-    if (above === 3) {
-      return {
-        status: 'up',
-        window: w,
-        detail: `Days ${w[0].date} → ${w[2].date} all above ref ${ref.toFixed(2)}`,
-        cycles: i + 1
-      };
-    }
-    if (below === 3) {
-      return {
-        status: 'down',
-        window: w,
-        detail: `Days ${w[0].date} → ${w[2].date} all below ref ${ref.toFixed(2)}`,
-        cycles: i + 1
-      };
-    }
+    if (above === 3) return { status: 'up', window: w, detail: `Days ${w[0].date} → ${w[2].date} all above ref ${ref.toFixed(2)}`, cycles: i + 1 };
+    if (below === 3) return { status: 'down', window: w, detail: `Days ${w[0].date} → ${w[2].date} all below ref ${ref.toFixed(2)}`, cycles: i + 1 };
   }
   const lastWin = daysAll.slice(-3);
   const above = lastWin.filter(d => d.cash > ref).length;
   const below = lastWin.filter(d => d.cash < ref).length;
-  return {
-    status: 'hold',
-    window: lastWin,
-    detail: `Latest window broken (${above} above, ${below} below) — sliding forward`,
-    cycles: daysAll.length - 2
-  };
+  return { status: 'hold', window: lastWin, detail: `Latest window broken (${above} above, ${below} below) — sliding forward`, cycles: daysAll.length - 2 };
 }
 function renderNalcoCard() {
   const grid = document.getElementById('nalcoGrid');
   if (!grid) return;
-  if (!NALCO_RAW.length) {
-    grid.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;">No NALCO data.</div>';
-    return;
-  }
+  if (!NALCO_RAW.length) { grid.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;">No NALCO data.</div>'; return; }
   const last = NALCO_RAW[0];
   const eff = last.effDate;
   const ref = getLmeCashOn(eff);
@@ -1667,70 +1645,35 @@ function renderNalcoCard() {
   const days = sig.window;
   const dirTxt = last.direction === 'increase' ? 'UP' : 'DOWN';
   const dirColor = last.direction === 'increase' ? 'var(--green)' : 'var(--red)';
-
-  const sigBadge = signal === 'up' ? 'REVISE UP'
-                 : signal === 'down' ? 'REVISE DOWN'
-                 : signal === 'hold' ? 'NO REVISION'
-                 : 'WAITING';
+  const sigBadge = signal === 'up' ? 'REVISE UP' : signal === 'down' ? 'REVISE DOWN' : signal === 'hold' ? 'NO REVISION' : 'WAITING';
   const sigCls = signal === 'up' ? 'bwd' : signal === 'down' ? 'ctg' : 'flat';
-
   const rowsHtml = days.map((d, i) => {
     const arrow = d.cash > ref ? '▲' : '▼';
     const cls = d.cash > ref ? 'pos' : 'neg';
     const tag = d.cash > ref ? 'above' : 'below';
-    return `<div class="parity-row">
-      <div class="pr-label">Day ${i+1} — ${d.date} <span style="color:var(--muted);font-size:0.62rem;">(${tag})</span></div>
-      <div class="pr-value ${cls}">${arrow} ${d.cash.toFixed(2)}</div>
-    </div>`;
+    return `<div class="parity-row"><div class="pr-label">Day ${i+1} — ${d.date} <span style="color:var(--muted);font-size:0.62rem;">(${tag})</span></div><div class="pr-value ${cls}">${arrow} ${d.cash.toFixed(2)}</div></div>`;
   }).join('') || '<div class="parity-row"><div class="pr-label" style="grid-column:span 2;color:var(--muted);">No CSP data after this date yet.</div></div>';
-
-  const cyclesLine = sig.cycles > 0
-    ? `<div class="parity-row"><div class="pr-label">Windows checked</div><div class="pr-value">${sig.cycles}</div></div>`
-    : '';
-
+  const cyclesLine = sig.cycles > 0 ? `<div class="parity-row"><div class="pr-label">Windows checked</div><div class="pr-value">${sig.cycles}</div></div>` : '';
   const recentRows = NALCO_RAW.slice(0, 5).map(r => `
     <tr>
       <td class="date-cell">${r.effDate}</td>
       <td style="color:${r.direction === 'increase' ? 'var(--green)' : 'var(--red)'};font-weight:600;text-align:left;">${r.direction === 'increase' ? '▲' : '▼'} ${(r.direction || '—').toUpperCase()}</td>
       <td style="text-align:right;">₹${r.magnitude != null ? r.magnitude.toLocaleString() : '—'}/PMT</td>
     </tr>`).join('');
-
   grid.innerHTML = `
     <div class="parity-card al">
-      <div class="pc-header">
-        <span class="pc-title" style="color:${CSP_COLORS.Al}">Latest Revision · Signal</span>
-        <span class="pc-badge ${sigCls}">${sigBadge}</span>
-      </div>
-      <div class="parity-row">
-        <div class="pr-label">Effective date</div>
-        <div class="pr-value">${eff}</div>
-      </div>
-      <div class="parity-row">
-        <div class="pr-label">Direction · Magnitude</div>
-        <div class="pr-value" style="color:${dirColor}">${dirTxt} · ₹${last.magnitude != null ? last.magnitude.toLocaleString() : '—'}/PMT</div>
-      </div>
-      <div class="parity-row">
-        <div class="pr-label">Reference LME Cash</div>
-        <div class="pr-value">${ref != null ? ref.toFixed(2) + ' USD/t' : '—'}</div>
-      </div>
+      <div class="pc-header"><span class="pc-title" style="color:${CSP_COLORS.Al}">Latest Revision · Signal</span><span class="pc-badge ${sigCls}">${sigBadge}</span></div>
+      <div class="parity-row"><div class="pr-label">Effective date</div><div class="pr-value">${eff}</div></div>
+      <div class="parity-row"><div class="pr-label">Direction · Magnitude</div><div class="pr-value" style="color:${dirColor}">${dirTxt} · ₹${last.magnitude != null ? last.magnitude.toLocaleString() : '—'}/PMT</div></div>
+      <div class="parity-row"><div class="pr-label">Reference LME Cash</div><div class="pr-value">${ref != null ? ref.toFixed(2) + ' USD/t' : '—'}</div></div>
       ${cyclesLine}
       ${rowsHtml}
-      <div class="parity-row pr-result">
-        <div class="pr-label">Signal</div>
-        <div class="pr-value" style="font-size:0.72rem;">${sig.detail}</div>
-      </div>
+      <div class="parity-row pr-result"><div class="pr-label">Signal</div><div class="pr-value" style="font-size:0.72rem;">${sig.detail}</div></div>
     </div>
-
     <div class="parity-card al" style="grid-column:span 2;">
-      <div class="pc-header">
-        <span class="pc-title" style="color:${CSP_COLORS.Al}">Recent Revisions</span>
-      </div>
+      <div class="pc-header"><span class="pc-title" style="color:${CSP_COLORS.Al}">Recent Revisions</span></div>
       <table class="csp-days-table" style="width:100%;">
-        <thead><tr>
-          <th style="text-align:left;">Effective</th>
-          <th style="text-align:left;">Direction</th>
-          <th style="text-align:right;">Magnitude</th>
-        </tr></thead>
+        <thead><tr><th style="text-align:left;">Effective</th><th style="text-align:left;">Direction</th><th style="text-align:right;">Magnitude</th></tr></thead>
         <tbody>${recentRows}</tbody>
       </table>
     </div>
@@ -1746,16 +1689,11 @@ function startNalcoFeed() {
    CSP DAILY UPDATER
    ======================================================================== */
 const CSP_FILE_PATH = 'lme_csp.csv';
-const GITHUB_TOKEN_KEY = 'gh_pat_csp';
-
 function getGithubToken() {
-  let tok = localStorage.getItem(GITHUB_TOKEN_KEY);
+  let tok = SAFE_STORE.getItem(GITHUB_TOKEN_KEY);
   if (!tok) {
     tok = prompt('Paste your GitHub Personal Access Token (Contents: Read+Write on this repo).\nStored only in this browser.');
-    if (tok) {
-      tok = tok.trim();
-      localStorage.setItem(GITHUB_TOKEN_KEY, tok);
-    }
+    if (tok) { tok = tok.trim(); SAFE_STORE.setItem(GITHUB_TOKEN_KEY, tok); }
   }
   return tok;
 }
@@ -1765,8 +1703,7 @@ async function getFileSha(token) {
   const api = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${CSP_FILE_PATH}?ref=${REPO_BRANCH}`;
   const res = await fetch(api, { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
   if (!res.ok) throw new Error('SHA lookup failed: ' + res.status);
-  const json = await res.json();
-  return json.sha;
+  return (await res.json()).sha;
 }
 async function getFileText(token) {
   const api = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${CSP_FILE_PATH}?ref=${REPO_BRANCH}`;
@@ -1782,40 +1719,29 @@ async function saveCspToGitHub() {
   const btn = document.getElementById('cspSaveBtn');
   const token = getGithubToken();
   if (!token) { statusEl.textContent = 'No token — aborted.'; return; }
-
   const date = document.getElementById('cspNewDate').value;
   if (!date) { statusEl.textContent = 'Pick a date.'; return; }
-
   const vals = {
-    CuCash:  numOrNull(document.getElementById('newCuCash').value),
+    CuCash: numOrNull(document.getElementById('newCuCash').value),
     CuThree: numOrNull(document.getElementById('newCuThree').value),
     CuStock: numOrNull(document.getElementById('newCuStock').value),
-    ZnCash:  numOrNull(document.getElementById('newZnCash').value),
+    ZnCash: numOrNull(document.getElementById('newZnCash').value),
     ZnThree: numOrNull(document.getElementById('newZnThree').value),
     ZnStock: numOrNull(document.getElementById('newZnStock').value),
-    AlCash:  numOrNull(document.getElementById('newAlCash').value),
+    AlCash: numOrNull(document.getElementById('newAlCash').value),
     AlThree: numOrNull(document.getElementById('newAlThree').value),
     AlStock: numOrNull(document.getElementById('newAlStock').value),
   };
-  if (Object.values(vals).every(v => v == null)) {
-    statusEl.textContent = 'Fill at least one value.';
-    return;
-  }
-
+  if (Object.values(vals).every(v => v == null)) { statusEl.textContent = 'Fill at least one value.'; return; }
   btn.disabled = true;
-  statusEl.textContent = 'Saving…';
-  statusEl.style.color = 'var(--muted)';
-
+  statusEl.textContent = 'Saving…'; statusEl.style.color = 'var(--muted)';
   try {
     const currentText = await getFileText(token);
     const sha = await getFileSha(token);
-
     const lines = currentText.split(/\r?\n/).filter(l => l.trim().length > 0);
     if (lines.length < 2) throw new Error('CSP file has no data rows');
-
     const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim());
     const dateCol = 0;
-
     const colMap = {};
     header.forEach((name, idx) => {
       if (idx === dateCol) return;
@@ -1832,13 +1758,12 @@ async function saveCspToGitHub() {
       if (!field) return;
       colMap[metal + field] = idx;
     });
-
     const newRow = new Array(header.length).fill('');
     newRow[dateCol] = date;
     const keyMap = {
-      CuCash: 'CuCash', CuThree: 'CuThree', CuStock: 'CuStock',
-      ZnCash: 'ZnCash', ZnThree: 'ZnThree', ZnStock: 'ZnStock',
-      AlCash: 'AlCash', AlThree: 'AlThree', AlStock: 'AlStock',
+      CuCash:'CuCash', CuThree:'CuThree', CuStock:'CuStock',
+      ZnCash:'ZnCash', ZnThree:'ZnThree', ZnStock:'ZnStock',
+      AlCash:'AlCash', AlThree:'AlThree', AlStock:'AlStock',
     };
     for (const [inputKey, colKey] of Object.entries(keyMap)) {
       const v = vals[inputKey];
@@ -1846,7 +1771,6 @@ async function saveCspToGitHub() {
       const idx = colMap[colKey];
       if (idx != null) newRow[idx] = v;
     }
-
     const newLine = newRow.map(c => typeof c === 'string' && c.includes(',') ? `"${c}"` : c).join(',');
     let replaced = false;
     const outLines = lines.map((l, i) => {
@@ -1856,11 +1780,7 @@ async function saveCspToGitHub() {
       if (d === date) { replaced = true; return newLine; }
       return l;
     });
-
-    let finalText;
-    if (replaced) finalText = outLines.join('\n') + '\n';
-    else finalText = lines.join('\n') + '\n' + newLine + '\n';
-
+    const finalText = replaced ? outLines.join('\n') + '\n' : lines.join('\n') + '\n' + newLine + '\n';
     const putRes = await fetch(
       `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${CSP_FILE_PATH}`,
       {
@@ -1869,55 +1789,36 @@ async function saveCspToGitHub() {
         body: JSON.stringify({
           message: `CSP update ${date}`,
           content: b64encodeUtf8(finalText),
-          sha,
-          branch: REPO_BRANCH,
+          sha, branch: REPO_BRANCH,
         }),
       }
     );
     if (!putRes.ok) throw new Error('Commit failed: ' + putRes.status);
-
     statusEl.textContent = (replaced ? 'Replaced ' : 'Added ') + date + ' ✓';
     statusEl.style.color = 'var(--green)';
-
-    // Auto-hide the card after a successful save
     setTimeout(closeCspUpdater, 1500);
-
     setTimeout(async () => {
       try {
         const txt = await fetchText(CSP_URL + '?t=' + Date.now());
         const r = parseCSPCSV(txt);
-        if (r.ok) {
-          renderCSPLatest();
-          renderCSPDaysTable();
-          renderNalcoCard();
-          renderCSP();
-          renderCSP2();
-        }
-      } catch (e) { console.warn('Refresh after save failed:', e); }
+        if (r.ok) { renderCSPLatest(); renderCSPDaysTable(); renderNalcoCard(); renderCSP(); renderCSP2(); }
+      } catch (e) {}
     }, 3000);
-
   } catch (e) {
     console.error(e);
     statusEl.textContent = 'Error: ' + e.message;
     statusEl.style.color = 'var(--red)';
-    if (/401|403/.test(e.message)) {
-      localStorage.removeItem(GITHUB_TOKEN_KEY);
-      statusEl.textContent = 'Token invalid — cleared. Reload to re-enter.';
-    }
-  } finally {
-    btn.disabled = false;
-  }
+    if (/401|403/.test(e.message)) { SAFE_STORE.removeItem(GITHUB_TOKEN_KEY); statusEl.textContent = 'Token invalid — cleared.'; }
+  } finally { btn.disabled = false; }
 }
-
 function refreshTokenUI() {
   const el = document.getElementById('tokenStatus');
   const btn = document.getElementById('forgetTokenBtn');
   if (!el || !btn) return;
-  const has = !!localStorage.getItem(GITHUB_TOKEN_KEY);
-  el.textContent = has ? '🔒 Token saved in this browser' : 'No token yet — will be requested on first save';
+  const has = !!SAFE_STORE.getItem(GITHUB_TOKEN_KEY);
+  el.textContent = has ? '🔒 Token saved in this browser' : 'No token yet — requested on first save';
   btn.style.display = has ? 'inline-block' : 'none';
 }
-
 function openCspUpdater() {
   const card = document.getElementById('cspUpdaterCard');
   if (!card) return;
@@ -1930,7 +1831,6 @@ function closeCspUpdater() {
   const card = document.getElementById('cspUpdaterCard');
   if (card) card.style.display = 'none';
 }
-
 function wireCspUpdater() {
   const dateInput = document.getElementById('cspNewDate');
   if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
@@ -1942,14 +1842,12 @@ function wireCspUpdater() {
   document.getElementById('cspCloseBtn')?.addEventListener('click', closeCspUpdater);
   refreshTokenUI();
   document.getElementById('forgetTokenBtn')?.addEventListener('click', () => {
-    localStorage.removeItem(GITHUB_TOKEN_KEY);
+    SAFE_STORE.removeItem(GITHUB_TOKEN_KEY);
     refreshTokenUI();
     const st = document.getElementById('cspUpdateStatus');
     if (st) { st.textContent = 'Token cleared.'; st.style.color = 'var(--muted)'; }
   });
-  document.getElementById('cspSaveBtn')?.addEventListener('click', () => {
-    setTimeout(refreshTokenUI, 500);
-  });
+  document.getElementById('cspSaveBtn')?.addEventListener('click', () => setTimeout(refreshTokenUI, 500));
 }
 
 /* ========================================================================
@@ -1959,18 +1857,10 @@ function renderCSPLatest() {
   const grid = document.getElementById('cspLatestGrid');
   const dateEl = document.getElementById('cspLatestDate');
   if (!grid) return;
-  if (!CSP_RAW.length) {
-    grid.innerHTML = '<div class="loading"><div class="spinner"></div> Waiting for lme_csp.csv…</div>';
-    if (dateEl) dateEl.textContent = '';
-    return;
-  }
+  if (!CSP_RAW.length) { grid.innerHTML = '<div class="loading"><div class="spinner"></div> Waiting for lme_csp.csv…</div>'; if (dateEl) dateEl.textContent = ''; return; }
   const last = CSP_RAW[CSP_RAW.length-1];
   if (dateEl) dateEl.textContent = 'As of ' + last.date;
-  const metals = [
-    { key:'Cu', name:'Copper', cls:'' },
-    { key:'Zn', name:'Zinc', cls:'zn' },
-    { key:'Al', name:'Aluminium', cls:'al' },
-  ];
+  const metals = [{ key:'Cu', name:'Copper', cls:'' }, { key:'Zn', name:'Zinc', cls:'zn' }, { key:'Al', name:'Aluminium', cls:'al' }];
   let html = '';
   for (const m of metals) {
     const data = last[m.key] || {};
@@ -1984,22 +1874,13 @@ function renderCSPLatest() {
       else { badge = 'Flat'; badgeCls = 'na'; }
     }
     html += `<div class="csp-latest-card ${m.cls}">
-      <div class="metal-header">
-        <span class="metal-name" style="color:${CSP_COLORS[m.key]}">${m.name} (${m.key})</span>
-        <span class="metal-date">${last.date}</span>
-      </div>
+      <div class="metal-header"><span class="metal-name" style="color:${CSP_COLORS[m.key]}">${m.name} (${m.key})</span><span class="metal-date">${last.date}</span></div>
       <div class="row-grid">
         <div class="cell"><div class="lbl">Cash</div><div class="val">${cash!=null?fmt(cash):'—'}</div></div>
         <div class="cell"><div class="lbl">3M</div><div class="val">${threeM!=null?fmt(threeM):'—'}</div></div>
         <div class="cell"><div class="lbl">Stock</div><div class="val">${stock!=null?fmt(stock,0):'—'}</div></div>
       </div>
-      <div class="spread-row">
-        <span class="lbl">Cash–3M Spread</span>
-        <span>
-          <span class="val ${spreadCls}">${spread!=null?fmt(spread,1):'—'}</span>
-          ${badge ? `<span class="badge ${badgeCls}">${badge}</span>` : ''}
-        </span>
-      </div>
+      <div class="spread-row"><span class="lbl">Cash–3M Spread</span><span><span class="val ${spreadCls}">${spread!=null?fmt(spread,1):'—'}</span>${badge ? `<span class="badge ${badgeCls}">${badge}</span>` : ''}</span></div>
     </div>`;
   }
   grid.innerHTML = html;
@@ -2011,37 +1892,19 @@ function renderCSPLatest() {
 function renderCSPDaysTable() {
   const wrap = document.getElementById('cspDaysTable');
   if (!wrap) return;
-  if (!CSP_RAW.length) {
-    wrap.innerHTML = '<div class="loading"><div class="spinner"></div> Waiting for lme_csp.csv…</div>';
-    return;
-  }
+  if (!CSP_RAW.length) { wrap.innerHTML = '<div class="loading"><div class="spinner"></div> Waiting for lme_csp.csv…</div>'; return; }
   const N = parseInt(document.getElementById('cspDaysCount')?.value || '5', 10);
-
-  const validRows = CSP_RAW.filter(r =>
-    (r.Cu && r.Cu.cash != null && r.Cu.threeM != null) ||
-    (r.Zn && r.Zn.cash != null && r.Zn.threeM != null) ||
-    (r.Al && r.Al.cash != null && r.Al.threeM != null)
-  );
+  const validRows = CSP_RAW.filter(r => (r.Cu && r.Cu.cash != null && r.Cu.threeM != null) || (r.Zn && r.Zn.cash != null && r.Zn.threeM != null) || (r.Al && r.Al.cash != null && r.Al.threeM != null));
   const last = validRows.slice(-N).reverse();
-  if (!last.length) {
-    wrap.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:8px;">No CSP data available.</div>';
-    return;
-  }
-
-  const metals = [
-    { key:'Cu', label:'Copper (Cu)', color:CSP_COLORS.Cu },
-    { key:'Zn', label:'Zinc (Zn)',   color:CSP_COLORS.Zn },
-    { key:'Al', label:'Aluminium (Al)', color:CSP_COLORS.Al },
-  ];
-
+  if (!last.length) { wrap.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:8px;">No CSP data.</div>'; return; }
+  const metals = [{ key:'Cu', label:'Copper (Cu)', color:CSP_COLORS.Cu }, { key:'Zn', label:'Zinc (Zn)', color:CSP_COLORS.Zn }, { key:'Al', label:'Aluminium (Al)', color:CSP_COLORS.Al }];
   let html = '';
   for (const m of metals) {
-    html += `<table class="csp-days-table" style="margin-bottom:14px;">
-      <thead><tr>
-        <th class="metal-h" style="color:${m.color}">${m.label}</th>
-        <th>Date</th><th>Cash</th><th>3M</th><th>Stock</th>
-        <th>Spread (C–3M)</th><th>Structure</th>
-      </tr></thead><tbody>`;
+    html += `<table class="csp-days-table" style="margin-bottom:14px;"><thead><tr>
+      <th class="metal-h" style="color:${m.color}">${m.label}</th>
+      <th>Date</th><th>Cash</th><th>3M</th><th>Stock</th>
+      <th>Spread (C–3M)</th><th>Structure</th>
+    </tr></thead><tbody>`;
     let anyRow = false;
     for (const r of last) {
       const data = r[m.key] || {};
@@ -2057,9 +1920,7 @@ function renderCSPDaysTable() {
       }
       const spreadCls = spread == null ? '' : (spread >= 0 ? 'pos' : 'neg');
       const spreadTxt = spread != null ? (spread >= 0 ? '+' : '') + fmt(spread, 2) : '—';
-      const pillTxt = structure === 'Backwardation' ? 'B · BWD'
-                    : structure === 'Contango'     ? 'C · CTG'
-                    : structure === 'Flat'         ? 'F · FLAT' : '—';
+      const pillTxt = structure === 'Backwardation' ? 'B · BWD' : structure === 'Contango' ? 'C · CTG' : structure === 'Flat' ? 'F · FLAT' : '—';
       html += `<tr>
         <td class="metal-name" style="color:${m.color}">${m.key}</td>
         <td class="date-cell">${r.date}</td>
@@ -2098,7 +1959,6 @@ function renderSbiChart() {
   }
   canvas.style.display = 'block';
   emptyEl.style.display = 'none';
-
   const tf = document.getElementById('sbiTf').value;
   const cutoff = tfCutoff(tf);
   const filtUsd = cutoff ? usdinr.filter(p => p.t >= cutoff) : usdinr;
@@ -2109,43 +1969,21 @@ function renderSbiChart() {
   const sbiData = sbiResampled.map(p => ({ x: p.t, y: p.v }));
   const sbiMap = new Map(sbiData.map(p => [p.x, p.y]));
   const spreadData = usdData.filter(p => sbiMap.has(p.x)).map(p => ({ x: p.x, y: p.y - sbiMap.get(p.x) }));
-
   const datasets = [];
-  if (usdData.length) datasets.push({
-    label: 'USDINR (Spot)', data: usdData,
-    borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,0.08)',
-    borderWidth: 1.8, pointRadius: 0, tension: 0.15, yAxisID: 'y',
-  });
-  if (sbiData.length) datasets.push({
-    label: 'SBI TT Sell', data: sbiData,
-    borderColor: '#ff6b9d', backgroundColor: 'rgba(255,107,157,0.08)',
-    borderWidth: 1.8, pointRadius: 0, tension: 0.15,
-    yAxisID: 'y', borderDash: [6, 3],
-  });
-  if (spreadData.length) datasets.push({
-    label: 'Spread (Spot − SBI)', data: spreadData,
-    borderColor: '#e8a33d', backgroundColor: 'rgba(232,163,61,0.06)',
-    borderWidth: 1.2, pointRadius: 0, tension: 0.15, yAxisID: 'y1',
-  });
-
+  if (usdData.length) datasets.push({ label: 'USDINR (Spot)', data: usdData, borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,0.08)', borderWidth: 1.8, pointRadius: 0, tension: 0.15, yAxisID: 'y' });
+  if (sbiData.length) datasets.push({ label: 'SBI TT Sell', data: sbiData, borderColor: '#ff6b9d', backgroundColor: 'rgba(255,107,157,0.08)', borderWidth: 1.8, pointRadius: 0, tension: 0.15, yAxisID: 'y', borderDash: [6, 3] });
+  if (spreadData.length) datasets.push({ label: 'Spread (Spot − SBI)', data: spreadData, borderColor: '#e8a33d', backgroundColor: 'rgba(232,163,61,0.06)', borderWidth: 1.2, pointRadius: 0, tension: 0.15, yAxisID: 'y1' });
   if (sbiChart) sbiChart.destroy();
   sbiChart = new Chart(canvas, {
     type: 'line', data: { datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } },
-        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(4)}` } }
-      },
+      plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } }, tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(4)}` } } },
       scales: {
         x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
-        y: { position: 'left', grid: { color: '#1c2536' },
-             ticks: { color: '#7c8aa0', font: { size: 10 } },
-             title: { display: true, text: 'INR per USD', color: '#7c8aa0', font: { size: 10 } } },
-        y1: { position: 'right', grid: { display: false },
-              ticks: { color: '#e8a33d', font: { size: 9 } },
-              title: { display: true, text: 'Spread (₹)', color: '#e8a33d', font: { size: 9 } } }
+        y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } }, title: { display: true, text: 'INR per USD', color: '#7c8aa0', font: { size: 10 } } },
+        y1: { position: 'right', grid: { display: false }, ticks: { color: '#e8a33d', font: { size: 9 } }, title: { display: true, text: 'Spread (₹)', color: '#e8a33d', font: { size: 9 } } }
       }
     }
   });
@@ -2155,17 +1993,14 @@ function renderSbiChart() {
    LME–MCX SPREAD HISTORY
    ======================================================================== */
 function computeLmcSpreadSeries(metal) {
-  const lmeName = `LME ${metal}`;
-  const mcxName = `MCX ${metal}`;
   const out = [];
   for (const r of RAW) {
-    const lme = r.series[lmeName];
-    const mcx = r.series[mcxName];
+    const lme = r.series[`LME ${metal}`];
+    const mcx = r.series[`MCX ${metal}`];
     const fx = r.series['USDINR'];
     if (lme == null || mcx == null || fx == null) continue;
     const lmeInrPerKg = (lme * fx) / 1000;
-    const spread = mcx - lmeInrPerKg;
-    out.push({ t: r.t, date: r.date, lme, mcx, fx, lmeInrPerKg, spread });
+    out.push({ t: r.t, date: r.date, lme, mcx, fx, lmeInrPerKg, spread: mcx - lmeInrPerKg });
   }
   return out;
 }
@@ -2179,22 +2014,14 @@ function renderLmcChart() {
   const resampled = resample(filtered, lmcFreq);
   const color = CSP_COLORS[LMC_METAL_MAP[currentLMC]] || '#e8a33d';
   const data = resampled.map(p => ({ x: p.t, y: p.spread }));
-
   if (lmcChart) lmcChart.destroy();
   lmcChart = new Chart(canvas, {
     type: 'line',
-    data: { datasets: [{
-      label: `${currentLMC} MCX − LME (₹/kg)`, data,
-      borderColor: color, backgroundColor: color + '20',
-      borderWidth: 2, pointRadius: 0, tension: 0.15, fill: true,
-    }]},
+    data: { datasets: [{ label: `${currentLMC} MCX − LME (₹/kg)`, data, borderColor: color, backgroundColor: color + '20', borderWidth: 2, pointRadius: 0, tension: 0.15, fill: true }]},
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } },
-        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ₹${ctx.parsed.y.toFixed(2)}` } }
-      },
+      plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } }, tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ₹${ctx.parsed.y.toFixed(2)}` } } },
       scales: {
         x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
         y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 }, callback: v => '₹' + v } }
@@ -2214,8 +2041,7 @@ function populatePricePicker() {
     const cb = document.createElement('input');
     cb.type = 'checkbox'; cb.value = name;
     cb.addEventListener('change', () => {
-      if (cb.checked) selectedPriceSeries.add(name);
-      else selectedPriceSeries.delete(name);
+      if (cb.checked) selectedPriceSeries.add(name); else selectedPriceSeries.delete(name);
       lbl.classList.toggle('active', cb.checked);
       renderPriceChart();
     });
@@ -2244,52 +2070,30 @@ function renderPriceChart() {
   const tf = document.getElementById('priceTf').value;
   const customWrap = document.getElementById('priceCustomRange');
   let cutoff = null, fromDate = null, toDate = null;
-  if (tf === 'custom') {
-    customWrap.style.display = 'flex';
-    fromDate = document.getElementById('priceDateFrom').value;
-    toDate = document.getElementById('priceDateTo').value;
-  } else {
-    customWrap.style.display = 'none';
-    cutoff = tfCutoff(tf);
-  }
+  if (tf === 'custom') { customWrap.style.display = 'flex'; fromDate = document.getElementById('priceDateFrom').value; toDate = document.getElementById('priceDateTo').value; }
+  else { customWrap.style.display = 'none'; cutoff = tfCutoff(tf); }
   const fxSeries = new Set(['USDINR','DXY','Dollar Index','US 2Y','US 10Y','US 30Y']);
   const datasets = [];
   const palette = ['#d68b4d','#93a2b5','#5b8fc9','#e8b23d','#c0392b','#2ecc71','#9b59b6','#f39c12','#e84393','#1abc9c'];
   let i = 0;
   for (const name of selectedPriceSeries) {
     const series = [];
-    for (const r of RAW) {
-      const v = r.series[name];
-      if (v != null) series.push({ t: r.t, v, date: r.date });
-    }
+    for (const r of RAW) { const v = r.series[name]; if (v != null) series.push({ t: r.t, v, date: r.date }); }
     if (!series.length) continue;
     let filtered = series;
-    if (tf === 'custom') {
-      if (fromDate) filtered = filtered.filter(p => p.date >= fromDate);
-      if (toDate) filtered = filtered.filter(p => p.date <= toDate);
-    } else if (cutoff) {
-      filtered = series.filter(p => p.t >= cutoff);
-    }
+    if (tf === 'custom') { if (fromDate) filtered = filtered.filter(p => p.date >= fromDate); if (toDate) filtered = filtered.filter(p => p.date <= toDate); }
+    else if (cutoff) filtered = series.filter(p => p.t >= cutoff);
     if (!filtered.length) continue;
     const resampled = resample(filtered, priceFreq);
     const isFx = fxSeries.has(name);
-    datasets.push({
-      label: name,
-      data: resampled.map(p => ({ x: p.t, y: p.v })),
-      borderColor: palette[i % palette.length],
-      borderWidth: 1.8, pointRadius: 0, tension: 0.15,
-      yAxisID: isFx ? 'y1' : 'y',
-    });
+    datasets.push({ label: name, data: resampled.map(p => ({ x: p.t, y: p.v })), borderColor: palette[i % palette.length], borderWidth: 1.8, pointRadius: 0, tension: 0.15, yAxisID: isFx ? 'y1' : 'y' });
     i++;
   }
   const rangeLbl = document.getElementById('priceRangeLabel');
-  if (tf === 'custom') {
-    rangeLbl.textContent = (fromDate || toDate) ? `${fromDate||'start'} → ${toDate||'end'}` : 'Full range';
-  } else { rangeLbl.textContent = ''; }
-
+  if (tf === 'custom') rangeLbl.textContent = (fromDate || toDate) ? `${fromDate||'start'} → ${toDate||'end'}` : 'Full range';
+  else rangeLbl.textContent = '';
   const logScale = document.getElementById('priceLogToggle').checked;
   const hasFx = datasets.some(d => d.yAxisID === 'y1');
-
   if (priceChart) priceChart.destroy();
   priceChart = new Chart(document.getElementById('priceChart'), {
     type: 'line', data: { datasets },
@@ -2299,8 +2103,7 @@ function renderPriceChart() {
       plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } },
       scales: {
         x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
-        y: { position: 'left', type: logScale ? 'logarithmic' : 'linear',
-             grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
+        y: { position: 'left', type: logScale ? 'logarithmic' : 'linear', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
         ...(hasFx ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 9 } } } } : {})
       }
     }
@@ -2311,13 +2114,9 @@ function renderPriceChart() {
    SEASONALITY
    ======================================================================== */
 function getLmeSeries(metal) {
-  const map = { copper:'LME Copper', aluminium:'LME Aluminium', zinc:'LME Zinc' };
-  const name = map[metal];
+  const name = { copper:'LME Copper', aluminium:'LME Aluminium', zinc:'LME Zinc' }[metal];
   const out = [];
-  for (const r of RAW) {
-    const v = r.series[name];
-    if (v != null) out.push({ t: r.t, date: r.date, v });
-  }
+  for (const r of RAW) { const v = r.series[name]; if (v != null) out.push({ t: r.t, date: r.date, v }); }
   return out;
 }
 function computeSeasonalityMonthly(metal, years) {
@@ -2371,31 +2170,17 @@ function renderSeasonChart() {
   const chartWrap = document.getElementById('seasonChartWrap');
   const matrixWrap = document.getElementById('seasonMatrixWrap');
   if (mode === 'matrix') {
-    chartWrap.style.display = 'none';
-    matrixWrap.style.display = 'block';
+    chartWrap.style.display = 'none'; matrixWrap.style.display = 'block';
     if (seasonChart) { seasonChart.destroy(); seasonChart = null; }
-    renderMatrix();
-    return;
+    renderMatrix(); return;
   }
-  chartWrap.style.display = 'block';
-  matrixWrap.style.display = 'none';
+  chartWrap.style.display = 'block'; matrixWrap.style.display = 'none';
   let labels, data, isWeekly;
-  if (mode === 'weekly') {
-    isWeekly = true;
-    labels = Array.from({length:53}, (_,i) => 'W'+(i+1));
-    data = computeSeasonalityWeekly(currentSeasonMetal, years);
-  } else {
-    isWeekly = false;
-    labels = MONTHS;
-    data = computeSeasonalityMonthly(currentSeasonMetal, years);
-  }
+  if (mode === 'weekly') { isWeekly = true; labels = Array.from({length:53}, (_,i) => 'W'+(i+1)); data = computeSeasonalityWeekly(currentSeasonMetal, years); }
+  else { isWeekly = false; labels = MONTHS; data = computeSeasonalityMonthly(currentSeasonMetal, years); }
   if (seasonChart) seasonChart.destroy();
   seasonChart = new Chart(document.getElementById('seasonChart'), {
-    type: 'bar', data: { labels, datasets: [{
-      data,
-      backgroundColor: data.map(v => v >= 0 ? 'rgba(46,204,113,0.65)' : 'rgba(231,76,60,0.65)'),
-      borderRadius: 3,
-    }]},
+    type: 'bar', data: { labels, datasets: [{ data, backgroundColor: data.map(v => v >= 0 ? 'rgba(46,204,113,0.65)' : 'rgba(231,76,60,0.65)'), borderRadius: 3 }]},
     options: { responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
@@ -2427,26 +2212,19 @@ function renderMatrix() {
     for (let m = 0; m < 12; m++) {
       const v = row[m];
       if (v == null) html += '<td style="color:var(--muted);">—</td>';
-      else {
-        const cls = v > 0.05 ? 'pos' : v < -0.05 ? 'neg' : '';
-        html += `<td class="${cls}">${v>=0?'+':''}${v.toFixed(2)}</td>`;
-      }
+      else { const cls = v > 0.05 ? 'pos' : v < -0.05 ? 'neg' : ''; html += `<td class="${cls}">${v>=0?'+':''}${v.toFixed(2)}</td>`; }
     }
     html += `<td class="avg">${avg==null?'—':(avg>=0?'+':'')+avg.toFixed(2)}</td></tr>`;
   });
   html += '<tr><td class="row-h" style="background:#1a2334;color:var(--accent);">Avg</td>';
-  monthAvgs.forEach(v => {
-    const cls = v > 0.05 ? 'pos' : v < -0.05 ? 'neg' : '';
-    html += `<td class="${cls} avg">${v>=0?'+':''}${v.toFixed(2)}</td>`;
-  });
+  monthAvgs.forEach(v => { const cls = v > 0.05 ? 'pos' : v < -0.05 ? 'neg' : ''; html += `<td class="${cls} avg">${v>=0?'+':''}${v.toFixed(2)}</td>`; });
   const grand = monthAvgs.reduce((a,b)=>a+b,0)/12;
-  html += `<td class="avg">${grand>=0?'+':''}${grand.toFixed(2)}</td></tr>`;
-  html += '</tbody></table></div>';
+  html += `<td class="avg">${grand>=0?'+':''}${grand.toFixed(2)}</td></tr></tbody></table></div>`;
   wrap.innerHTML = html;
 }
 
 /* ========================================================================
-   CSP CARD
+   CSP CARD & CSP2 CARD
    ======================================================================== */
 function renderCSP() {
   const metal = currentCSP;
@@ -2464,10 +2242,7 @@ function renderCSP() {
     if (!m || m.cash == null || m.threeM == null) continue;
     rows.push({ t: r.t, date: r.date, cash: m.cash, threeM: m.threeM, stock: m.stock, spread: m.cash - m.threeM });
   }
-  if (!rows.length) {
-    document.getElementById('cspBadge').innerHTML = `<span class="badge na">NO ${metal} DATA</span>`;
-    return;
-  }
+  if (!rows.length) { document.getElementById('cspBadge').innerHTML = `<span class="badge na">NO ${metal} DATA</span>`; return; }
   const last = rows[rows.length-1];
   const spread = last.spread;
   document.getElementById('cspCash').textContent = fmt(last.cash, 2);
@@ -2475,29 +2250,19 @@ function renderCSP() {
   const spEl = document.getElementById('cspSpread');
   spEl.textContent = (spread >= 0 ? '+' : '') + fmt(spread, 2);
   spEl.className = 'val ' + (spread >= 0 ? 'pos' : 'neg');
-  document.getElementById('cspBadge').innerHTML = spread >= 0
-    ? '<span class="badge bwd">BACKWARDATION</span>'
-    : '<span class="badge ctg">CONTANGO</span>';
-
+  document.getElementById('cspBadge').innerHTML = spread >= 0 ? '<span class="badge bwd">BACKWARDATION</span>' : '<span class="badge ctg">CONTANGO</span>';
   const data = resample(rows, cspFreq);
   const labels = data.map(r => r.t);
   const spreadData = data.map(r => r.spread);
   const stockData = data.map(r => r.stock);
   const hasStock = stockData.some(s => s != null);
-
   if (cspChart) cspChart.destroy();
   cspChart = new Chart(document.getElementById('cspChart'), {
     data: {
       labels,
       datasets: [
-        { type:'bar', label:'Cash − 3M', data: spreadData,
-          backgroundColor: spreadData.map(v => v >= 0 ? 'rgba(46,204,113,0.6)' : 'rgba(231,76,60,0.6)'),
-          yAxisID: 'y', order: 2 },
-        ...(hasStock ? [{
-          type:'line', label:'LME Stock', data: stockData,
-          borderColor: '#e8a33d', borderWidth: 1.5, pointRadius: 0, tension: 0.15,
-          yAxisID: 'y1', order: 1,
-        }] : []),
+        { type:'bar', label:'Cash − 3M', data: spreadData, backgroundColor: spreadData.map(v => v >= 0 ? 'rgba(46,204,113,0.6)' : 'rgba(231,76,60,0.6)'), yAxisID: 'y', order: 2 },
+        ...(hasStock ? [{ type:'line', label:'LME Stock', data: stockData, borderColor: '#e8a33d', borderWidth: 1.5, pointRadius: 0, tension: 0.15, yAxisID: 'y1', order: 1 }] : []),
       ]
     },
     options: {
@@ -2512,10 +2277,6 @@ function renderCSP() {
     }
   });
 }
-
-/* ========================================================================
-   CSP2 CARD
-   ======================================================================== */
 function renderCSP2() {
   const metal = currentCSP2;
   if (!CSP_RAW.length) { if (csp2Chart) { csp2Chart.destroy(); csp2Chart = null; } return; }
@@ -2531,19 +2292,12 @@ function renderCSP2() {
   const stockData = data.map(r => ({ x: r.t, y: r.stock }));
   const hasStock = stockData.some(s => s.y != null);
   const color = CSP_COLORS[metal] || '#d68b4d';
-
   if (csp2Chart) csp2Chart.destroy();
   csp2Chart = new Chart(document.getElementById('csp2Chart'), {
     data: {
       datasets: [
-        { type:'line', label: `${metal} Cash`, data: cashData,
-          borderColor: color, backgroundColor: color + '20',
-          borderWidth: 2, pointRadius: 0, tension: 0.15, yAxisID: 'y' },
-        ...(hasStock ? [{
-          type:'line', label: `${metal} Stock`, data: stockData,
-          borderColor: '#e8a33d', borderWidth: 1.5, borderDash: [5, 3],
-          pointRadius: 0, tension: 0.15, yAxisID: 'y1'
-        }] : []),
+        { type:'line', label: `${metal} Cash`, data: cashData, borderColor: color, backgroundColor: color + '20', borderWidth: 2, pointRadius: 0, tension: 0.15, yAxisID: 'y' },
+        ...(hasStock ? [{ type:'line', label: `${metal} Stock`, data: stockData, borderColor: '#e8a33d', borderWidth: 1.5, borderDash: [5, 3], pointRadius: 0, tension: 0.15, yAxisID: 'y1' }] : []),
       ]
     },
     options: {
@@ -2564,10 +2318,7 @@ function renderCSP2() {
    ======================================================================== */
 function seriesValues(name) {
   const out = [];
-  for (const r of RAW) {
-    const v = r.series[name];
-    if (v != null) out.push({ t: r.t, v });
-  }
+  for (const r of RAW) { const v = r.series[name]; if (v != null) out.push({ t: r.t, v }); }
   return out;
 }
 function seriesReturns(name, cutoff) {
@@ -2598,11 +2349,7 @@ function alignSeries(a, b, cutoff, mode) {
   const bVals = mode === 'returns' ? seriesReturns(b, cutoff) : seriesLevels(b, cutoff);
   const bMap = new Map(bVals.map(p => [p.t, p.v]));
   const out = [];
-  for (const p of aVals) {
-    const bv = bMap.get(p.t);
-    if (bv == null) continue;
-    out.push({ t: p.t, a: p.v, b: bv });
-  }
+  for (const p of aVals) { const bv = bMap.get(p.t); if (bv == null) continue; out.push({ t: p.t, a: p.v, b: bv }); }
   return out;
 }
 function pearson(pairs) {
@@ -2612,26 +2359,17 @@ function pearson(pairs) {
   for (const p of pairs) { sa += p.a; sb += p.b; }
   const ma = sa/n, mb = sb/n;
   let num = 0, da2 = 0, db2 = 0;
-  for (const p of pairs) {
-    const da = p.a - ma, db = p.b - mb;
-    num += da*db; da2 += da*da; db2 += db*db;
-  }
+  for (const p of pairs) { const da = p.a - ma, db = p.b - mb; num += da*db; da2 += da*da; db2 += db*db; }
   const den = Math.sqrt(da2*db2);
   return den === 0 ? null : num/den;
 }
 function rollingCorr(a, b, win, cutoff, mode) {
   const aligned = alignSeries(a, b, cutoff, mode);
   const out = [];
-  for (let i = win - 1; i < aligned.length; i++) {
-    const w = aligned.slice(i - win + 1, i + 1);
-    const c = pearson(w);
-    if (c != null) out.push({ t: aligned[i].t, corr: c });
-  }
+  for (let i = win - 1; i < aligned.length; i++) { const w = aligned.slice(i - win + 1, i + 1); const c = pearson(w); if (c != null) out.push({ t: aligned[i].t, corr: c }); }
   return { series: out, sample: aligned.length };
 }
-function fullCorr(a, b, cutoff, mode) {
-  return pearson(alignSeries(a, b, cutoff, mode));
-}
+function fullCorr(a, b, cutoff, mode) { return pearson(alignSeries(a, b, cutoff, mode)); }
 function populateCorrDropdowns() {
   const a = document.getElementById('corrA');
   const b = document.getElementById('corrB');
@@ -2651,8 +2389,7 @@ function populateSeriesPicker() {
     const cb = document.createElement('input');
     cb.type = 'checkbox'; cb.value = name;
     cb.addEventListener('change', () => {
-      if (cb.checked) selectedMatrixSeries.add(name);
-      else selectedMatrixSeries.delete(name);
+      if (cb.checked) selectedMatrixSeries.add(name); else selectedMatrixSeries.delete(name);
       lbl.classList.toggle('active', cb.checked);
       renderCorrMatrix();
     });
@@ -2670,23 +2407,14 @@ function renderCorrRolling() {
   const cutoff = tfCutoff(tf);
   const { series, sample } = rollingCorr(a, b, win, cutoff, mode);
   document.getElementById('corrSample').textContent = `· ${sample} obs`;
-  if (!series.length) {
-    if (corrChart) { corrChart.destroy(); corrChart = null; }
-    document.getElementById('corrCurrent').textContent = '— no data';
-    return;
-  }
+  if (!series.length) { if (corrChart) { corrChart.destroy(); corrChart = null; } document.getElementById('corrCurrent').textContent = '— no data'; return; }
   const cur = series[series.length-1].corr;
   const cls = cur > 0.3 ? 'var(--green)' : cur < -0.3 ? 'var(--red)' : 'var(--accent)';
   document.getElementById('corrCurrent').innerHTML = `ρ = <span style="color:${cls};">${cur.toFixed(3)}</span>`;
   if (corrChart) corrChart.destroy();
   corrChart = new Chart(document.getElementById('corrChart'), {
     type: 'line',
-    data: { datasets: [{
-      label: `${a} vs ${b} — ${win}d ρ (${mode})`,
-      data: series.map(r => ({ x: r.t, y: r.corr })),
-      borderColor: '#e8a33d', backgroundColor: 'rgba(232,163,61,0.1)',
-      borderWidth: 1.8, pointRadius: 0, tension: 0.15, fill: true,
-    }]},
+    data: { datasets: [{ label: `${a} vs ${b} — ${win}d ρ (${mode})`, data: series.map(r => ({ x: r.t, y: r.corr })), borderColor: '#e8a33d', backgroundColor: 'rgba(232,163,61,0.1)', borderWidth: 1.8, pointRadius: 0, tension: 0.15, fill: true }]},
     options: { responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: { legend: { labels: { color: '#a9b6cb', font: { size: 10 } } } },
@@ -2730,17 +2458,13 @@ function renderCorrChart() {
   const pairControls = document.getElementById('corrPairControls');
   const matrixControls = document.getElementById('corrMatrixControls');
   if (mode === 'matrix') {
-    rollingWrap.style.display = 'none';
-    matrixWrap.style.display = 'block';
-    pairControls.style.display = 'none';
-    matrixControls.style.display = 'block';
+    rollingWrap.style.display = 'none'; matrixWrap.style.display = 'block';
+    pairControls.style.display = 'none'; matrixControls.style.display = 'block';
     if (corrChart) { corrChart.destroy(); corrChart = null; }
     renderCorrMatrix();
   } else {
-    rollingWrap.style.display = 'block';
-    matrixWrap.style.display = 'none';
-    pairControls.style.display = 'flex';
-    matrixControls.style.display = 'none';
+    rollingWrap.style.display = 'block'; matrixWrap.style.display = 'none';
+    pairControls.style.display = 'flex'; matrixControls.style.display = 'none';
     renderCorrRolling();
   }
 }
@@ -2750,10 +2474,7 @@ function renderCorrChart() {
    ======================================================================== */
 function computeTrend(seriesName) {
   const prices = [];
-  for (const r of RAW) {
-    const v = r.series[seriesName];
-    if (v != null) prices.push({ t: r.t, date: r.date, v });
-  }
+  for (const r of RAW) { const v = r.series[seriesName]; if (v != null) prices.push({ t: r.t, date: r.date, v }); }
   if (prices.length < 20) return null;
   const ema20d = computeEMA(prices, 20);
   const latestPrice = prices[prices.length-1];
@@ -2774,13 +2495,7 @@ function computeTrend(seriesName) {
       mediumDist = ((latestWeekly.v - latestEma20w.v) / latestEma20w.v) * 100;
     }
   }
-  return {
-    latestPrice: latestPrice.v, latestDate: latestPrice.date,
-    ema20d: latestEma20d ? latestEma20d.v : null,
-    shortTrend, shortDist,
-    ema20w: ema20w && ema20w.length ? ema20w[ema20w.length-1].v : null,
-    mediumTrend, mediumDist,
-  };
+  return { latestPrice: latestPrice.v, latestDate: latestPrice.date, ema20d: latestEma20d ? latestEma20d.v : null, shortTrend, shortDist, ema20w: ema20w && ema20w.length ? ema20w[ema20w.length-1].v : null, mediumTrend, mediumDist };
 }
 function renderTrendAnalysis() {
   const panel = document.getElementById('trendPanel');
@@ -2793,18 +2508,15 @@ function renderTrendAnalysis() {
     { name:'MCX Aluminium', label:'MCX Aluminium', color:'#c07c2b' },
     { name:'MCX Zinc', label:'MCX Zinc', color:'#c07c2b' },
   ];
-  let html = `<table class="trend-table">
-    <thead><tr>
-      <th>Instrument</th><th>Price</th><th>20D EMA</th>
-      <th>Short-term Trend</th><th>20W EMA</th><th>Medium-term Trend</th>
-    </tr></thead><tbody>`;
+  let html = `<table class="trend-table"><thead><tr>
+    <th>Instrument</th><th>Price</th><th>20D EMA</th><th>Short-term Trend</th><th>20W EMA</th><th>Medium-term Trend</th>
+  </tr></thead><tbody>`;
   let anyRow = false, lastDate = null;
   for (const m of metals) {
     if (!SERIES_NAMES.includes(m.name)) continue;
     const t = computeTrend(m.name);
     if (!t) continue;
-    anyRow = true;
-    lastDate = t.latestDate;
+    anyRow = true; lastDate = t.latestDate;
     const shortCls = t.shortTrend === 'up' ? 'up' : t.shortTrend === 'down' ? 'down' : 'na';
     const shortIcon = t.shortTrend === 'up' ? '▲' : t.shortTrend === 'down' ? '▼' : '—';
     const shortTxt = t.shortTrend === 'up' ? 'UPTREND' : t.shortTrend === 'down' ? 'DOWNTREND' : 'N/A';
@@ -2819,19 +2531,13 @@ function renderTrendAnalysis() {
       <td class="metal-name" style="color:${m.color}">${m.label}</td>
       <td class="val">${fmt(t.latestPrice, 2)}</td>
       <td class="val">${t.ema20d != null ? fmt(t.ema20d, 2) : '—'}</td>
-      <td><span class="trend-tag ${shortCls}">${shortIcon} ${shortTxt}</span>
-        ${shortDistTxt ? `<span class="dist ${shortDistCls}">${shortDistTxt}</span>` : ''}</td>
+      <td><span class="trend-tag ${shortCls}">${shortIcon} ${shortTxt}</span> ${shortDistTxt ? `<span class="dist ${shortDistCls}">${shortDistTxt}</span>` : ''}</td>
       <td class="val">${t.ema20w != null ? fmt(t.ema20w, 2) : '—'}</td>
-      <td><span class="trend-tag ${medCls}">${medIcon} ${medTxt}</span>
-        ${medDistTxt ? `<span class="dist ${medDistCls}">${medDistTxt}</span>` : ''}</td>
+      <td><span class="trend-tag ${medCls}">${medIcon} ${medTxt}</span> ${medDistTxt ? `<span class="dist ${medDistCls}">${medDistTxt}</span>` : ''}</td>
     </tr>`;
   }
   html += '</tbody></table>';
-  if (!anyRow) {
-    panel.innerHTML = '<div class="feed empty">No trend data available.</div>';
-    if (updatedEl) updatedEl.textContent = '';
-    return;
-  }
+  if (!anyRow) { panel.innerHTML = '<div class="feed empty">No trend data available.</div>'; if (updatedEl) updatedEl.textContent = ''; return; }
   panel.innerHTML = html;
   if (updatedEl && lastDate) updatedEl.textContent = 'As of ' + lastDate;
 }
@@ -2852,8 +2558,7 @@ function renderSentiment() {
     if (prices.length < 100) continue;
     const lookback = 20;
     const roll = [];
-    for (let i = lookback; i < prices.length; i++)
-      roll.push((prices[i] - prices[i-lookback]) / prices[i-lookback]);
+    for (let i = lookback; i < prices.length; i++) roll.push((prices[i] - prices[i-lookback]) / prices[i-lookback]);
     const recent = roll.slice(-250);
     const meanR = recent.reduce((a,b)=>a+b,0)/recent.length;
     const sdR = Math.sqrt(recent.reduce((s,x)=>s+(x-meanR)**2,0)/(recent.length-1));
@@ -2887,30 +2592,9 @@ function renderSentiment() {
           <div class="sent-detail">5d: ${trend5>=0?'+':''}${trend5.toFixed(1)}%</div>
         </div>
         <div>
-          <div class="metric">
-            <span style="display:flex;justify-content:space-between;font-size:0.65rem;">
-              <span>Momentum (50%)</span><span>${(momZ>=0?'+':'')+momZ.toFixed(2)}σ</span>
-            </span>
-            <div class="bar-wrap">
-              <div class="bar ${momZ>=0?'pos':'neg'} ${momZ>=0?'mid':'left'}" style="width:${Math.min(50,Math.abs(momZ)*25)}%;"></div>
-            </div>
-          </div>
-          <div class="metric" style="margin-top:6px;">
-            <span style="display:flex;justify-content:space-between;font-size:0.65rem;">
-              <span>Basis (30%)</span><span>${basisText}</span>
-            </span>
-            <div class="bar-wrap">
-              <div class="bar ${basisScore>=0?'pos':'neg'} ${basisScore>=0?'mid':'left'}" style="width:${Math.min(50,Math.abs(basisScore)*25)}%;"></div>
-            </div>
-          </div>
-          <div class="metric" style="margin-top:6px;">
-            <span style="display:flex;justify-content:space-between;font-size:0.65rem;">
-              <span>Vol regime (20%)</span><span>${(volScore>=0?'+':'')+volScore.toFixed(2)}</span>
-            </span>
-            <div class="bar-wrap">
-              <div class="bar ${volScore>=0?'neg':'pos'} ${volScore>=0?'mid':'left'}" style="width:${Math.min(50,Math.abs(volScore)*50)}%;"></div>
-            </div>
-          </div>
+          <div class="metric"><span style="display:flex;justify-content:space-between;font-size:0.65rem;"><span>Momentum (50%)</span><span>${(momZ>=0?'+':'')+momZ.toFixed(2)}σ</span></span><div class="bar-wrap"><div class="bar ${momZ>=0?'pos':'neg'} ${momZ>=0?'mid':'left'}" style="width:${Math.min(50,Math.abs(momZ)*25)}%;"></div></div></div>
+          <div class="metric" style="margin-top:6px;"><span style="display:flex;justify-content:space-between;font-size:0.65rem;"><span>Basis (30%)</span><span>${basisText}</span></span><div class="bar-wrap"><div class="bar ${basisScore>=0?'pos':'neg'} ${basisScore>=0?'mid':'left'}" style="width:${Math.min(50,Math.abs(basisScore)*25)}%;"></div></div></div>
+          <div class="metric" style="margin-top:6px;"><span style="display:flex;justify-content:space-between;font-size:0.65rem;"><span>Vol regime (20%)</span><span>${(volScore>=0?'+':'')+volScore.toFixed(2)}</span></span><div class="bar-wrap"><div class="bar ${volScore>=0?'neg':'pos'} ${volScore>=0?'mid':'left'}" style="width:${Math.min(50,Math.abs(volScore)*50)}%;"></div></div></div>
         </div>
         <div class="score ${cls==='bull'?'pos':cls==='bear'?'neg':'neu'}">${scoreTxt}</div>
       </div>`;
@@ -2956,18 +2640,14 @@ async function loadNews() {
   const feed = document.getElementById('newsFeed');
   const stamp = document.getElementById('newsUpdated');
   try {
-    const api = 'https://api.rss2json.com/v1/api.json?rss_url=' +
-                encodeURIComponent('https://www.mining.com/feed/') + '&count=20';
+    const api = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.mining.com/feed/') + '&count=20';
     const res = await fetch(api);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     if (data.status === 'ok' && data.items && data.items.length) {
       feed.innerHTML = data.items.map(it => {
         const metals = detectMetals(it.title || '').map(m => `<span class="tag metal">${m}</span>`).join(' ');
-        return `<li>
-          <div class="title"><a href="${it.link}" target="_blank" rel="noopener">${it.title}</a></div>
-          <div class="meta">Mining.com · ${timeAgo(it.pubDate)} ${metals ? '· '+metals : ''}</div>
-        </li>`;
+        return `<li><div class="title"><a href="${it.link}" target="_blank" rel="noopener">${it.title}</a></div><div class="meta">Mining.com · ${timeAgo(it.pubDate)} ${metals ? '· '+metals : ''}</div></li>`;
       }).join('');
       stamp.textContent = 'live · ' + new Date().toLocaleTimeString();
       return;
@@ -2981,78 +2661,10 @@ async function loadNews() {
     feed.innerHTML = Array.from(items).slice(0, 20).map(it => {
       const title = (it.querySelector('title')?.textContent || '').trim();
       const metals = detectMetals(title).map(m => `<span class="tag metal">${m}</span>`).join(' ');
-      return `<li>
-        <div class="title"><a href="${it.querySelector('link')?.textContent}" target="_blank">${title}</a></div>
-        <div class="meta">Mining.com · ${timeAgo(it.querySelector('pubDate')?.textContent)} ${metals ? '· '+metals : ''}</div>
-      </li>`;
+      return `<li><div class="title"><a href="${it.querySelector('link')?.textContent}" target="_blank">${title}</a></div><div class="meta">Mining.com · ${timeAgo(it.querySelector('pubDate')?.textContent)} ${metals ? '· '+metals : ''}</div></li>`;
     }).join('');
     stamp.textContent = 'live · ' + new Date().toLocaleTimeString();
-  } catch (err) {
-    feed.innerHTML = '<li class="empty">Could not load feed.</li>';
-  }
-}
-
-/* ========================================================================
-   SBI TT FETCH
-   ======================================================================== */
-async function tryFetch(url, timeoutMs = 15000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timer);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return await res.text();
-  } catch (err) {
-    clearTimeout(timer);
-    throw err;
-  }
-}
-async function fetchSbiTT(url) {
-  const statusEl = document.getElementById('sbiStatus');
-  if (!url || !/^https?:\/\//.test(url)) {
-    statusEl.textContent = 'Please enter a valid URL starting with http(s)://';
-    statusEl.className = 'status err';
-    return;
-  }
-  statusEl.textContent = 'Fetching…';
-  statusEl.className = 'status';
-  const proxies = [
-    { name: 'corsproxy.io',  wrap: u => 'https://corsproxy.io/?' + encodeURIComponent(u) },
-    { name: 'allorigins',    wrap: u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u) },
-    { name: 'codetabs',      wrap: u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u) },
-    { name: 'direct',        wrap: u => u },
-  ];
-  let text = null, lastErr = null, usedProxy = '';
-  for (const p of proxies) {
-    try {
-      statusEl.textContent = `Fetching via ${p.name}…`;
-      text = await tryFetch(p.wrap(url), 15000);
-      if (text && text.length > 100) { usedProxy = p.name; break; }
-      text = null;
-    } catch (e) { lastErr = e; }
-  }
-  if (!text) {
-    statusEl.innerHTML = `All proxies failed. Last error: ${lastErr ? lastErr.message : 'unknown'}.`;
-    statusEl.className = 'status err';
-    return;
-  }
-  try {
-    const parsed = parseSBICSV(text);
-    if (!parsed.ok) throw new Error(parsed.msg);
-    SBI_RAW = parsed.rows;
-    statusEl.textContent = `${parsed.msg} · via ${usedProxy}` +
-      (parsed.details && parsed.details.length ? ' · ' + parsed.details[0] : '');
-    statusEl.className = 'status ok';
-    renderSbiChart();
-    if (!parityEdited.has('__usdinr')) {
-      parityEdits.__usdinr = SBI_RAW.length ? SBI_RAW[SBI_RAW.length-1].value : null;
-      renderParity();
-    }
-  } catch (err) {
-    statusEl.textContent = 'Parse error: ' + err.message;
-    statusEl.className = 'status err';
-  }
+  } catch (err) { feed.innerHTML = '<li class="empty">Could not load feed.</li>'; }
 }
 
 /* ========================================================================
@@ -3066,10 +2678,7 @@ async function fetchText(url, timeoutMs = 20000) {
     clearTimeout(timer);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return await res.text();
-  } catch (err) {
-    clearTimeout(timer);
-    throw err;
-  }
+  } catch (err) { clearTimeout(timer); throw err; }
 }
 async function autoLoadFromGitHub(silent = false) {
   const btn = document.getElementById('btnRefreshAll');
@@ -3086,32 +2695,21 @@ async function autoLoadFromGitHub(silent = false) {
     const toEl = document.getElementById('priceDateTo');
     if (fromEl && !fromEl.value) fromEl.value = RAW[0].date;
     if (toEl && !toEl.value) toEl.value = RAW[RAW.length-1].date;
-    const btnM = document.getElementById('btnMetals');
-    btnM.classList.add('loaded');
+    document.getElementById('btnMetals').classList.add('loaded');
     metalsOk = true;
   } catch (e) { errs.push('metals.csv: ' + e.message); }
-
   try {
     const txt = await fetchText(CSP_URL + '?t=' + Date.now());
     const res = parseCSPCSV(txt);
     if (!res.ok) throw new Error(res.msg);
-    const btnC = document.getElementById('btnCSP');
-    btnC.classList.add('loaded');
+    document.getElementById('btnCSP').classList.add('loaded');
     cspOk = true;
   } catch (e) { errs.push('lme_csp.csv: ' + e.message); }
-
   if (btn && !silent) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh from GitHub'; }
-
   if (metalsOk || cspOk) {
-    if (!silent) {
-      showStatus('ok', 'Loaded from GitHub' +
-        (metalsOk ? ' · metals.csv ✓' : '') + (cspOk ? ' · lme_csp.csv ✓' : ''),
-        errs.length ? errs : null);
-    }
+    if (!silent) showStatus('ok', 'Loaded from GitHub' + (metalsOk ? ' · metals.csv ✓' : '') + (cspOk ? ' · lme_csp.csv ✓' : ''), errs.length ? errs : null);
     maybeRender();
-  } else if (!silent) {
-    showStatus('err', 'Could not load GitHub CSVs', errs);
-  }
+  } else if (!silent) showStatus('err', 'Could not load GitHub CSVs', errs);
 }
 
 /* ========================================================================
@@ -3126,10 +2724,6 @@ function loadMetalsFile(text) {
   if (!res.ok) { showStatus('err', 'metals.csv failed: ' + res.msg, res.details); return false; }
   computeLatest();
   document.getElementById('rangeLabel').textContent = RAW[0].date + ' → ' + RAW[RAW.length-1].date;
-  const fromEl = document.getElementById('priceDateFrom');
-  const toEl = document.getElementById('priceDateTo');
-  if (fromEl && !fromEl.value) fromEl.value = RAW[0].date;
-  if (toEl && !toEl.value) toEl.value = RAW[RAW.length-1].date;
   const btn = document.getElementById('btnMetals');
   btn.classList.add('loaded');
   btn.querySelector('i').className = 'fas fa-check-circle';
@@ -3145,11 +2739,7 @@ function loadCSPFile(text) {
   showStatus('ok', 'lme_csp.csv (override): ' + res.msg, res.details);
   return true;
 }
-function readFile(file, onLoad) {
-  const r = new FileReader();
-  r.onload = e => onLoad(e.target.result);
-  r.readAsText(file);
-}
+function readFile(file, onLoad) { const r = new FileReader(); r.onload = e => onLoad(e.target.result); r.readAsText(file); }
 
 function maybeRender() {
   if (!RAW.length && !LIVE_RAW.length && !CSP_RAW.length) return;
@@ -3176,9 +2766,7 @@ function maybeRender() {
     ['corr chart',       () => renderCorrChart()],
   ];
   const errs = [];
-  for (const [name, fn] of steps) {
-    try { fn(); } catch (e) { errs.push(`${name}: ${e.message}`); console.error(name, e); }
-  }
+  for (const [name, fn] of steps) { try { fn(); } catch (e) { errs.push(`${name}: ${e.message}`); console.error(name, e); } }
   if (errs.length) showStatus('err', 'Some sections failed to render:', errs);
   if (!controlsWired) { wireControls(); controlsWired = true; }
 }
@@ -3217,20 +2805,11 @@ function wireControls() {
     b.classList.add('active'); sbiFreq = b.dataset.freq; renderSbiChart();
   }));
 
-  document.getElementById('priceAllBtn').addEventListener('click', () => {
-    selectedPriceSeries = new Set(SERIES_NAMES);
-    updatePricePickerUI(); renderPriceChart();
-  });
-  document.getElementById('priceNoneBtn').addEventListener('click', () => {
-    selectedPriceSeries = new Set();
-    updatePricePickerUI(); renderPriceChart();
-  });
+  document.getElementById('priceAllBtn').addEventListener('click', () => { selectedPriceSeries = new Set(SERIES_NAMES); updatePricePickerUI(); renderPriceChart(); });
+  document.getElementById('priceNoneBtn').addEventListener('click', () => { selectedPriceSeries = new Set(); updatePricePickerUI(); renderPriceChart(); });
   document.getElementById('priceMetalsBtn').addEventListener('click', () => {
     selectedPriceSeries = new Set();
-    SERIES_NAMES.forEach(n => {
-      const c = categorize(n);
-      if (c === 'lme' || c === 'mcx' || c === 'comex') selectedPriceSeries.add(n);
-    });
+    SERIES_NAMES.forEach(n => { const c = categorize(n); if (c === 'lme' || c === 'mcx' || c === 'comex') selectedPriceSeries.add(n); });
     updatePricePickerUI(); renderPriceChart();
   });
 
@@ -3262,6 +2841,8 @@ function wireControls() {
     for (const k of Object.keys(parityEdits)) delete parityEdits[k];
     parityEdits.__usdinr = null;
     parityEdited.clear();
+    for (const k of Object.keys(parityBadgeLock)) delete parityBadgeLock[k];
+    scheduleSaveParityOverrides();
     renderParity();
   });
 }
@@ -3280,27 +2861,21 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btnRefreshAll').addEventListener('click', () => autoLoadFromGitHub(false));
-
   document.getElementById('btnOpenCspUpdater').addEventListener('click', openCspUpdater);
-
-  document.getElementById('sbiFetchBtn').addEventListener('click', () => {
-    const url = document.getElementById('sbiUrl').value.trim();
-    fetchSbiTT(url);
-  });
+  document.getElementById('sbiPdfBtn').addEventListener('click', fetchSbiFromPdf);
+  document.getElementById('sbiCsvBtn').addEventListener('click', () => fetchSbiFromCsv(document.getElementById('sbiUrl').value.trim()));
 
   autoLoadFromGitHub(true);
   startLiveFeed();
   loadNews();
   startNalcoFeed();
 
-  fetchSbiTT(document.getElementById('sbiUrl').value.trim());
-  let lastSbiFetch = Date.now();
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && Date.now() - lastSbiFetch > 10 * 60 * 1000) {
-      lastSbiFetch = Date.now();
-      fetchSbiTT(document.getElementById('sbiUrl').value.trim());
-    }
-  });
+  fetchSbiFromCsv(document.getElementById('sbiUrl').value.trim());
+  fetchSbiFromPdf();
+  setInterval(fetchSbiFromPdf, 30 * 60 * 1000);
+
+  loadParityOverrides();
+  setInterval(loadParityOverrides, 60 * 1000);
 });
 </script>
 </body>
