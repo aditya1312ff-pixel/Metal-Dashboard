@@ -1377,7 +1377,7 @@ function parityCalc(m) {
   return { lmeCash, cost, inr, duty, subtotal, landedMt, landedKg, net };
 }
 
-/* Badge derived purely from basis: > 0 Bwd, < 0 Ctg, = 0 Flat */
+/* Badge derives purely from basis: > 0 Bwd, < 0 Ctg, = 0 Flat */
 function badgeFromBasis(basis) {
   if (basis > 0) return { cls: 'bwd', txt: 'Backwardation' };
   if (basis < 0) return { cls: 'ctg', txt: 'Contango' };
@@ -1498,7 +1498,7 @@ function updateParityCard(metalKey) {
 }
 
 /* ========================================================================
-   PARITY BASIS OVERRIDES — shared via GitHub
+   PARITY BASIS OVERRIDES — shared via GitHub (FIXED)
    ======================================================================== */
 async function loadParityOverrides() {
   try {
@@ -1507,14 +1507,15 @@ async function loadParityOverrides() {
     const data = await res.json();
     for (const k of ['Cu','Zn','Al']) {
       const key = k + '_basis';
+      // Only apply if the user hasn't manually edited this session
       if (parityEdited.has(k + '.basis')) continue;
       if (typeof data[key] === 'number' && isFinite(data[key])) {
         if (!parityEdits[k]) parityEdits[k] = {};
         parityEdits[k].basis = data[key];
         parityEdited.add(k + '.basis');
-      } else {
-        parityEdited.delete(k + '.basis');
       }
+      // Note: we deliberately DO NOT delete the flag when value is null.
+      // Once a field has been touched by the user (in any session), it stays dirty.
     }
     renderParity();
   } catch (e) {
@@ -1528,11 +1529,12 @@ function scheduleSaveParityOverrides() {
 }
 async function saveParityOverrides() {
   const token = getGithubToken();
-  if (!token) return;
+  if (!token) { console.warn('No token — parity overrides not saved.'); return; }
+  // FIXED: save whatever is in parityEdits, regardless of the "edited" flag
   const body = {
-    Cu_basis: parityEdited.has('Cu.basis') ? (numOrNull(parityEdits.Cu?.basis) ?? null) : null,
-    Zn_basis: parityEdited.has('Zn.basis') ? (numOrNull(parityEdits.Zn?.basis) ?? null) : null,
-    Al_basis: parityEdited.has('Al.basis') ? (numOrNull(parityEdits.Al?.basis) ?? null) : null,
+    Cu_basis: numOrNull(parityEdits.Cu?.basis),
+    Zn_basis: numOrNull(parityEdits.Zn?.basis),
+    Al_basis: numOrNull(parityEdits.Al?.basis),
   };
   const api = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${OVERRIDES_FILE_PATH}`;
   try {
