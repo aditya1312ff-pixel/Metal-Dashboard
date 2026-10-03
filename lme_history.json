@@ -48677,18 +48677,33 @@
       "date": "2026-09-15",
       "copper": {
         "total": 249225,
-        "live": null,
-        "cancelled": null
-      },
-      "zinc": {
-        "total": 111225,
-        "live": null,
-        "cancelled": null
+        "live": 134425,
+        "cancelled": 114800
       },
       "aluminium": {
         "total": 243600,
-        "live": null,
-        "cancelled": null
+        "live": 238675,
+        "cancelled": 4925
+      },
+      "nickel": {
+        "total": 278580,
+        "live": 265608,
+        "cancelled": 12972
+      },
+      "lead": {
+        "total": 379850,
+        "live": 349600,
+        "cancelled": 30250
+      },
+      "zinc": {
+        "total": 111225,
+        "live": 94375,
+        "cancelled": 16850
+      },
+      "tin": {
+        "total": 4890,
+        "live": 3625,
+        "cancelled": 1265
       }
     },
     {
