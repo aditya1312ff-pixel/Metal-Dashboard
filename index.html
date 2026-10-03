@@ -371,6 +371,49 @@
   .lme-status { font-size:0.72rem; color:var(--muted); margin-top:10px; min-height:1.2em; }
   .lme-status.ok { color:var(--green); }
   .lme-status.err { color:var(--red); }
+
+  /* ============ SHFE TAB STYLES ============ */
+  .shfe-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:12px; }
+  .shfe-card { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:12px; position:relative; overflow:hidden; }
+  .shfe-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:#d68b4d; }
+  .shfe-card.al::before { background:#93a2b5; }
+  .shfe-card.zn::before { background:#5b8fc9; }
+  .shfe-card.pb::before { background:#8b7a9e; }
+  .shfe-card.ni::before { background:#a3b18a; }
+  .shfe-card.sn::before { background:#c9a227; }
+  .shfe-card.ox::before { background:#6a9fbf; }
+  .shfe-card .shfe-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #1f2837; }
+  .shfe-card .shfe-title { font-size:0.9rem; font-weight:700; letter-spacing:0.3px; }
+  .shfe-card .shfe-sub { font-size:0.6rem; color:var(--muted); background:#0e1724; padding:2px 6px; border-radius:4px; }
+  .shfe-card .shfe-totals { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px; }
+  .shfe-card .shfe-cell { background:#0e1724; border-radius:8px; padding:8px 10px; }
+  .shfe-card .shfe-cell .lbl { font-size:0.58rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px; }
+  .shfe-card .shfe-cell .val { font-size:1.02rem; font-weight:700; font-variant-numeric:tabular-nums; color:#fff; }
+  .shfe-card .shfe-settle { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; margin-bottom:8px; font-size:0.68rem; }
+  .shfe-card .shfe-settle .k { color:var(--muted); display:block; font-size:0.55rem; text-transform:uppercase; letter-spacing:0.5px; }
+  .shfe-card .shfe-settle .v { color:#fff; font-weight:600; font-variant-numeric:tabular-nums; }
+  .shfe-card .shfe-wh-toggle { cursor:pointer; font-size:0.65rem; color:var(--accent); display:flex; align-items:center; gap:5px; user-select:none; padding:4px 0; }
+  .shfe-card .shfe-wh-toggle:hover { color:#f5b95a; }
+  .shfe-card .shfe-wh-toggle i { transition:transform 0.15s; }
+  .shfe-card .shfe-wh-toggle.open i { transform:rotate(90deg); }
+  .shfe-card .shfe-wh { display:none; max-height:280px; overflow-y:auto; margin-top:6px; border-top:1px solid #1f2837; padding-top:6px; }
+  .shfe-card .shfe-wh.open { display:block; }
+  .shfe-card .shfe-wh::-webkit-scrollbar { width:4px; }
+  .shfe-card .shfe-wh::-webkit-scrollbar-thumb { background:#2a3548; border-radius:4px; }
+  .shfe-card .shfe-wh table { width:100%; border-collapse:collapse; font-size:0.68rem; }
+  .shfe-card .shfe-wh th { text-align:left; color:var(--muted); font-weight:600; padding:4px 6px; border-bottom:1px solid #1f2837; font-size:0.58rem; text-transform:uppercase; }
+  .shfe-card .shfe-wh td { padding:4px 6px; border-bottom:1px solid #161d2b; color:#c6d0de; font-variant-numeric:tabular-nums; }
+  .shfe-card .shfe-wh td.wh-region { color:var(--muted); font-size:0.62rem; white-space:nowrap; }
+  .shfe-card .shfe-wh td.wh-name { color:#dfe8f2; }
+  .shfe-card .shfe-wh td.wh-qty { text-align:right; color:#fff; }
+  .shfe-card .shfe-wh td.wh-chg { text-align:right; font-weight:600; }
+  .shfe-card .shfe-wh td.wh-chg.pos { color:var(--green); }
+  .shfe-card .shfe-wh td.wh-chg.neg { color:var(--red); }
+  .shfe-card .shfe-wh td.wh-chg.zero { color:var(--muted); }
+  .debug { background:#0a1019; border:1px solid var(--border); border-radius:10px; padding:14px; font-family: monospace; font-size:0.7rem; color:#a9b6cb; max-height:340px; overflow:auto; white-space:pre-wrap; line-height:1.5; }
+  .debug .ok { color:#7ee8a7; }
+  .debug .fail { color:#f5a3a3; }
+  .debug .info { color:#e8a33d; }
 </style>
 </head>
 <body>
@@ -380,6 +423,7 @@
     <div class="tab-bar">
       <button class="tab-btn active" data-tab="main"><i class="fas fa-chart-line"></i> Main Dashboard</button>
       <button class="tab-btn" data-tab="lme"><i class="fas fa-globe"></i> LME</button>
+      <button class="tab-btn" data-tab="shfe"><i class="fas fa-landmark"></i> SHFE</button>
     </div>
   </div>
 
@@ -781,11 +825,17 @@
         <span id="lmeMetaUpdated">Loading…</span>
         <span id="lmeMetaCounts"></span>
         <button class="btn small" id="lmeRefreshBtn"><i class="fas fa-sync-alt"></i></button>
+        <button class="btn small" id="lmeEnterDataBtn" style="background:rgba(231,76,60,0.15);border-color:#e74c3c;color:#e74c3c;">
+          <i class="fas fa-paste"></i> Enter Data
+        </button>
       </div>
     </div>
 
-    <div class="lme-paste-card">
-      <h3><i class="fas fa-paste"></i> Paste WhatsApp Message (Admin)</h3>
+    <div class="lme-paste-card" id="lmePasteCard" style="display:none;">
+      <h3 style="justify-content:space-between;display:flex;">
+        <span><i class="fas fa-paste"></i> Paste WhatsApp Message (Admin)</span>
+        <button class="btn small" id="lmePasteCloseBtn" style="font-weight:400;"><i class="fas fa-times"></i> Close</button>
+      </h3>
       <div class="lme-paste-row" style="margin-top:0;margin-bottom:12px;">
         <label>GitHub Token: <input type="password" id="lmeTokenInput" placeholder="ghp_..."></label>
         <button class="btn" id="lmeTokenSave">Save Token</button>
@@ -831,14 +881,73 @@ SN: 965+105"></textarea>
     </div>
 
     <div id="lmeChartsSection" style="display:none;">
-      <div class="lme-charts-title"><i class="fas fa-chart-line"></i> <span id="lmeChartsMetalName">Copper</span> — Last 30 Days</div>
-      <div class="lme-chart-box"><div class="ct">Live vs Cancelled</div><div class="cw"><canvas id="lmeChLive"></canvas></div></div>
+      <div class="lme-charts-title" style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:10px;">
+        <span><i class="fas fa-chart-line"></i> <span id="lmeChartsMetalName">Copper</span> — <span id="lmeChartsRangeLabel">Last 30 days</span></span>
+        <span class="controls" style="gap:8px;">
+          <span class="freq-group" id="lmeTfGroup">
+            <button data-lme-tf="30" class="active">30D</button>
+            <button data-lme-tf="90">90D</button>
+            <button data-lme-tf="180">6M</button>
+            <button data-lme-tf="365">1Y</button>
+            <button data-lme-tf="all">All</button>
+          </span>
+          <span class="freq-group" id="lmeYAxisGroup">
+            <button data-lme-y="linear" class="active">Linear</button>
+            <button data-lme-y="log">Log</button>
+          </span>
+          <span class="freq-group" id="lmeRatioModeGroup">
+            <button data-lme-ratio="abs" class="active">Abs</button>
+            <button data-lme-ratio="pct">% of Total</button>
+          </span>
+        </span>
+      </div>
+
+      <div class="lme-chart-box">
+        <div class="ct" style="justify-content:space-between;display:flex;">
+          <span>Live vs Cancelled</span>
+          <span id="lmeChLiveHint" style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;"></span>
+        </div>
+        <div class="cw"><canvas id="lmeChLive"></canvas></div>
+      </div>
+
       <div class="lme-chart-box"><div class="ct">Total Inventory Trend</div><div class="cw"><canvas id="lmeChTotal"></canvas></div></div>
       <div class="lme-chart-box"><div class="ct">Cancelled Ratio (%)</div><div class="cw"><canvas id="lmeChRatio"></canvas></div></div>
       <div class="lme-chart-box"><div class="ct">Daily Change</div><div class="cw"><canvas id="lmeChChange"></canvas></div></div>
     </div>
   </div>
   <!-- ============ END LME TAB ============ -->
+
+  <!-- ============ SHFE TAB ============ -->
+  <div id="tab-shfe" class="tab-panel" style="display:none;">
+
+    <div class="upload-bar" style="border-color:#e8a33d;">
+      <span class="title"><i class="fas fa-flask"></i> SHFE Test</span>
+      <input type="text" id="shfeUrl" value="https://little-mode-3e8f.aditya1312ff.workers.dev/shfe/daily"
+        style="flex:1;min-width:320px;background:#0e1724;border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:8px;font-size:0.75rem;font-family:monospace;">
+      <button class="btn-refresh" id="shfeGo"><i class="fas fa-play"></i> Fetch</button>
+      <button class="btn" id="shfeToggleAll"><i class="fas fa-expand"></i> Expand all</button>
+    </div>
+
+    <div id="shfeStatus" class="status-banner info" style="display:block;">Ready. Click "Fetch" to load SHFE data.</div>
+
+    <div class="head">
+      <h1><i class="fas fa-landmark"></i> SHFE — Shanghai Futures Exchange</h1>
+      <div class="meta" id="shfeMeta">
+        <span id="shfeLastUpdated" style="display:inline-flex;align-items:center;gap:6px;background:rgba(232,163,61,0.12);border:1px solid rgba(232,163,61,0.35);padding:3px 10px;border-radius:12px;font-size:0.7rem;color:var(--accent);">
+          <i class="fas fa-clock"></i> <span id="shfeLastUpdatedText">Never updated</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><i class="fas fa-warehouse"></i> Warehouse Warrants & Settlement <span class="sub">— all metals available</span></h3>
+      <div id="shfeGrid" class="shfe-grid">
+        <div class="loading"><div class="spinner"></div> Not loaded yet. Click Fetch.</div>
+      </div>
+    </div>
+
+  </div>
+  <!-- ============ END SHFE TAB ============ -->
 
 </div>
 
@@ -1054,6 +1163,11 @@ let LME_ACTIVE = 'copper';
 let LME_CHARTS = { live:null, total:null, ratio:null, change:null };
 let lmeLoadedOnce = false;
 
+// LME chart prefs
+let LME_TF_DAYS = 30;
+let LME_Y_AXIS = 'linear';
+let LME_RATIO_MODE = 'abs';
+
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const CSP_COLORS = { Cu:'#d68b4d', Zn:'#5b8fc9', Al:'#93a2b5' };
 const LMC_METAL_MAP = { Copper:'Cu', Zinc:'Zn', Aluminium:'Al' };
@@ -1088,19 +1202,29 @@ const SAFE_STORE = (() => {
 const GITHUB_TOKEN_KEY = 'gh_pat_csp';
 const CSP_FILE_PATH = 'lme_csp.csv';
 
+// LME chart preference keys
+const LME_TF_KEY = 'lme_tf_days';
+const LME_YAXIS_KEY = 'lme_y_axis';
+const LME_RATIOMODE_KEY = 'lme_ratio_mode';
+
+// SHFE badge key
+const SHFE_LAST_KEY = 'shfe_last_updated';
+
 /* ========================================================================
    TAB SWITCHING
    ======================================================================== */
+let shfeLoadedOnce = false;
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach(t => {
     const isActive = t.dataset.tab === name;
     t.classList.toggle('active', isActive);
   });
-  ['main','lme'].forEach(k => {
+  ['main','lme','shfe'].forEach(k => {
     const el = document.getElementById('tab-' + k);
     if (el) el.style.display = (k === name) ? 'block' : 'none';
   });
   if (name === 'lme' && !lmeLoadedOnce) { lmeLoadedOnce = true; lmeLoadHistory(); }
+  if (name === 'shfe' && !shfeLoadedOnce) { shfeLoadedOnce = true; /* don't auto-fetch; user clicks Fetch */ }
 }
 
 /* ========================================================================
@@ -3060,22 +3184,102 @@ function lmeRender() {
 function lmeRenderCharts() {
   const entries = LME_HISTORY.entries || [];
   if (!entries.length) return;
-  const recent = entries.slice(-30);
-  const labels = recent.map(e => e.date);
   const mk = LME_ACTIVE;
   const meta = LME_METAL_META[mk];
   document.getElementById('lmeChartsMetalName').textContent = meta.label;
-  const liveD = recent.map(e => e[mk]?.live ?? null);
-  const cancD = recent.map(e => e[mk]?.cancelled ?? null);
+
+  let recent;
+  if (LME_TF_DAYS === 'all') {
+    recent = entries.slice();
+  } else {
+    recent = entries.slice(-LME_TF_DAYS);
+  }
+  const rangeLabel = LME_TF_DAYS === 'all'
+    ? `All (${recent.length} days)`
+    : `Last ${LME_TF_DAYS} days`;
+  document.getElementById('lmeChartsRangeLabel').textContent = rangeLabel;
+
+  const labels = recent.map(e => e.date);
+  const liveD  = recent.map(e => e[mk]?.live ?? null);
+  const cancD  = recent.map(e => e[mk]?.cancelled ?? null);
   const totalD = recent.map(e => e[mk]?.total ?? null);
-  const ratioD = recent.map(e => { const l = e[mk]?.live, c = e[mk]?.cancelled; if (l == null || c == null || (l+c) === 0) return null; return +((c/(l+c))*100).toFixed(2); });
-  const changeD = recent.map((e,i) => { if (i === 0) return 0; const p = recent[i-1][mk]?.total; const c = e[mk]?.total; if (p == null || c == null) return 0; return c - p; });
-  const opts = () => ({ responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#a9b6cb', font: { size: 10 } } } }, scales: { x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } } } });
+
+  const ratioD = recent.map(e => {
+    const l = e[mk]?.live, c = e[mk]?.cancelled;
+    if (l == null || c == null || (l + c) === 0) return null;
+    return +((c / (l + c)) * 100).toFixed(2);
+  });
+
+  const changeD = recent.map((e, i) => {
+    if (i === 0) return 0;
+    const p = recent[i - 1][mk]?.total;
+    const c = e[mk]?.total;
+    if (p == null || c == null) return 0;
+    return c - p;
+  });
+
+  let liveSeries = liveD, cancSeries = cancD;
+  let liveLabel = 'Live', cancLabel = 'Cancelled';
+  if (LME_RATIO_MODE === 'pct') {
+    liveSeries = recent.map(e => {
+      const l = e[mk]?.live, c = e[mk]?.cancelled;
+      if (l == null || c == null || (l + c) === 0) return null;
+      return +((l / (l + c)) * 100).toFixed(2);
+    });
+    cancSeries = ratioD;
+    liveLabel = 'Live % of total';
+    cancLabel = 'Cancelled % of total';
+  }
+  const hint = document.getElementById('lmeChLiveHint');
+  if (hint) hint.textContent = LME_RATIO_MODE === 'pct' ? 'Values shown as % of (live + cancelled)' : '';
+
+  const yType = LME_Y_AXIS;
+  const opts = (optsExtra = {}) => ({
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#a9b6cb', font: { size: 10 } } } },
+    scales: {
+      x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } },
+      y: {
+        type: yType,
+        grid: { color: '#1c2536' },
+        ticks: { color: '#7c8aa0', font: { size: 9 } },
+        ...(optsExtra.y || {}),
+      },
+    },
+  });
+
   Object.values(LME_CHARTS).forEach(c => { if (c) c.destroy(); });
-  LME_CHARTS.live = new Chart(document.getElementById('lmeChLive'), { type: 'line', data: { labels, datasets: [ { label: 'Live', data: liveD, borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,.15)', borderWidth: 2, pointRadius: 0, tension: .15, fill: true }, { label: 'Cancelled', data: cancD, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,.15)', borderWidth: 2, pointRadius: 0, tension: .15, fill: true } ] }, options: opts() });
-  LME_CHARTS.total = new Chart(document.getElementById('lmeChTotal'), { type: 'line', data: { labels, datasets: [{ label: 'Total', data: totalD, borderColor: meta.color, backgroundColor: meta.color + '20', borderWidth: 2, pointRadius: 0, tension: .15, fill: true }] }, options: opts() });
-  LME_CHARTS.ratio = new Chart(document.getElementById('lmeChRatio'), { type: 'line', data: { labels, datasets: [{ label: 'Cancelled %', data: ratioD, borderColor: '#f39c12', backgroundColor: 'rgba(243,156,18,.15)', borderWidth: 2, pointRadius: 0, tension: .15, fill: true }] }, options: opts() });
-  LME_CHARTS.change = new Chart(document.getElementById('lmeChChange'), { type: 'bar', data: { labels, datasets: [{ label: 'Daily Change', data: changeD, backgroundColor: changeD.map(v => v >= 0 ? 'rgba(46,204,113,.6)' : 'rgba(231,76,60,.6)') }] }, options: opts() });
+
+  LME_CHARTS.live = new Chart(document.getElementById('lmeChLive'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: liveLabel, data: liveSeries, borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,.15)', borderWidth: 2, pointRadius: 0, tension: .15, fill: true },
+        { label: cancLabel, data: cancSeries, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,.15)', borderWidth: 2, pointRadius: 0, tension: .15, fill: true },
+      ],
+    },
+    options: opts(),
+  });
+
+  LME_CHARTS.total = new Chart(document.getElementById('lmeChTotal'), {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'Total', data: totalD, borderColor: meta.color, backgroundColor: meta.color + '20', borderWidth: 2, pointRadius: 0, tension: .15, fill: true }] },
+    options: opts(),
+  });
+
+  LME_CHARTS.ratio = new Chart(document.getElementById('lmeChRatio'), {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'Cancelled %', data: ratioD, borderColor: '#f39c12', backgroundColor: 'rgba(243,156,18,.15)', borderWidth: 2, pointRadius: 0, tension: .15, fill: true }] },
+    options: opts({ y: { type: 'linear', min: 0, max: 100 } }),
+  });
+
+  const maxAbs = Math.max(...changeD.map(v => Math.abs(v || 0)), 1);
+  LME_CHARTS.change = new Chart(document.getElementById('lmeChChange'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Daily Change', data: changeD, backgroundColor: changeD.map(v => v >= 0 ? 'rgba(46,204,113,.6)' : 'rgba(231,76,60,.6)') }] },
+    options: opts({ y: { min: -maxAbs, max: maxAbs } }),
+  });
 }
 function lmeParseMessage(text) {
   const r = { total:{}, live:{}, cancelled:{} };
@@ -3197,9 +3401,53 @@ async function lmeBackfill() {
     st.className = 'lme-status err';
   } finally { btn.disabled = false; }
 }
+function lmeLoadPrefs() {
+  const tf = SAFE_STORE.getItem(LME_TF_KEY);
+  if (tf) LME_TF_DAYS = tf === 'all' ? 'all' : parseInt(tf, 10);
+  const ya = SAFE_STORE.getItem(LME_YAXIS_KEY);
+  if (ya) LME_Y_AXIS = ya;
+  const rm = SAFE_STORE.getItem(LME_RATIOMODE_KEY);
+  if (rm) LME_RATIO_MODE = rm;
+
+  document.querySelectorAll('#lmeTfGroup button').forEach(b => {
+    const v = b.dataset.lmeTf;
+    const target = LME_TF_DAYS === 'all' ? 'all' : String(LME_TF_DAYS);
+    b.classList.toggle('active', v === target);
+  });
+  document.querySelectorAll('#lmeYAxisGroup button').forEach(b => {
+    b.classList.toggle('active', b.dataset.lmeY === LME_Y_AXIS);
+  });
+  document.querySelectorAll('#lmeRatioModeGroup button').forEach(b => {
+    b.classList.toggle('active', b.dataset.lmeRatio === LME_RATIO_MODE);
+  });
+}
+function lmeSavePrefs() {
+  SAFE_STORE.setItem(LME_TF_KEY, String(LME_TF_DAYS));
+  SAFE_STORE.setItem(LME_YAXIS_KEY, LME_Y_AXIS);
+  SAFE_STORE.setItem(LME_RATIOMODE_KEY, LME_RATIO_MODE);
+}
 function lmeWire() {
+  lmeLoadPrefs();
   document.getElementById('lmePasteDate').value = new Date().toISOString().slice(0,10);
   document.getElementById('lmeRefreshBtn').addEventListener('click', lmeLoadHistory);
+
+  // --- Collapsible paste card ---
+  const pasteCard = document.getElementById('lmePasteCard');
+  const enterBtn = document.getElementById('lmeEnterDataBtn');
+  const closeBtn = document.getElementById('lmePasteCloseBtn');
+  if (enterBtn) enterBtn.addEventListener('click', () => {
+    const isOpen = pasteCard.style.display !== 'none';
+    pasteCard.style.display = isOpen ? 'none' : 'block';
+    enterBtn.innerHTML = isOpen
+      ? '<i class="fas fa-paste"></i> Enter Data'
+      : '<i class="fas fa-times"></i> Hide Form';
+    if (!isOpen) pasteCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  if (closeBtn) closeBtn.addEventListener('click', () => {
+    pasteCard.style.display = 'none';
+    enterBtn.innerHTML = '<i class="fas fa-paste"></i> Enter Data';
+  });
+
   document.getElementById('lmeBackfillBtn').addEventListener('click', lmeBackfill);
   document.getElementById('lmeSaveBtn').addEventListener('click', async () => {
     const st = document.getElementById('lmeSaveStatus');
@@ -3247,9 +3495,361 @@ function lmeWire() {
     document.getElementById('lmeTokenStatus').textContent = '✓ Token active';
     document.getElementById('lmeTokenStatus').className = 'lme-status ok';
   }
+
+  // --- LME chart controls ---
+  document.querySelectorAll('#lmeTfGroup button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#lmeTfGroup button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    const v = b.dataset.lmeTf;
+    LME_TF_DAYS = v === 'all' ? 'all' : parseInt(v, 10);
+    lmeSavePrefs();
+    lmeRenderCharts();
+  }));
+
+  document.querySelectorAll('#lmeYAxisGroup button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#lmeYAxisGroup button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    LME_Y_AXIS = b.dataset.lmeY;
+    lmeSavePrefs();
+    lmeRenderCharts();
+  }));
+
+  document.querySelectorAll('#lmeRatioModeGroup button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#lmeRatioModeGroup button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    LME_RATIO_MODE = b.dataset.lmeRatio;
+    lmeSavePrefs();
+    lmeRenderCharts();
+  }));
+
   document.querySelectorAll('.tab-btn').forEach(t => {
     t.addEventListener('click', () => switchTab(t.dataset.tab));
   });
+}
+
+/* ========================================================================
+   SHFE TAB
+   ======================================================================== */
+const SHFE_METAL_META = {
+  copper:            { label: 'Copper',              symbol: 'Cu',    unit: 't', color: '#d68b4d', cls: '' },
+  aluminium:         { label: 'Aluminium',           symbol: 'Al',    unit: 't', color: '#93a2b5', cls: 'al' },
+  zinc:              { label: 'Zinc',                symbol: 'Zn',    unit: 't', color: '#5b8fc9', cls: 'zn' },
+  lead:              { label: 'Lead',                symbol: 'Pb',    unit: 't', color: '#8b7a9e', cls: 'pb' },
+  nickel:            { label: 'Nickel',              symbol: 'Ni',    unit: 't', color: '#a3b18a', cls: 'ni' },
+  tin:               { label: 'Tin',                 symbol: 'Sn',    unit: 't', color: '#c9a227', cls: 'sn' },
+  alumina_wh:        { label: 'Alumina (Warehouse)', symbol: 'AO-W',  unit: 't', color: '#6a9fbf', cls: 'ox' },
+  alumina_factory:   { label: 'Alumina (Factory)',   symbol: 'AO-F',  unit: 't', color: '#6a9fbf', cls: 'ox' },
+  cast_aluminium:    { label: 'Cast Aluminium',      symbol: 'Al-C',  unit: 't', color: '#a3b8c9', cls: 'al' },
+  stainless_wh:      { label: 'Stainless (Warehouse)', symbol: 'SS-W', unit: 't', color: '#8899aa', cls: 'ni' },
+  stainless_factory: { label: 'Stainless (Factory)', symbol: 'SS-F',  unit: 't', color: '#8899aa', cls: 'ni' },
+  copper_bc:         { label: 'Copper (BC - Bonded)', symbol: 'Cu-BC', unit: 't', color: '#b46b3a', cls: '' },
+};
+const SHFE_ORDER = [
+  'copper','aluminium','zinc','lead','nickel','tin',
+  'alumina_wh','alumina_factory','cast_aluminium',
+  'stainless_wh','stainless_factory','copper_bc'
+];
+const SHFE_REGION_MAP = {
+  '上海':'Shanghai','广东':'Guangdong','江苏':'Jiangsu','浙江':'Zhejiang','江西':'Jiangxi',
+  '山东':'Shandong','天津':'Tianjin','河南':'Henan','重庆':'Chongqing','甘肃':'Gansu',
+  '四川':'Sichuan','安徽':'Anhui','福建':'Fujian','湖北':'Hubei','湖南':'Hunan',
+  '河北':'Hebei','辽宁':'Liaoning','广西':'Guangxi','新疆':'Xinjiang','海南':'Hainan',
+  '陕西':'Shaanxi','云南':'Yunnan','北京':'Beijing','厂库提货地':'Factory Pickup','泰国':'Thailand',
+};
+const SHFE_WAREHOUSE_MAP = {
+  '国储天威':'Guochu Tianwei','国储外高桥':'Guochu Waigaoqiao','中储吴淞':'Zhongchu Wusong',
+  '裕强闵行':'Yuqiang Minhang','中储大场':'Zhongchu Dachang','上港云仓安达':'SIPG Yuncang Anda',
+  '上港云仓龙吴':'SIPG Yuncang Longwu','中储沪闵':'Zhongchu Humin','四川中远海运宝山':'Sichuan COSCO Baoshan',
+  '四川中远海运临港':'Sichuan COSCO Lingang','外运华东张华浜':'Sinotrans East China Zhanghuabang',
+  '中储临港(保税)':'Zhongchu Lingang (Bonded)','中储临港保税':'Zhongchu Lingang Bonded',
+  '世天威外高桥':'SGW Waigaoqiao','世天威临港':'SGW Lingang','中储临港':'Zhongchu Lingang',
+  '中储临港物流':'Zhongchu Lingang Logistics','上港保税':'SIPG Bonded','亨睿保上海':'Hengruibao Shanghai',
+  '上海国储':'Shanghai Guochu','上海吉开伊':'Shanghai Jikaiyi','中储浦东':'Zhongchu Pudong',
+  '全胜物流':'Quansheng Logistics','全胜物流曹安':'Quansheng Logistics Caoan','上海裕强':'Shanghai Yuqiang',
+  '中储股份陆通':'Zhongchu Lutong','中储塘沽':'Zhongchu Tanggu','中储陆通':'Zhongchu Lutong',
+  '中储陆港':'Zhongchu Lugang','上海远盛':'Shanghai Yuansheng','上海远盛佛山':'Shanghai Yuansheng Foshan',
+  '上海兴晟':'Shanghai Xingsheng','上港物流共青':'SIPG Logistics Gongqing','上港保税罗泾':'SIPG Bonded Luojing',
+  '中工美供应链':'Zhonggongmei Supply Chain','外运华东虹桥':'Sinotrans East China Hongqiao',
+  '深圳威豹':'Shenzhen Weibao','上海国储天威':'Shanghai Guochu Tianwei','上期所指定交割金库':'SHFE Designated Delivery Vault',
+  '中储晟世东江':'Zhongchu Shengshi Dongjiang','五矿东莞':'Minmetals Dongguan','中铝中州佛山':'Chalco Zhongzhou Foshan',
+  '八三O黄埔':'830 Huangpu','八三O增城':'830 Zengcheng','广东炬申':'Guangdong Jushen','中储晟世':'Zhongchu Shengshi',
+  '中储晟世三水':'Zhongchu Shengshi Sanshui','中储晟世保盈':'Zhongchu Shengshi Baoying','中储晟世南沙':'Zhongchu Shengshi Nansha',
+  '中储广州':'Zhongchu Guangzhou','亨睿保广州':'Hengruibao Guangzhou','炬申广州':'Jushen Guangzhou',
+  '世天威广州':'SGW Guangzhou','广物物流':'Guangwu Logistics','广州港物流':'Guangzhou Port Logistics',
+  '泰普克新会':'Tipco Xinhui','广东华泰':'Guangdong Huatai','中储无锡':'Zhongchu Wuxi',
+  '中铝中部陆港无锡':'Chalco Central Landport Wuxi','无锡国联':'Wuxi Guolian','上港云仓常州':'SIPG Yuncang Changzhou',
+  '添马行物流':'Tamahang Logistics','常州融达':'Changzhou Rongda','五矿无锡':'Minmetals Wuxi','炬申无锡':'Jushen Wuxi',
+  '中储股份南京':'Zhongchu Nanjing','中储南京':'Zhongchu Nanjing','惠龙港':'Huilong Port','玖隆物流':'Jiulong Logistics',
+  '百金汇物流':'Baijinhui Logistics','中物泰州':'Zhongwu Taizhou','五矿无锡钱桥':'Minmetals Wuxi Qianqiao',
+  '常熟威特隆':'Changshu Weitelong','金海宏业(仓库)':'Jinhai Hongye (Warehouse)','新越沥青':'Xinyue Asphalt',
+  '南京蓝途沥青':'Nanjing Lantu Asphalt','中油江苏':'PetroChina Jiangsu','建发仓储南通':'C&D Warehouse Nantong',
+  '南通中远海运':'Nantong COSCO','金翌贸易':'Jinyi Trading','国储837处':'Guochu 837','宁波九龙仓':'Ningbo Whampoa',
+  '浙江南湖':'Zhejiang Nanhu','浙江田川':'Zhejiang Tianchuan','浙江中石油国事':'Zhejiang PetroChina Guoshi',
+  '中石化浙江舟山':'Sinopec Zhejiang Zhoushan','中化兴中':'Sinochem Xingzhong','海洋仓储':'Haiyang Warehousing',
+  '大鼎石油':'Dading Petroleum','华泰石油':'Huatai Petroleum','爱思开宝盈':'SK Baoying','建发仓储宁波':'C&D Warehouse Ningbo',
+  '建发仓储嘉兴':'C&D Warehouse Jiaxing','建发仓储平湖':'C&D Warehouse Pinghu','尖峰供应链':'Jianfeng Supply Chain',
+  '物产中大期交宁波':'Wuchan Zhongda Futures Ningbo','中拓湖州':'Zhongtuo Huzhou','杭州临港':'Hangzhou Lingang',
+  '浙江物资储运':'Zhejiang Materials Storage','宁波高新货柜':'Ningbo Gaoxin Container','国储临港':'Guochu Lingang',
+  '浙江永安资本':'Zhejiang Yongan Capital','浙江宝盈':'Zhejiang Baoying','舟山济海':'Zhoushan Jihai',
+  '山东高通泰安':'Shandong Gaotong Taian','山东恒欣':'Shandong Hengxin','山港青岛国际物流':'Shangang Qingdao Intl Logistics',
+  '外运华中黄岛':'Sinotrans Central China Huangdao','外运华中胶州':'Sinotrans Central China Jiaozhou',
+  '外运华中市北':'Sinotrans Central China Shibei','外运华中青州':'Sinotrans Central China Qingzhou',
+  '外运华中':'Sinotrans Central China','山港青岛港':'Shangang Qingdao Port','象屿速传青岛':'Xiangyu Suchuan Qingdao',
+  '山港青港物流':'Shangang Qinggang Logistics','山港青港物流胶州':'Shangang Qinggang Logistics Jiaozhou',
+  '青岛832':'Qingdao 832','奥润特':'Orunt','中远海运高新':'COSCO Gaoxin','中远海运黄岛':'COSCO Huangdao',
+  '青岛中远海运黄岛':'Qingdao COSCO Huangdao','青岛中远海运高新':'Qingdao COSCO Gaoxin','青岛中远海运青保':'Qingdao COSCO Qingbao',
+  '中储青岛':'Zhongchu Qingdao','青岛宏桥':'Qingdao Hongqiao','青岛青银':'Qingdao Qingyin','建发仓储黄岛':'C&D Warehouse Huangdao',
+  '山港青岛实华':'Shangang Qingdao Shihua','山东中储':'Shandong Zhongchu','青岛泺亨':'Qingdao Luoheng',
+  '青岛招商局':'Qingdao China Merchants','青岛中储物流':'Qingdao Zhongchu Logistics','中储青州':'Zhongchu Qingzhou',
+  '青州中储':'Qingzhou Zhongchu','中外运供应链':'Sinotrans Supply Chain','中外运供应链潍坊':'Sinotrans Supply Chain Weifang',
+  '中外运供应链青州':'Sinotrans Supply Chain Qingzhou','山东高速华瑞':'Shandong Hi-Speed Huarui',
+  '山东高速储运':'Shandong Hi-Speed Storage','弘润石化(仓库)':'Hongrun Petrochemical (Warehouse)',
+  '弘润石化(厂库)':'Hongrun Petrochemical (Factory)','弘润油储':'Hongrun Oil Storage','山高新材料':'Shangang New Materials',
+  '中铝山东':'Chalco Shandong','山东宏拓':'Shandong Hongtuo','国贸纸业':'Guomao Paper','建发浆纸集团':'C&D Pulp & Paper Group',
+  '永安资本':'Yongan Capital','景诚实业':'Jingcheng Industrial','物产中大化工':'Wuchan Zhongda Chemical',
+  '博汇纸业':'Bohui Paper','太阳纸业':'Sun Paper','广西太阳':'Guangxi Sun Paper','华泰纸业':'Huatai Paper',
+  '联盛浆纸':'Liansheng Pulp & Paper','京博石化':'Jingbo Petrochemical','东明石化':'Dongming Petrochemical',
+  '中储天津':'Zhongchu Tianjin','天津中远海运':'Tianjin COSCO','中远海运天津':'COSCO Tianjin',
+  '上港云仓天津':'SIPG Yuncang Tianjin','全胜物流天津':'Quansheng Logistics Tianjin',
+  '建发仓储天津':'C&D Warehouse Tianjin','象屿速传天津':'Xiangyu Suchuan Tianjin','中储洛阳':'Zhongchu Luoyang',
+  '河南国储431':'Henan Guochu 431','中储巩义':'Zhongchu Gongyi','河南国储巩义':'Henan Guochu Gongyi',
+  '河南国储洛阳':'Henan Guochu Luoyang','中储股份洛阳':'Zhongchu Luoyang','中铝中部陆港郑州':'Chalco Central Landport Zhengzhou',
+  '中州铝业':'Zhongzhou Aluminium','厦门国贸同歆':'Xiamen ITG Tongxin','中物流重庆':'Zhongwuliu Chongqing',
+  '港欣长嘉汇':'Gangxin Changjiahui','重庆中远海运':'Chongqing COSCO','甘肃国通':'Gansu Guotong',
+  '中储广元':'Zhongchu Guangyuan','遂宁天诚':'Suining Tiancheng','中储西安':'Zhongchu Xian',
+  '中储汉口':'Zhongchu Hankou','中拓唐山':'Zhongtuo Tangshan','物产中大期交唐山':'Wuchan Zhongda Futures Tangshan',
+  '中物流乌鲁木齐':'Zhongwuliu Urumqi','炬申新疆':'Jushen Xinjiang','中疆物流':'Zhongjiang Logistics',
+  '中物流头屯河':'Zhongwuliu Toutunhe','山高新疆':'Shangang Xinjiang','炬申钦州':'Jushen Qinzhou',
+  '海垦现代物流':'Haiken Modern Logistics','港航物流':'Ganghang Logistics','云南储运':'Yunnan Storage',
+  '云南530':'Yunnan 530','四邦实业':'Sibang Industrial','中石油华东国事':'PetroChina East China Guoshi',
+  '中石化化销':'Sinopec Chemical Sales','浙江传化':'Zhejiang Transfar','四联':'Silian',
+  '物产中大金属':'Wuchan Zhongda Metals','中哲物产':'Zhongzhe Wuchan','北沥公司':'Beili Company',
+  '中基宁波':'Zhongji Ningbo','中海泰州石化':'CNOOC Taizhou Petrochemical','中海沥青':'CNOOC Asphalt',
+  '中油高富':'PetroChina Gaofu','中化化销福建':'Sinochem Chemical Sales Fujian','中油炼特':'PetroChina Lianshi',
+  '中油湛江':'PetroChina Zhanjiang','中国石化湛江':'Sinopec Zhanjiang','中国石化册子岛':'Sinopec Cezi Island',
+  '中国石化日照':'Sinopec Rizhao','中国石化海南':'Sinopec Hainan','中国石化曹妃甸':'Sinopec Caofeidian',
+  '国投洋浦油储':'SDIC Yangpu Oil Storage','中油大连保税':'PetroChina Dalian Bonded',
+  '中油大连国际':'PetroChina Dalian Intl','北方油品':'Beifang Oil','中油广西国际':'PetroChina Guangxi Intl',
+  '山港青岛油品':'Shangang Qingdao Oil','山港董家口油品':'Shangang Dongjiakou Oil','山港日照油品':'Shangang Rizhao Oil',
+  '山港华港石油':'Shangang Huagang Petroleum','泰华树胶':'Thai Hua Rubber','宏旺集团':'Hongwang Group',
+  '鞍钢股份':'Angang Steel','沙钢集团':'Shagang Group','镔钢集团':'Bingang Group','河钢集团承钢':'HBIS Chengde Steel',
+  '河钢集团邯钢':'HBIS Handan Steel','南钢股份':'Nanjing Steel','杭钢国贸':'Hangzhou Steel Trading',
+  '欧冶云商':'Ouyeel Cloud Commerce','柳钢股份':'Liuzhou Steel','热联集团':'Reliance Group',
+  '永安资本(钢材)':'Yongan Capital (Steel)','纵横钢铁':'Zongheng Steel','岳阳林纸':'Yueyang Paper',
+  '玖龙环球':'Nine Dragons Global','弘润石化(仓库)':'Hongrun Petrochemical (Wh)','弘润石化(厂库)':'Hongrun Petrochemical (Factory)',
+};
+function shfeTrRegion(cn) { return SHFE_REGION_MAP[cn] || cn || ''; }
+function shfeTrWarehouse(cn) { return SHFE_WAREHOUSE_MAP[cn] || cn || ''; }
+function shfeSetStatus(kind, msg) {
+  const el = document.getElementById('shfeStatus');
+  if (!el) return;
+  el.className = 'status-banner ' + kind;
+  el.style.display = 'block';
+  el.innerHTML = msg;
+}
+function shfeFmt(n, dp = 0) {
+  if (n == null || isNaN(n)) return '—';
+  return Number(n).toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
+}
+function shfeRenderCard(key, inv, settle) {
+  const meta = SHFE_METAL_META[key] || { label: key, symbol: key, unit: 't', color: '#d68b4d', cls: '' };
+  const total = inv.total || {};
+  const whs = inv.warehouses || [];
+  const chg = total.change || 0;
+  const chgArrow = chg > 0 ? '▲' : chg < 0 ? '▼' : '·';
+  const chgSign = chg > 0 ? '+' : '';
+  const chgColor = chg > 0 ? 'var(--green)' : chg < 0 ? 'var(--red)' : '#fff';
+  let settleHtml = '';
+  if (settle) {
+    settleHtml = `
+      <div class="shfe-settle">
+        <div><span class="k">Settle (${settle.deliveryMonth || '—'})</span><span class="v">¥${shfeFmt(settle.settle)}</span></div>
+        <div><span class="k">Volume</span><span class="v">${shfeFmt(settle.volume)}</span></div>
+        <div><span class="k">Open Int.</span><span class="v">${shfeFmt(settle.openInterest)}</span></div>
+      </div>`;
+  }
+  const whRows = whs.map(w => {
+    const c = w.change || 0;
+    const cCls = c > 0 ? 'pos' : c < 0 ? 'neg' : 'zero';
+    const cSign = c > 0 ? '+' : '';
+    return `<tr>
+      <td class="wh-region">${shfeTrRegion(w.region)}</td>
+      <td class="wh-name">${shfeTrWarehouse(w.name)}</td>
+      <td class="wh-qty">${shfeFmt(w.qty)}</td>
+      <td class="wh-chg ${cCls}">${cSign}${shfeFmt(c)}</td>
+    </tr>`;
+  }).join('');
+  return `
+    <div class="shfe-card ${meta.cls}">
+      <div class="shfe-head">
+        <span class="shfe-title" style="color:${meta.color}">${meta.label} <span style="color:var(--muted);font-size:0.7rem;">${meta.symbol}</span></span>
+        <span class="shfe-sub">${whs.length} warehouses</span>
+      </div>
+      <div class="shfe-totals">
+        <div class="shfe-cell">
+          <div class="lbl">Warrants (${meta.unit})</div>
+          <div class="val">${shfeFmt(total.qty)}</div>
+        </div>
+        <div class="shfe-cell">
+          <div class="lbl">Day Change</div>
+          <div class="val" style="color:${chgColor}">${chgArrow} ${chgSign}${shfeFmt(Math.abs(chg))}</div>
+        </div>
+      </div>
+      ${settleHtml}
+      <div class="shfe-wh-toggle" onclick="this.classList.toggle('open'); this.nextElementSibling.classList.toggle('open');">
+        <i class="fas fa-chevron-right"></i> Show warehouses (${whs.length})
+      </div>
+      <div class="shfe-wh">
+        <table>
+          <thead><tr><th>Region</th><th>Warehouse</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Chg</th></tr></thead>
+          <tbody>${whRows || '<tr><td colspan="4" style="text-align:center;color:var(--muted);">No warehouses</td></tr>'}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+function shfeRenderDebug(data) {
+  const el = document.getElementById('shfeDebug');
+  if (!el) return;
+  const lines = [];
+  lines.push(`<span class="info">▶ source: ${data.source}</span>`);
+  lines.push(`<span class="info">▶ timestamp: ${data.timestamp}</span>`);
+  lines.push(`<span class="info">▶ inventoryDate: ${data.inventoryDate || '—'}</span>`);
+  lines.push(`<span class="info">▶ settlementDate: ${data.settlementDate || '—'}</span>`);
+  lines.push('');
+  lines.push('<span class="info">── Inventory (summary) ──</span>');
+  for (const k of Object.keys(data.inventory || {})) {
+    if (k === '_meta') continue;
+    const inv = data.inventory[k] || {};
+    const t = inv.total || {};
+    const whs = (inv.warehouses || []).length;
+    lines.push(`  ${k.padEnd(20)} qty=${String(t.qty ?? '—').padStart(10)}  chg=${String(t.change ?? '—').padStart(8)}  wh=${whs}`);
+  }
+  lines.push('');
+  lines.push('<span class="info">── Settlement ──</span>');
+  for (const [k, v] of Object.entries(data.settlement || {})) {
+    lines.push(`  ${k.padEnd(12)} m=${v.deliveryMonth}  settle=${String(v.settle).padStart(10)}  vol=${v.volume}  oi=${v.openInterest}`);
+  }
+  lines.push('');
+  lines.push('<span class="info">── Fetch Debug ──</span>');
+  for (const d of (data.debug || [])) {
+    const cls = d.status === 200 ? 'ok' : 'fail';
+    lines.push(`<span class="${cls}">  [${d.status}] ${d.kind.padEnd(6)} ${d.url}</span>`);
+  }
+  el.innerHTML = lines.join('<br>');
+}
+function shfeAgo(date) {
+  const s = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (s < 5) return 'just now';
+  if (s < 60) return s + 's ago';
+  if (s < 3600) return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  return Math.floor(s / 86400) + 'd ago';
+}
+function shfeRenderLastUpdated(data) {
+  const el = document.getElementById('shfeLastUpdatedText');
+  if (!el) return;
+  const when = new Date(data.ts);
+  const ago = shfeAgo(when);
+  const inv = data.inventoryDate ? ` · inv ${data.inventoryDate}` : '';
+  el.textContent = `Updated ${ago}${inv}`;
+  const wrap = document.getElementById('shfeLastUpdated');
+  if (wrap) wrap.title = `Last successful fetch: ${when.toLocaleString()}${inv}`;
+}
+function shfeLoadLastUpdated() {
+  const raw = SAFE_STORE.getItem(SHFE_LAST_KEY);
+  if (!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    shfeRenderLastUpdated(data);
+  } catch (e) { /* ignore */ }
+}
+function shfeSaveLastUpdated(ts, meta) {
+  const data = { ts, inventoryDate: meta.inventoryDate || null, settlementDate: meta.settlementDate || null, metals: meta.metals || 0, warehouses: meta.warehouses || 0 };
+  SAFE_STORE.setItem(SHFE_LAST_KEY, JSON.stringify(data));
+  shfeRenderLastUpdated(data);
+}
+async function shfeFetch() {
+  const urlEl = document.getElementById('shfeUrl');
+  const goEl = document.getElementById('shfeGo');
+  const url = urlEl.value.trim();
+  if (!url) return;
+  goEl.disabled = true;
+  goEl.innerHTML = '<span class="spinner" style="width:12px;height:12px;margin-right:6px;display:inline-block;"></span> Fetching…';
+  shfeSetStatus('info', `⏳ Fetching <code>${url}</code>…`);
+  document.getElementById('shfeGrid').innerHTML = '<div class="loading"><div class="spinner"></div> Loading…</div>';
+  document.getElementById('shfeDebug').textContent = 'Loading…';
+  const t0 = performance.now();
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    const t1 = performance.now();
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const t2 = performance.now();
+    if (data.error) throw new Error(data.error);
+    const inv = data.inventory || {};
+    const set = data.settlement || {};
+    const keys = SHFE_ORDER.filter(k => inv[k] && inv[k].warehouses);
+    if (keys.length === 0) {
+      document.getElementById('shfeGrid').innerHTML = '<div style="color:var(--red);padding:20px;">No metals found in response.</div>';
+      shfeSetStatus('err', '⚠️ Response OK but no metals parsed.');
+      shfeRenderDebug(data);
+      return;
+    }
+    const html = keys.map(k => shfeRenderCard(k, inv[k], set[k])).join('');
+    document.getElementById('shfeGrid').innerHTML = html;
+    const totalWh = keys.reduce((s, k) => s + (inv[k].warehouses?.length || 0), 0);
+    const meta = document.getElementById('shfeMeta');
+    // Preserve the badge — rebuild meta without destroying badge element
+    meta.innerHTML = `
+      <span id="shfeLastUpdated" style="display:inline-flex;align-items:center;gap:6px;background:rgba(232,163,61,0.12);border:1px solid rgba(232,163,61,0.35);padding:3px 10px;border-radius:12px;font-size:0.7rem;color:var(--accent);">
+        <i class="fas fa-clock"></i> <span id="shfeLastUpdatedText">Never updated</span>
+      </span>
+      <span>Inventory: <strong>${data.inventoryDate || '—'}</strong></span>
+      <span>Settlement: <strong>${data.settlementDate || '—'}</strong></span>
+      <span>Metals: <strong>${keys.length}</strong></span>
+      <span>Warehouses: <strong>${totalWh}</strong></span>
+      <span>Fetch: <strong>${(t1-t0).toFixed(0)}ms</strong> · Parse: <strong>${(t2-t1).toFixed(0)}ms</strong></span>
+    `;
+    shfeRenderDebug(data);
+    shfeSetStatus('ok',
+      `✅ <b>Loaded</b> · ${keys.length} metals · ${totalWh} warehouses · ${(t2-t0).toFixed(0)}ms total`
+    );
+    shfeSaveLastUpdated(Date.now(), {
+      inventoryDate: data.inventoryDate,
+      settlementDate: data.settlementDate,
+      metals: keys.length,
+      warehouses: totalWh,
+    });
+  } catch (e) {
+    console.error('SHFE fetch failed:', e);
+    document.getElementById('shfeGrid').innerHTML = `<div style="color:var(--red);padding:20px;">Fetch failed: ${e.message}</div>`;
+    shfeSetStatus('err', `❌ Fetch failed: <code>${e.message}</code>`);
+    document.getElementById('shfeDebug').innerHTML = `<span class="fail">${e.message}</span>`;
+  } finally {
+    goEl.disabled = false;
+    goEl.innerHTML = '<i class="fas fa-play"></i> Fetch';
+  }
+}
+function shfeWire() {
+  const goEl = document.getElementById('shfeGo');
+  if (!goEl) return;
+  shfeLoadLastUpdated();
+  goEl.addEventListener('click', shfeFetch);
+  document.getElementById('shfeUrl').addEventListener('keydown', e => { if (e.key === 'Enter') shfeFetch(); });
+  document.getElementById('shfeToggleAll').addEventListener('click', () => {
+    const cards = document.querySelectorAll('#shfeGrid .shfe-card');
+    const allOpen = [...cards].every(c => c.querySelector('.shfe-wh')?.classList.contains('open'));
+    cards.forEach(c => {
+      const wh = c.querySelector('.shfe-wh');
+      const tgl = c.querySelector('.shfe-wh-toggle');
+      if (!wh || !tgl) return;
+      if (allOpen) { wh.classList.remove('open'); tgl.classList.remove('open'); }
+      else { wh.classList.add('open'); tgl.classList.add('open'); }
+    });
+    document.getElementById('shfeToggleAll').innerHTML = allOpen ? '<i class="fas fa-expand"></i> Expand all' : '<i class="fas fa-compress"></i> Collapse all';
+  });
+  setInterval(shfeLoadLastUpdated, 60 * 1000);
 }
 
 /* ========================================================================
@@ -3283,6 +3883,7 @@ function init() {
   setInterval(loadParityOverrides, 60 * 1000);
 
   lmeWire();
+  shfeWire();
 }
 
 if (document.readyState === 'loading') {
