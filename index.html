@@ -410,10 +410,6 @@
   .shfe-card .shfe-wh td.wh-chg.pos { color:var(--green); }
   .shfe-card .shfe-wh td.wh-chg.neg { color:var(--red); }
   .shfe-card .shfe-wh td.wh-chg.zero { color:var(--muted); }
-  .debug { background:#0a1019; border:1px solid var(--border); border-radius:10px; padding:14px; font-family: monospace; font-size:0.7rem; color:#a9b6cb; max-height:340px; overflow:auto; white-space:pre-wrap; line-height:1.5; }
-  .debug .ok { color:#7ee8a7; }
-  .debug .fail { color:#f5a3a3; }
-  .debug .info { color:#e8a33d; }
 </style>
 </head>
 <body>
@@ -447,8 +443,8 @@
 
   <div class="sbi-bar">
     <span class="title"><i class="fas fa-university"></i> SBI TT Sell</span>
-    <button class="btn small" id="sbiPdfBtn" title="Latest USD/INR from SBI PDF"><i class="fas fa-file-pdf"></i> PDF</button>
-    <button class="btn small" id="sbiCsvBtn" title="Historical SBI TT Sell from GitHub CSV"><i class="fas fa-file-csv"></i> CSV</button>
+    <button class="btn small" id="sbiPdfBtn"><i class="fas fa-file-pdf"></i> PDF</button>
+    <button class="btn small" id="sbiCsvBtn"><i class="fas fa-file-csv"></i> CSV</button>
     <input type="text" id="sbiUrl" value="https://raw.githubusercontent.com/sahilgupta/sbi-fx-ratekeeper/main/csv_files/SBI_REFERENCE_RATES_USD.csv">
     <span class="status" id="sbiStatus">Loading…</span>
   </div>
@@ -477,9 +473,7 @@
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
           <span><i class="fas fa-coins"></i> Latest Prices <span class="sub">— live from Google Sheet</span></span>
-          <span class="controls">
-            <span id="liveUpdated" style="font-size:0.68rem;color:var(--muted);"></span>
-          </span>
+          <span class="controls"><span id="liveUpdated" style="font-size:0.68rem;color:var(--muted);"></span></span>
         </h3>
         <div id="priceGrid"></div>
       </div>
@@ -489,9 +483,7 @@
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
           <span><i class="fas fa-calculator"></i> Import Parity Model <span class="sub">— LME → Landed ₹ vs MCX</span></span>
-          <span class="controls">
-            <button class="btn" id="parityResetBtn" title="Reset all edits"><i class="fas fa-undo"></i> Reset</button>
-          </span>
+          <span class="controls"><button class="btn" id="parityResetBtn" title="Reset all edits"><i class="fas fa-undo"></i> Reset</button></span>
         </h3>
         <div class="parity-sbi-bar">
           <span class="psb-label"><i class="fas fa-university" style="color:var(--sbi)"></i> USD/INR (SBI TT)</span>
@@ -557,11 +549,8 @@
           <span><i class="fas fa-history"></i> Last Days Cash / 3M / Stock</span>
           <span class="controls">
             <select class="tf-select" id="cspDaysCount">
-              <option value="3">3 days</option>
-              <option value="4">4 days</option>
-              <option value="5" selected>5 days</option>
-              <option value="7">7 days</option>
-              <option value="10">10 days</option>
+              <option value="3">3 days</option><option value="4">4 days</option>
+              <option value="5" selected>5 days</option><option value="7">7 days</option><option value="10">10 days</option>
             </select>
           </span>
         </h3>
@@ -580,15 +569,12 @@
             <button class="btn small" id="cspCloseBtn" style="margin-left:8px;"><i class="fas fa-times"></i> Close</button>
           </span>
         </h3>
-
         <div class="controls" style="margin-bottom:8px;gap:12px;align-items:center;">
           <label style="font-size:0.72rem;color:var(--muted);display:inline-flex;align-items:center;gap:6px;">
-            Date:
-            <input type="date" id="cspNewDate" class="date-input">
+            Date: <input type="date" id="cspNewDate" class="date-input">
           </label>
           <span style="font-size:0.68rem;color:var(--muted);">Fill only today's values · leave blank to skip</span>
         </div>
-
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
           <div class="parity-card al">
             <div class="pc-header"><span class="pc-title" style="color:#93a2b5">Aluminium</span></div>
@@ -609,12 +595,10 @@
             <div class="parity-row"><div class="pr-label">Stock</div><input type="number" class="pr-input" id="newZnStock" step="1"></div>
           </div>
         </div>
-
         <div class="controls" style="margin-top:8px;gap:10px;align-items:center;">
           <span id="tokenStatus" style="font-size:0.7rem;color:var(--muted);"></span>
           <button class="btn small" id="forgetTokenBtn" style="display:none;">Forget token</button>
         </div>
-
         <div class="controls" style="margin-top:10px;justify-content:flex-end;">
           <button class="btn" id="cspClearBtn" style="margin-right:8px;">Clear</button>
           <button class="btn-refresh" id="cspSaveBtn"><i class="fas fa-cloud-upload-alt"></i> Save to GitHub</button>
@@ -687,9 +671,7 @@
 
     <div class="grid">
       <div class="card span-12">
-        <h3 style="justify-content:space-between;display:flex;">
-          <span><i class="fas fa-calendar-alt"></i> Seasonality</span>
-        </h3>
+        <h3><i class="fas fa-calendar-alt"></i> Seasonality</h3>
         <div class="controls" style="margin-bottom:4px;">
           <button class="btn active" data-metal="copper" data-season>Cu</button>
           <button class="btn" data-metal="aluminium" data-season>Al</button>
@@ -842,31 +824,7 @@
         <button class="btn" id="lmeTokenClear">Clear</button>
         <span id="lmeTokenStatus" class="lme-status" style="margin-top:0;"></span>
       </div>
-      <textarea id="lmePasteArea" placeholder="Paste here...
-
-MARKET HUB
-CU: 248650+575
-AL: 240375-250
-NI: 285168+486
-PB: 354175-2425
-ZN: 123750-225
-SN: 4475+0
-
-LIVE WARRANTS
-CU: 134650+3200
-AL: 226675+0
-NI: 255960-2232
-PB: 326775+0
-ZN: 112500-100
-SN: 3510-105
-
-CANCLE WARRANTS
-CU: 114000-2625
-AL: 13700-250
-NI: 29208+2718
-PB: 27400-2425
-ZN: 11250-125
-SN: 965+105"></textarea>
+      <textarea id="lmePasteArea" placeholder="Paste here..."></textarea>
       <div class="lme-paste-row">
         <label>Date: <input type="date" id="lmePasteDate"></label>
         <button class="lme-save-btn" id="lmeSaveBtn"><i class="fas fa-cloud-upload-alt"></i> Parse & Save</button>
@@ -921,14 +879,14 @@ SN: 965+105"></textarea>
   <div id="tab-shfe" class="tab-panel" style="display:none;">
 
     <div class="upload-bar" style="border-color:#e8a33d;">
-      <span class="title"><i class="fas fa-flask"></i> SHFE Test</span>
+      <span class="title"><i class="fas fa-flask"></i> SHFE Data</span>
       <input type="text" id="shfeUrl" value="https://little-mode-3e8f.aditya1312ff.workers.dev/shfe/daily"
         style="flex:1;min-width:320px;background:#0e1724;border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:8px;font-size:0.75rem;font-family:monospace;">
-      <button class="btn-refresh" id="shfeGo"><i class="fas fa-play"></i> Fetch</button>
+      <button class="btn-refresh" id="shfeGo"><i class="fas fa-play"></i> Fetch Now</button>
       <button class="btn" id="shfeToggleAll"><i class="fas fa-expand"></i> Expand all</button>
     </div>
 
-    <div id="shfeStatus" class="status-banner info" style="display:block;">Ready. Click "Fetch" to load SHFE data.</div>
+    <div id="shfeStatus" class="status-banner info" style="display:block;">Ready. Auto-loading...</div>
 
     <div class="head">
       <h1><i class="fas fa-landmark"></i> SHFE — Shanghai Futures Exchange</h1>
@@ -939,16 +897,37 @@ SN: 965+105"></textarea>
       </div>
     </div>
 
+    <!-- ===== CHARTS SECTION ===== -->
     <div class="card">
-      <h3><i class="fas fa-warehouse"></i> Warehouse Warrants & Settlement <span class="sub">— all metals available</span></h3>
-      <div id="shfeGrid" class="shfe-grid">
-        <div class="loading"><div class="spinner"></div> Not loaded yet. Click Fetch.</div>
+      <h3 style="justify-content:space-between;display:flex;">
+        <span><i class="fas fa-chart-line"></i> SHFE Inventory Trends <span class="sub">— history from GitHub + live snapshot</span></span>
+        <span class="controls">
+          <span id="shfeHistoryDays" style="font-size:0.68rem;color:var(--muted);"></span>
+        </span>
+      </h3>
+      <div class="grid" style="margin-bottom:0;">
+        <div class="card span-8" style="margin-bottom:0;background:var(--card2);">
+          <h3 style="font-size:0.72rem;"><i class="fas fa-warehouse"></i> Total Inventory by Metal (tonnes)</h3>
+          <div class="chart-wrap tall" style="height:280px;"><canvas id="shfeChartTotal"></canvas></div>
+        </div>
+        <div class="card span-4" style="margin-bottom:0;background:var(--card2);">
+          <h3 style="font-size:0.72rem;"><i class="fas fa-balance-scale"></i> Daily Change (tonnes)</h3>
+          <div class="chart-wrap tall" style="height:280px;"><canvas id="shfeChartChange"></canvas></div>
+        </div>
+      </div>
+      <div class="grid" style="margin-bottom:0;margin-top:14px;">
+        <div class="card span-12" style="margin-bottom:0;background:var(--card2);">
+          <h3 style="font-size:0.72rem;"><i class="fas fa-chart-area"></i> Copper vs Aluminium (tonnes)</h3>
+          <div class="chart-wrap" style="height:240px;"><canvas id="shfeChartCuAl"></canvas></div>
+        </div>
       </div>
     </div>
 
     <div class="card">
-      <h3><i class="fas fa-bug"></i> Debug — Raw Response</h3>
-      <div id="shfeDebug" class="debug">(nothing yet)</div>
+      <h3><i class="fas fa-warehouse"></i> Warehouse Warrants & Settlement <span class="sub">— today's snapshot</span></h3>
+      <div id="shfeGrid" class="shfe-grid">
+        <div class="loading"><div class="spinner"></div> Loading SHFE data...</div>
+      </div>
     </div>
 
   </div>
@@ -969,6 +948,8 @@ const OVERRIDES_FILE_PATH = 'parity_overrides.json';
 const OVERRIDES_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/${OVERRIDES_FILE_PATH}?t=`;
 const LME_FILE = 'lme_history.json';
 const LME_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/${LME_FILE}`;
+const SHFE_FILE = 'shfe_history.json';
+const SHFE_HISTORY_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/${SHFE_FILE}`;
 
 const LIVE_REAL_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vROr3cjVUMAqL9qXYAp6rxcekcbiacZmQ4JfSMOjgoEKKAxhLLDCsMddPf6G3ZgnN0b4dWl7RrghaZ9/pub?gid=0&single=true&output=csv';
 const LIVE_REFRESH_MS = 120000;
@@ -978,7 +959,6 @@ const WORKER_BASE = 'https://round-cake-56f6.aditya1312ff.workers.dev/?url=';
 const LIVE_PROXIES = [{ name: 'cloudflare', wrap: u => WORKER_BASE + encodeURIComponent(u) }];
 
 const SBI_PDF_URL = 'https://sbi.bank.in/documents/16012/1400784/FOREX_CARD_RATES.pdf';
-
 const NALCO_URL = 'https://mudira.nalcoindia.co.in:3443/CUSTOMER/notification';
 const NALCO_REFRESH_MS = 30 * 60 * 1000;
 
@@ -1206,19 +1186,15 @@ const SAFE_STORE = (() => {
 })();
 const GITHUB_TOKEN_KEY = 'gh_pat_csp';
 const CSP_FILE_PATH = 'lme_csp.csv';
-
-// LME chart preference keys
 const LME_TF_KEY = 'lme_tf_days';
 const LME_YAXIS_KEY = 'lme_y_axis';
 const LME_RATIOMODE_KEY = 'lme_ratio_mode';
-
-// SHFE badge key
 const SHFE_LAST_KEY = 'shfe_last_updated';
+const SHFE_HISTORY_KEY = 'shfe_history';
 
 /* ========================================================================
    TAB SWITCHING
    ======================================================================== */
-let shfeLoadedOnce = false;
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach(t => {
     const isActive = t.dataset.tab === name;
@@ -1229,7 +1205,6 @@ function switchTab(name) {
     if (el) el.style.display = (k === name) ? 'block' : 'none';
   });
   if (name === 'lme' && !lmeLoadedOnce) { lmeLoadedOnce = true; lmeLoadHistory(); }
-  if (name === 'shfe' && !shfeLoadedOnce) { shfeLoadedOnce = true; /* don't auto-fetch; user clicks Fetch */ }
 }
 
 /* ========================================================================
@@ -3199,9 +3174,7 @@ function lmeRenderCharts() {
   } else {
     recent = entries.slice(-LME_TF_DAYS);
   }
-  const rangeLabel = LME_TF_DAYS === 'all'
-    ? `All (${recent.length} days)`
-    : `Last ${LME_TF_DAYS} days`;
+  const rangeLabel = LME_TF_DAYS === 'all' ? `All (${recent.length} days)` : `Last ${LME_TF_DAYS} days`;
   document.getElementById('lmeChartsRangeLabel').textContent = rangeLabel;
 
   const labels = recent.map(e => e.date);
@@ -3241,7 +3214,25 @@ function lmeRenderCharts() {
   const yType = LME_Y_AXIS;
   const opts = (optsExtra = {}) => ({
     responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { labels: { color: '#a9b6cb', font: { size: 10 } } } },
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { labels: { color: '#a9b6cb', font: { size: 10 } } },
+      tooltip: {
+        mode: 'index', intersect: false,
+        backgroundColor: 'rgba(14,20,32,0.95)',
+        borderColor: '#232d42', borderWidth: 1,
+        titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10,
+        callbacks: {
+          label: function(ctx) {
+            const v = ctx.parsed.y;
+            if (v == null) return `${ctx.dataset.label}: —`;
+            const isPct = /%\s*of total/i.test(ctx.dataset.label) || ctx.dataset.label.includes('%');
+            const val = isPct ? v.toFixed(2) + '%' : Number(v).toLocaleString();
+            return `${ctx.dataset.label}: ${val}`;
+          }
+        }
+      }
+    },
     scales: {
       x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } },
       y: {
@@ -3436,7 +3427,6 @@ function lmeWire() {
   document.getElementById('lmePasteDate').value = new Date().toISOString().slice(0,10);
   document.getElementById('lmeRefreshBtn').addEventListener('click', lmeLoadHistory);
 
-  // --- Collapsible paste card ---
   const pasteCard = document.getElementById('lmePasteCard');
   const enterBtn = document.getElementById('lmeEnterDataBtn');
   const closeBtn = document.getElementById('lmePasteCloseBtn');
@@ -3501,7 +3491,6 @@ function lmeWire() {
     document.getElementById('lmeTokenStatus').className = 'lme-status ok';
   }
 
-  // --- LME chart controls ---
   document.querySelectorAll('#lmeTfGroup button').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('#lmeTfGroup button').forEach(x => x.classList.remove('active'));
     b.classList.add('active');
@@ -3554,6 +3543,8 @@ const SHFE_ORDER = [
   'alumina_wh','alumina_factory','cast_aluminium',
   'stainless_wh','stainless_factory','copper_bc'
 ];
+const SHFE_CHART_METALS = ['copper','aluminium','zinc','lead','nickel','tin'];
+
 const SHFE_REGION_MAP = {
   '上海':'Shanghai','广东':'Guangdong','江苏':'Jiangsu','浙江':'Zhejiang','江西':'Jiangxi',
   '山东':'Shandong','天津':'Tianjin','河南':'Henan','重庆':'Chongqing','甘肃':'Gansu',
@@ -3645,6 +3636,170 @@ const SHFE_WAREHOUSE_MAP = {
 };
 function shfeTrRegion(cn) { return SHFE_REGION_MAP[cn] || cn || ''; }
 function shfeTrWarehouse(cn) { return SHFE_WAREHOUSE_MAP[cn] || cn || ''; }
+
+let SHFE_HISTORY = [];
+let shfeChartTotal, shfeChartChange, shfeChartCuAl;
+
+function shfeSaveHistory(date, inventory) {
+  const entry = { date, metals: {} };
+  for (const k of SHFE_CHART_METALS) {
+    const inv = inventory[k];
+    if (!inv || !inv.total) continue;
+    entry.metals[k] = { qty: inv.total.qty, change: inv.total.change || 0 };
+  }
+  SHFE_HISTORY = SHFE_HISTORY.filter(e => e.date !== date);
+  SHFE_HISTORY.push(entry);
+  SHFE_HISTORY.sort((a,b) => a.date.localeCompare(b.date));
+  if (SHFE_HISTORY.length > 400) SHFE_HISTORY = SHFE_HISTORY.slice(-400);
+  SAFE_STORE.setItem(SHFE_HISTORY_KEY, JSON.stringify(SHFE_HISTORY));
+}
+
+async function shfeLoadHistory() {
+  const raw = SAFE_STORE.getItem(SHFE_HISTORY_KEY);
+  if (raw) {
+    try { SHFE_HISTORY = JSON.parse(raw); } catch(e) { SHFE_HISTORY = []; }
+  }
+  try {
+    const res = await fetch(SHFE_HISTORY_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.entries)) {
+        const byDate = new Map();
+        for (const e of SHFE_HISTORY) byDate.set(e.date, e);
+        for (const e of data.entries) byDate.set(e.date, e);
+        SHFE_HISTORY = [...byDate.values()].sort((a,b) => a.date.localeCompare(b.date));
+        if (SHFE_HISTORY.length > 400) SHFE_HISTORY = SHFE_HISTORY.slice(-400);
+        SAFE_STORE.setItem(SHFE_HISTORY_KEY, JSON.stringify(SHFE_HISTORY));
+      }
+    }
+  } catch (e) {
+    console.warn('SHFE history fetch failed:', e);
+  }
+}
+
+function shfeRenderCharts() {
+  const days = document.getElementById('shfeHistoryDays');
+  if (days) days.textContent = SHFE_HISTORY.length ? `${SHFE_HISTORY.length} days of history` : '';
+
+  if (!SHFE_HISTORY.length) {
+    if (shfeChartTotal) { shfeChartTotal.destroy(); shfeChartTotal = null; }
+    if (shfeChartChange) { shfeChartChange.destroy(); shfeChartChange = null; }
+    if (shfeChartCuAl) { shfeChartCuAl.destroy(); shfeChartCuAl = null; }
+    return;
+  }
+
+  const labels = SHFE_HISTORY.map(e => e.date);
+  const colors = SHFE_CHART_METALS.map(m => SHFE_METAL_META[m].color);
+
+  const tooltipCfg = (suffix='') => ({
+    mode: 'index', intersect: false,
+    backgroundColor: 'rgba(14,20,32,0.95)',
+    borderColor: '#232d42', borderWidth: 1,
+    titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10,
+    callbacks: {
+      label: function(ctx) {
+        const v = ctx.parsed.y;
+        if (v == null) return `${ctx.dataset.label}: —`;
+        const sign = (v > 0 && suffix === ' signed') ? '+' : '';
+        return `${ctx.dataset.label}: ${sign}${Number(v).toLocaleString()}${suffix === ' signed' ? ' t' : (suffix ? ' '+suffix : '')}`;
+      }
+    }
+  });
+
+  const totalDatasets = SHFE_CHART_METALS.map((m, i) => ({
+    label: SHFE_METAL_META[m].label,
+    data: SHFE_HISTORY.map(e => e.metals[m]?.qty ?? null),
+    borderColor: colors[i],
+    backgroundColor: colors[i] + '20',
+    borderWidth: 2,
+    pointRadius: 0,
+    tension: 0.15,
+    fill: false,
+  }));
+  if (shfeChartTotal) shfeChartTotal.destroy();
+  shfeChartTotal = new Chart(document.getElementById('shfeChartTotal'), {
+    type: 'line',
+    data: { labels, datasets: totalDatasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } },
+        tooltip: {
+          mode: 'index', intersect: false,
+          backgroundColor: 'rgba(14,20,32,0.95)', borderColor: '#232d42', borderWidth: 1,
+          titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10,
+          callbacks: { label: ctx => { const v = ctx.parsed.y; return `${ctx.dataset.label}: ${v != null ? Number(v).toLocaleString() + ' t' : '—'}`; } }
+        }
+      },
+      scales: {
+        x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } },
+        y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }
+      }
+    }
+  });
+
+  const changeDatasets = SHFE_CHART_METALS.map((m, i) => ({
+    label: SHFE_METAL_META[m].label,
+    data: SHFE_HISTORY.map(e => e.metals[m]?.change ?? 0),
+    backgroundColor: colors[i] + '99',
+    borderColor: colors[i],
+    borderWidth: 1,
+  }));
+  if (shfeChartChange) shfeChartChange.destroy();
+  shfeChartChange = new Chart(document.getElementById('shfeChartChange'), {
+    type: 'bar',
+    data: { labels, datasets: changeDatasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 9 } } },
+        tooltip: {
+          mode: 'index', intersect: false,
+          backgroundColor: 'rgba(14,20,32,0.95)', borderColor: '#232d42', borderWidth: 1,
+          titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10,
+          callbacks: { label: ctx => { const v = ctx.parsed.y; if (v == null) return `${ctx.dataset.label}: —`; const sign = v > 0 ? '+' : ''; return `${ctx.dataset.label}: ${sign}${Number(v).toLocaleString()} t`; } }
+        }
+      },
+      scales: {
+        x: { stacked: false, grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } },
+        y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }
+      }
+    }
+  });
+
+  if (shfeChartCuAl) shfeChartCuAl.destroy();
+  shfeChartCuAl = new Chart(document.getElementById('shfeChartCuAl'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Copper', data: SHFE_HISTORY.map(e => e.metals.copper?.qty ?? null), borderColor: '#d68b4d', backgroundColor: '#d68b4d20', borderWidth: 2, pointRadius: 0, tension: 0.15, fill: true, yAxisID: 'y' },
+        { label: 'Aluminium', data: SHFE_HISTORY.map(e => e.metals.aluminium?.qty ?? null), borderColor: '#93a2b5', backgroundColor: '#93a2b520', borderWidth: 2, pointRadius: 0, tension: 0.15, fill: true, yAxisID: 'y1' },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } },
+        tooltip: {
+          mode: 'index', intersect: false,
+          backgroundColor: 'rgba(14,20,32,0.95)', borderColor: '#232d42', borderWidth: 1,
+          titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10,
+          callbacks: { label: ctx => { const v = ctx.parsed.y; return `${ctx.dataset.label}: ${v != null ? Number(v).toLocaleString() + ' t' : '—'}`; } }
+        }
+      },
+      scales: {
+        x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } },
+        y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#d68b4d', font: { size: 9 } } },
+        y1: { position: 'right', grid: { display: false }, ticks: { color: '#93a2b5', font: { size: 9 } } }
+      }
+    }
+  });
+}
+
 function shfeSetStatus(kind, msg) {
   const el = document.getElementById('shfeStatus');
   if (!el) return;
@@ -3713,36 +3868,6 @@ function shfeRenderCard(key, inv, settle) {
     </div>
   `;
 }
-function shfeRenderDebug(data) {
-  const el = document.getElementById('shfeDebug');
-  if (!el) return;
-  const lines = [];
-  lines.push(`<span class="info">▶ source: ${data.source}</span>`);
-  lines.push(`<span class="info">▶ timestamp: ${data.timestamp}</span>`);
-  lines.push(`<span class="info">▶ inventoryDate: ${data.inventoryDate || '—'}</span>`);
-  lines.push(`<span class="info">▶ settlementDate: ${data.settlementDate || '—'}</span>`);
-  lines.push('');
-  lines.push('<span class="info">── Inventory (summary) ──</span>');
-  for (const k of Object.keys(data.inventory || {})) {
-    if (k === '_meta') continue;
-    const inv = data.inventory[k] || {};
-    const t = inv.total || {};
-    const whs = (inv.warehouses || []).length;
-    lines.push(`  ${k.padEnd(20)} qty=${String(t.qty ?? '—').padStart(10)}  chg=${String(t.change ?? '—').padStart(8)}  wh=${whs}`);
-  }
-  lines.push('');
-  lines.push('<span class="info">── Settlement ──</span>');
-  for (const [k, v] of Object.entries(data.settlement || {})) {
-    lines.push(`  ${k.padEnd(12)} m=${v.deliveryMonth}  settle=${String(v.settle).padStart(10)}  vol=${v.volume}  oi=${v.openInterest}`);
-  }
-  lines.push('');
-  lines.push('<span class="info">── Fetch Debug ──</span>');
-  for (const d of (data.debug || [])) {
-    const cls = d.status === 200 ? 'ok' : 'fail';
-    lines.push(`<span class="${cls}">  [${d.status}] ${d.kind.padEnd(6)} ${d.url}</span>`);
-  }
-  el.innerHTML = lines.join('<br>');
-}
 function shfeAgo(date) {
   const s = Math.floor((Date.now() - date.getTime()) / 1000);
   if (s < 5) return 'just now';
@@ -3774,6 +3899,7 @@ function shfeSaveLastUpdated(ts, meta) {
   SAFE_STORE.setItem(SHFE_LAST_KEY, JSON.stringify(data));
   shfeRenderLastUpdated(data);
 }
+
 async function shfeFetch() {
   const urlEl = document.getElementById('shfeUrl');
   const goEl = document.getElementById('shfeGo');
@@ -3782,8 +3908,7 @@ async function shfeFetch() {
   goEl.disabled = true;
   goEl.innerHTML = '<span class="spinner" style="width:12px;height:12px;margin-right:6px;display:inline-block;"></span> Fetching…';
   shfeSetStatus('info', `⏳ Fetching <code>${url}</code>…`);
-  document.getElementById('shfeGrid').innerHTML = '<div class="loading"><div class="spinner"></div> Loading…</div>';
-  document.getElementById('shfeDebug').textContent = 'Loading…';
+  document.getElementById('shfeGrid').innerHTML = '<div class="loading"><div class="spinner"></div> Loading SHFE data…</div>';
   const t0 = performance.now();
   try {
     const res = await fetch(url, { cache: 'no-store' });
@@ -3798,14 +3923,12 @@ async function shfeFetch() {
     if (keys.length === 0) {
       document.getElementById('shfeGrid').innerHTML = '<div style="color:var(--red);padding:20px;">No metals found in response.</div>';
       shfeSetStatus('err', '⚠️ Response OK but no metals parsed.');
-      shfeRenderDebug(data);
       return;
     }
     const html = keys.map(k => shfeRenderCard(k, inv[k], set[k])).join('');
     document.getElementById('shfeGrid').innerHTML = html;
     const totalWh = keys.reduce((s, k) => s + (inv[k].warehouses?.length || 0), 0);
     const meta = document.getElementById('shfeMeta');
-    // Preserve the badge — rebuild meta without destroying badge element
     meta.innerHTML = `
       <span id="shfeLastUpdated" style="display:inline-flex;align-items:center;gap:6px;background:rgba(232,163,61,0.12);border:1px solid rgba(232,163,61,0.35);padding:3px 10px;border-radius:12px;font-size:0.7rem;color:var(--accent);">
         <i class="fas fa-clock"></i> <span id="shfeLastUpdatedText">Never updated</span>
@@ -3816,30 +3939,27 @@ async function shfeFetch() {
       <span>Warehouses: <strong>${totalWh}</strong></span>
       <span>Fetch: <strong>${(t1-t0).toFixed(0)}ms</strong> · Parse: <strong>${(t2-t1).toFixed(0)}ms</strong></span>
     `;
-    shfeRenderDebug(data);
-    shfeSetStatus('ok',
-      `✅ <b>Loaded</b> · ${keys.length} metals · ${totalWh} warehouses · ${(t2-t0).toFixed(0)}ms total`
-    );
-    shfeSaveLastUpdated(Date.now(), {
-      inventoryDate: data.inventoryDate,
-      settlementDate: data.settlementDate,
-      metals: keys.length,
-      warehouses: totalWh,
-    });
+    shfeSetStatus('ok', `✅ <b>Loaded</b> · ${keys.length} metals · ${totalWh} warehouses · ${(t2-t0).toFixed(0)}ms total`);
+    shfeSaveLastUpdated(Date.now(), { inventoryDate: data.inventoryDate, settlementDate: data.settlementDate, metals: keys.length, warehouses: totalWh });
+    shfeSaveHistory(data.inventoryDate, inv);
+    shfeRenderCharts();
   } catch (e) {
     console.error('SHFE fetch failed:', e);
     document.getElementById('shfeGrid').innerHTML = `<div style="color:var(--red);padding:20px;">Fetch failed: ${e.message}</div>`;
     shfeSetStatus('err', `❌ Fetch failed: <code>${e.message}</code>`);
-    document.getElementById('shfeDebug').innerHTML = `<span class="fail">${e.message}</span>`;
   } finally {
     goEl.disabled = false;
-    goEl.innerHTML = '<i class="fas fa-play"></i> Fetch';
+    goEl.innerHTML = '<i class="fas fa-play"></i> Fetch Now';
   }
 }
-function shfeWire() {
+
+async function shfeWire() {
   const goEl = document.getElementById('shfeGo');
   if (!goEl) return;
   shfeLoadLastUpdated();
+  await shfeLoadHistory();
+  shfeRenderCharts();
+
   goEl.addEventListener('click', shfeFetch);
   document.getElementById('shfeUrl').addEventListener('keydown', e => { if (e.key === 'Enter') shfeFetch(); });
   document.getElementById('shfeToggleAll').addEventListener('click', () => {
@@ -3888,7 +4008,10 @@ function init() {
   setInterval(loadParityOverrides, 60 * 1000);
 
   lmeWire();
-  shfeWire();
+  shfeWire().then(() => {
+    // After history is loaded, trigger today's snapshot
+    setTimeout(() => shfeFetch(), 500);
+  });
 }
 
 if (document.readyState === 'loading') {
