@@ -48587,18 +48587,33 @@
       "date": "2026-09-08",
       "copper": {
         "total": 237725,
-        "live": null,
-        "cancelled": null
-      },
-      "zinc": {
-        "total": 115375,
-        "live": null,
-        "cancelled": null
+        "live": 116450,
+        "cancelled": 121275
       },
       "aluminium": {
         "total": 244525,
-        "live": null,
-        "cancelled": null
+        "live": 240775,
+        "cancelled": 3750
+      },
+      "nickel": {
+        "total": 271008,
+        "live": 257286,
+        "cancelled": 13722
+      },
+      "lead": {
+        "total": 385050,
+        "live": 346150,
+        "cancelled": 38900
+      },
+      "zinc": {
+        "total": 115375,
+        "live": 85750,
+        "cancelled": 29625
+      },
+      "tin": {
+        "total": 5335,
+        "live": 3975,
+        "cancelled": 1360
       }
     },
     {
