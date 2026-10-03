@@ -26,6 +26,12 @@
   body { background:var(--bg); color:var(--text); padding:18px; min-height:100vh; }
   .dashboard { max-width:1600px; margin:0 auto; }
 
+  .tab-bar-wrap { display:flex; align-items:center; margin-bottom:18px; gap:10px; }
+  .tab-bar { display:flex; gap:4px; padding:5px; background:#161d2b; border:1px solid var(--border); border-radius:12px; }
+  .tab-btn { background:transparent; border:1px solid transparent; color:var(--muted); padding:8px 18px; border-radius:8px; font-size:0.8rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:8px; font-family:inherit; }
+  .tab-btn.active { background:rgba(232,163,61,0.15); color:var(--accent); border-color:rgba(232,163,61,0.4); }
+  .tab-panel { display:block; }
+
   .upload-bar {
     background: linear-gradient(135deg, #1c2536 0%, #161d2b 100%);
     border: 1px solid var(--accent);
@@ -225,18 +231,18 @@
   .chart-wrap.tall { height:290px; }
 
   .controls { display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
-  .btn { background:#0e1724; border:1px solid var(--border); color:var(--muted); padding:5px 11px; border-radius:8px; font-size:0.72rem; font-weight:500; cursor:pointer; }
+  .btn { background:#0e1724; border:1px solid var(--border); color:var(--muted); padding:5px 11px; border-radius:8px; font-size:0.72rem; font-weight:500; cursor:pointer; font-family:inherit;}
   .btn:hover { color:var(--text); border-color:#33425e;}
   .btn.active { background:var(--accent); color:#0e1420; border-color:var(--accent); font-weight:600;}
   .btn.small { padding:3px 8px; font-size:0.68rem; }
 
-  .tf-select { background:#0e1724; border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:8px; font-size:0.72rem; cursor:pointer; max-width:220px; }
+  .tf-select { background:#0e1724; border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:8px; font-size:0.72rem; cursor:pointer; max-width:220px; font-family:inherit; }
   .tf-select:hover { border-color:var(--accent); }
-  .date-input { background:#0e1724; border:1px solid var(--border); color:var(--text); padding:4px 8px; border-radius:6px; font-size:0.7rem; cursor:pointer; }
+  .date-input { background:#0e1724; border:1px solid var(--border); color:var(--text); padding:4px 8px; border-radius:6px; font-size:0.7rem; cursor:pointer; font-family:inherit;}
   .date-input:hover { border-color:var(--accent); }
 
   .freq-group { display:inline-flex; background:#0e1724; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
-  .freq-group button { background:transparent; border:none; color:var(--muted); padding:5px 10px; font-size:0.72rem; font-weight:600; cursor:pointer; }
+  .freq-group button { background:transparent; border:none; color:var(--muted); padding:5px 10px; font-size:0.72rem; font-weight:600; cursor:pointer; font-family:inherit;}
   .freq-group button.active { background:var(--accent); color:#0e1420; }
 
   .feed { list-style:none; overflow-y:auto; max-height:330px; padding-right:4px;}
@@ -329,10 +335,56 @@
   .price-picker label:hover { border-color:var(--accent); }
   .price-picker input { accent-color:var(--accent); cursor:pointer; }
   .price-picker label.active { background:rgba(232,163,61,0.15); border-color:var(--accent); color:var(--accent); font-weight:600; }
+
+  .lme-metals-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
+  @media(max-width:900px){ .lme-metals-grid { grid-template-columns:1fr; } }
+  .lme-sum-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; position:relative; overflow:hidden; cursor:pointer; transition:all 0.15s; }
+  .lme-sum-card:hover { border-color:var(--accent); }
+  .lme-sum-card.active { border-color:var(--accent); box-shadow:0 0 0 2px rgba(232,163,61,0.25); }
+  .lme-sum-card .bar { position:absolute; left:0; top:0; bottom:0; width:3px; }
+  .lme-sum-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .lme-sum-title { font-size:1rem; font-weight:700; }
+  .lme-sum-date { font-size:0.65rem; color:var(--muted); background:#0e1724; padding:3px 8px; border-radius:5px; }
+  .lme-sum-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .lme-sum-cell { background:var(--card2); border-radius:8px; padding:10px; }
+  .lme-sum-cell .lbl { font-size:0.58rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+  .lme-sum-cell .val { font-size:1.05rem; font-weight:700; color:#fff; font-variant-numeric:tabular-nums; }
+  .lme-sum-cell .chg { font-size:0.65rem; font-weight:600; margin-top:2px; }
+  .lme-sum-cell .chg.pos { color:var(--green); }
+  .lme-sum-cell .chg.neg { color:var(--red); }
+  .lme-charts-title { font-size:0.9rem; font-weight:700; margin-bottom:12px; display:flex; align-items:center; gap:8px; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; }
+  .lme-charts-title i { color:var(--accent); }
+  .lme-chart-box { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:14px; }
+  .lme-chart-box .ct { font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; font-weight:600; margin-bottom:10px; }
+  .lme-chart-box .cw { position:relative; width:100%; height:220px; }
+  .lme-paste-card { background:var(--card); border:1px solid #e74c3c; border-radius:14px; padding:18px; margin-bottom:18px; }
+  .lme-paste-card h3 { font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.8px; color:#e74c3c; display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .lme-paste-card textarea { width:100%; min-height:160px; background:#0e1724; border:1px solid var(--border); color:var(--text); padding:12px; border-radius:8px; font-size:0.75rem; font-family:ui-monospace,monospace; resize:vertical; line-height:1.6; }
+  .lme-paste-card textarea:focus { outline:none; border-color:#e74c3c; }
+  .lme-paste-row { display:flex; gap:10px; margin-top:12px; align-items:center; flex-wrap:wrap; }
+  .lme-paste-row label { font-size:0.75rem; color:var(--muted); display:inline-flex; align-items:center; gap:6px; }
+  .lme-paste-row input[type=date], .lme-paste-row input[type=password] { background:#0e1724; border:1px solid var(--border); color:var(--text); padding:7px 10px; border-radius:6px; font-size:0.78rem; font-family:inherit; }
+  .lme-paste-row input[type=password] { min-width:260px; }
+  .lme-save-btn { background:rgba(231,76,60,0.15); border:1px solid #e74c3c; color:#e74c3c; padding:8px 16px; border-radius:8px; font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; font-family:inherit; }
+  .lme-save-btn:hover { background:rgba(231,76,60,0.3); }
+  .lme-save-btn:disabled { opacity:0.5; cursor:wait; }
+  .lme-status { font-size:0.72rem; color:var(--muted); margin-top:10px; min-height:1.2em; }
+  .lme-status.ok { color:var(--green); }
+  .lme-status.err { color:var(--red); }
 </style>
 </head>
 <body>
 <div class="dashboard">
+
+  <div class="tab-bar-wrap">
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="main"><i class="fas fa-chart-line"></i> Main Dashboard</button>
+      <button class="tab-btn" data-tab="lme"><i class="fas fa-globe"></i> LME</button>
+    </div>
+  </div>
+
+  <!-- ============ MAIN TAB ============ -->
+  <div id="tab-main" class="tab-panel">
 
   <div class="upload-bar">
     <span class="title"><i class="fas fa-folder-open"></i> Data</span>
@@ -377,7 +429,6 @@
 
   <div id="content" style="display:none;">
 
-    <!-- Latest Prices (LIVE) -->
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
@@ -390,7 +441,6 @@
       </div>
     </div>
 
-    <!-- PARITY MODEL -->
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
@@ -399,20 +449,17 @@
             <button class="btn" id="parityResetBtn" title="Reset all edits"><i class="fas fa-undo"></i> Reset</button>
           </span>
         </h3>
-
         <div class="parity-sbi-bar">
           <span class="psb-label"><i class="fas fa-university" style="color:var(--sbi)"></i> USD/INR (SBI TT)</span>
           <input type="number" class="pr-input" id="parityUsdinr" step="0.01" placeholder="e.g. 96.50">
           <span class="psb-hint">Auto-filled from SBI PDF · editable</span>
         </div>
-
         <div class="parity-grid" id="parityGrid">
           <div class="loading"><div class="spinner"></div> Waiting for data…</div>
         </div>
       </div>
     </div>
 
-    <!-- NALCO ALUMINIUM -->
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
@@ -425,7 +472,6 @@
       </div>
     </div>
 
-    <!-- SBI TT vs USDINR -->
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
@@ -449,7 +495,6 @@
       </div>
     </div>
 
-    <!-- CSP -->
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
@@ -482,7 +527,6 @@
       </div>
     </div>
 
-    <!-- Update Today's CSP -->
     <div class="grid" id="cspUpdaterCard" style="display:none;">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
@@ -534,7 +578,6 @@
       </div>
     </div>
 
-    <!-- LME-MCX Historical -->
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
@@ -558,7 +601,6 @@
       </div>
     </div>
 
-    <!-- Price Chart -->
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
@@ -599,7 +641,6 @@
       </div>
     </div>
 
-    <!-- Seasonality -->
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
@@ -613,9 +654,9 @@
             <option value="all" selected>All</option><option value="10">10Y</option><option value="5">5Y</option><option value="3">3Y</option>
           </select>
           <select class="tf-select" id="seasonMode">
-            <option value="monthly" selected>Monthly</option>
+            <option value="monthly">Monthly</option>
             <option value="weekly">Weekly</option>
-            <option value="matrix">Month Matrix</option>
+            <option value="matrix" selected>Month Matrix</option>
           </select>
         </div>
         <div class="chart-wrap tall" id="seasonChartWrap"><canvas id="seasonChart"></canvas></div>
@@ -668,7 +709,6 @@
       </div>
     </div>
 
-    <!-- Correlations -->
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
@@ -707,7 +747,6 @@
       </div>
     </div>
 
-    <!-- News & Sentiment -->
     <div class="grid">
       <div class="card span-6">
         <h3><i class="fas fa-newspaper"></i> News <span class="sub">— Mining.com</span> <span style="font-size:0.65rem;color:var(--muted);font-weight:400;margin-left:auto;" id="newsUpdated"></span></h3>
@@ -719,7 +758,6 @@
       </div>
     </div>
 
-    <!-- Trend Analysis -->
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;">
@@ -732,6 +770,76 @@
 
     <div class="foot">Live: Google Sheet (LMEMCX) | CSP: lme_csp.csv | SBI TT: sbi.bank.in PDF + sahilgupta CSV | News: Mining.com | NALCO: mudira.nalcoindia.co.in</div>
   </div>
+  </div>
+  <!-- ============ END MAIN TAB ============ -->
+
+  <!-- ============ LME TAB ============ -->
+  <div id="tab-lme" class="tab-panel" style="display:none;">
+    <div class="head" style="padding-bottom:16px;">
+      <h1><i class="fas fa-globe" style="color:#e74c3c;"></i> LME Warehouse Stock</h1>
+      <div class="meta">
+        <span id="lmeMetaUpdated">Loading…</span>
+        <span id="lmeMetaCounts"></span>
+        <button class="btn small" id="lmeRefreshBtn"><i class="fas fa-sync-alt"></i></button>
+      </div>
+    </div>
+
+    <div class="lme-paste-card">
+      <h3><i class="fas fa-paste"></i> Paste WhatsApp Message (Admin)</h3>
+      <div class="lme-paste-row" style="margin-top:0;margin-bottom:12px;">
+        <label>GitHub Token: <input type="password" id="lmeTokenInput" placeholder="ghp_..."></label>
+        <button class="btn" id="lmeTokenSave">Save Token</button>
+        <button class="btn" id="lmeTokenClear">Clear</button>
+        <span id="lmeTokenStatus" class="lme-status" style="margin-top:0;"></span>
+      </div>
+      <textarea id="lmePasteArea" placeholder="Paste here...
+
+MARKET HUB
+CU: 248650+575
+AL: 240375-250
+NI: 285168+486
+PB: 354175-2425
+ZN: 123750-225
+SN: 4475+0
+
+LIVE WARRANTS
+CU: 134650+3200
+AL: 226675+0
+NI: 255960-2232
+PB: 326775+0
+ZN: 112500-100
+SN: 3510-105
+
+CANCLE WARRANTS
+CU: 114000-2625
+AL: 13700-250
+NI: 29208+2718
+PB: 27400-2425
+ZN: 11250-125
+SN: 965+105"></textarea>
+      <div class="lme-paste-row">
+        <label>Date: <input type="date" id="lmePasteDate"></label>
+        <button class="lme-save-btn" id="lmeSaveBtn"><i class="fas fa-cloud-upload-alt"></i> Parse & Save</button>
+        <button class="btn" id="lmeBackfillBtn"><i class="fas fa-history"></i> Backfill from lme_csp.csv</button>
+        <button class="btn" id="lmeClearBtn">Clear</button>
+        <span id="lmeSaveStatus" class="lme-status"></span>
+      </div>
+    </div>
+
+    <div class="lme-metals-grid" id="lmeMetalsGrid">
+      <div class="loading" style="grid-column:1/-1;"><div class="spinner"></div> Loading…</div>
+    </div>
+
+    <div id="lmeChartsSection" style="display:none;">
+      <div class="lme-charts-title"><i class="fas fa-chart-line"></i> <span id="lmeChartsMetalName">Copper</span> — Last 30 Days</div>
+      <div class="lme-chart-box"><div class="ct">Live vs Cancelled</div><div class="cw"><canvas id="lmeChLive"></canvas></div></div>
+      <div class="lme-chart-box"><div class="ct">Total Inventory Trend</div><div class="cw"><canvas id="lmeChTotal"></canvas></div></div>
+      <div class="lme-chart-box"><div class="ct">Cancelled Ratio (%)</div><div class="cw"><canvas id="lmeChRatio"></canvas></div></div>
+      <div class="lme-chart-box"><div class="ct">Daily Change</div><div class="cw"><canvas id="lmeChChange"></canvas></div></div>
+    </div>
+  </div>
+  <!-- ============ END LME TAB ============ -->
+
 </div>
 
 <script>
@@ -745,6 +853,8 @@ const METALS_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}
 const CSP_URL    = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/lme_csp.csv`;
 const OVERRIDES_FILE_PATH = 'parity_overrides.json';
 const OVERRIDES_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/${OVERRIDES_FILE_PATH}?t=`;
+const LME_FILE = 'lme_history.json';
+const LME_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/${LME_FILE}`;
 
 const LIVE_REAL_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vROr3cjVUMAqL9qXYAp6rxcekcbiacZmQ4JfSMOjgoEKKAxhLLDCsMddPf6G3ZgnN0b4dWl7RrghaZ9/pub?gid=0&single=true&output=csv';
 const LIVE_REFRESH_MS = 120000;
@@ -779,6 +889,17 @@ const LIVE_GROUP_TITLES = {
   lme: 'Base Metals — LME', mcx: 'Base Metals — MCX', precious: 'Precious Metals',
   fx: 'FX', yield: 'US Yields', other: 'Other',
 };
+
+const LME_METAL_META = {
+  copper:    { label:'Copper',    symbol:'Cu', color:'#d68b4d', cls:'' },
+  aluminium: { label:'Aluminium', symbol:'Al', color:'#93a2b5', cls:'al' },
+  zinc:      { label:'Zinc',      symbol:'Zn', color:'#5b8fc9', cls:'zn' },
+  lead:      { label:'Lead',      symbol:'Pb', color:'#8b7a9e', cls:'pb' },
+  nickel:    { label:'Nickel',    symbol:'Ni', color:'#a3b18a', cls:'ni' },
+  tin:       { label:'Tin',       symbol:'Sn', color:'#c9a227', cls:'sn' },
+};
+const LME_ORDER = ['copper','aluminium','zinc','lead','nickel','tin'];
+const LME_SYMBOL_MAP = { CU:'copper', AL:'aluminium', ZN:'zinc', PB:'lead', NI:'nickel', SN:'tin' };
 
 /* ========================================================================
    HELPERS
@@ -912,6 +1033,7 @@ function resampleWeekly(series) {
   }
   return [...buckets.values()].sort((a,b) => a.t - b.t);
 }
+function b64encodeUtf8(str) { return btoa(unescape(encodeURIComponent(str))); }
 
 /* ========================================================================
    STATE
@@ -927,14 +1049,15 @@ let selectedPriceSeries = new Set();
 let priceFreq = 'daily', cspFreq = 'daily', csp2Freq = 'daily', lmcFreq = 'daily', sbiFreq = 'daily';
 let controlsWired = false;
 let NALCO_RAW = [], nalcoTimer = null;
+let LME_HISTORY = { version: 1, entries: [] };
+let LME_ACTIVE = 'copper';
+let LME_CHARTS = { live:null, total:null, ratio:null, change:null };
+let lmeLoadedOnce = false;
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const CSP_COLORS = { Cu:'#d68b4d', Zn:'#5b8fc9', Al:'#93a2b5' };
 const LMC_METAL_MAP = { Copper:'Cu', Zinc:'Zn', Aluminium:'Al' };
 
-/* ========================================================================
-   PARITY MODEL CONFIG
-   ======================================================================== */
 const PARITY_METALS = [
   { key:'Cu', name:'Copper',    lme3mSeries:'LME Copper',    lmeCspKey:'Cu', mcxSeries:'MCX Copper',
     dutyPct:0,    defaultPremium:400, defaultFreight:0,    cls:'',   color:'#d68b4d' },
@@ -943,12 +1066,10 @@ const PARITY_METALS = [
   { key:'Al', name:'Aluminium', lme3mSeries:'LME Aluminium', lmeCspKey:'Al', mcxSeries:'MCX Aluminium',
     dutyPct:8.25, defaultPremium:65,  defaultFreight:1500, cls:'al', color:'#93a2b5' },
 ];
-
-/* Default duty & freight (used only when nothing saved/edited yet) */
 const PARITY_FIXED = {
-  Cu: { dutyPct: 0,    freight: 0    },   // Copper: duty free, no freight
-  Zn: { dutyPct: 5.5,  freight: 0    },   // Zinc: 5.5% duty, no freight
-  Al: { dutyPct: 8.25, freight: 1500 },   // Aluminium: 8.25% duty, ₹1500/MT freight
+  Cu: { dutyPct: 0,    freight: 0    },
+  Zn: { dutyPct: 5.5,  freight: 0    },
+  Al: { dutyPct: 8.25, freight: 1500 },
 };
 
 const parityEdits = {};
@@ -966,6 +1087,21 @@ const SAFE_STORE = (() => {
 })();
 const GITHUB_TOKEN_KEY = 'gh_pat_csp';
 const CSP_FILE_PATH = 'lme_csp.csv';
+
+/* ========================================================================
+   TAB SWITCHING
+   ======================================================================== */
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(t => {
+    const isActive = t.dataset.tab === name;
+    t.classList.toggle('active', isActive);
+  });
+  ['main','lme'].forEach(k => {
+    const el = document.getElementById('tab-' + k);
+    if (el) el.style.display = (k === name) ? 'block' : 'none';
+  });
+  if (name === 'lme' && !lmeLoadedOnce) { lmeLoadedOnce = true; lmeLoadHistory(); }
+}
 
 /* ========================================================================
    LIVE FEED
@@ -1188,7 +1324,7 @@ function computeLatest() {
 }
 
 /* ========================================================================
-   SBI — CSV history + PDF latest
+   SBI
    ======================================================================== */
 function parseSBICSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
@@ -1304,7 +1440,7 @@ async function fetchSbiFromPdf() {
 }
 
 /* ========================================================================
-   PARITY MODEL
+   PARITY
    ======================================================================== */
 function initParityEdits() {
   for (const m of PARITY_METALS) {
@@ -1315,7 +1451,6 @@ function initParityEdits() {
         dutyPct: fx.dutyPct, freight: fx.freight, mcx: null
       };
     }
-    // If user has never edited duty/freight, keep defaults from PARITY_FIXED (so fresh load shows them)
     if (!parityEdited.has(m.key + '.dutyPct')) parityEdits[m.key].dutyPct = fx.dutyPct;
     if (!parityEdited.has(m.key + '.freight')) parityEdits[m.key].freight = fx.freight;
   }
@@ -1383,14 +1518,11 @@ function parityCalc(m) {
   const net = (landedKg != null && mcx != null) ? landedKg - mcx : null;
   return { lmeCash, cost, inr, duty, subtotal, landedMt, landedKg, net };
 }
-
-/* Badge derives purely from basis: > 0 Bwd, < 0 Ctg, = 0 Flat */
 function badgeFromBasis(basis) {
   if (basis > 0) return { cls: 'bwd', txt: 'Backwardation' };
   if (basis < 0) return { cls: 'ctg', txt: 'Contango' };
   return { cls: 'flat', txt: 'Flat' };
 }
-
 function renderParity() {
   const grid = document.getElementById('parityGrid');
   if (!grid) return;
@@ -1503,17 +1635,11 @@ function updateParityCard(metalKey) {
   badgeEl.classList.add(badge.cls);
   badgeEl.textContent = badge.txt;
 }
-
-/* ========================================================================
-   PARITY OVERRIDES (basis + premium + duty + freight) — shared via GitHub
-   ======================================================================== */
 async function loadParityOverrides() {
   try {
     const res = await fetch(OVERRIDES_URL + Date.now(), { cache: 'no-store' });
     if (!res.ok) return;
     const data = await res.json();
-
-    // Basis
     for (const k of ['Cu','Zn','Al']) {
       const key = k + '_basis';
       if (parityEdited.has(k + '.basis')) continue;
@@ -1523,7 +1649,6 @@ async function loadParityOverrides() {
         parityEdited.add(k + '.basis');
       }
     }
-    // Premium
     for (const k of ['Cu','Zn','Al']) {
       const key = k + '_premium';
       if (parityEdited.has(k + '.premium')) continue;
@@ -1533,7 +1658,6 @@ async function loadParityOverrides() {
         parityEdited.add(k + '.premium');
       }
     }
-    // Duty %
     for (const k of ['Cu','Zn','Al']) {
       const key = k + '_dutyPct';
       if (parityEdited.has(k + '.dutyPct')) continue;
@@ -1543,7 +1667,6 @@ async function loadParityOverrides() {
         parityEdited.add(k + '.dutyPct');
       }
     }
-    // Freight
     for (const k of ['Cu','Zn','Al']) {
       const key = k + '_freight';
       if (parityEdited.has(k + '.freight')) continue;
@@ -1565,7 +1688,7 @@ function scheduleSaveParityOverrides() {
 }
 async function saveParityOverrides() {
   const token = getGithubToken();
-  if (!token) { console.warn('No token — parity overrides not saved.'); return; }
+  if (!token) return;
   const body = {
     Cu_basis: numOrNull(parityEdits.Cu?.basis),
     Zn_basis: numOrNull(parityEdits.Zn?.basis),
@@ -1590,7 +1713,7 @@ async function saveParityOverrides() {
       method: 'PUT',
       headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message: `Parity overrides: Cu=b${body.Cu_basis ?? 'auto'}/p${body.Cu_premium ?? 'auto'}/d${body.Cu_dutyPct ?? 'auto'}/f${body.Cu_freight ?? 'auto'} Zn=b${body.Zn_basis ?? 'auto'}/p${body.Zn_premium ?? 'auto'}/d${body.Zn_dutyPct ?? 'auto'}/f${body.Zn_freight ?? 'auto'} Al=b${body.Al_basis ?? 'auto'}/p${body.Al_premium ?? 'auto'}/d${body.Al_dutyPct ?? 'auto'}/f${body.Al_freight ?? 'auto'}`,
+        message: `Parity overrides update`,
         content: b64encodeUtf8(JSON.stringify(body, null, 2)),
         branch: REPO_BRANCH,
         ...(sha ? { sha } : {}),
@@ -1674,7 +1797,7 @@ function computeNalcoSignal(ref, daysAll) {
   const lastWin = daysAll.slice(-3);
   const above = lastWin.filter(d => d.cash > ref).length;
   const below = lastWin.filter(d => d.cash < ref).length;
-  return { status: 'hold', window: lastWin, detail: `Latest window broken (${above} above, ${below} below) — sliding forward`, cycles: daysAll.length - 2 };
+  return { status: 'hold', window: lastWin, detail: `Latest window broken (${above} above, ${below} below)`, cycles: daysAll.length - 2 };
 }
 function renderNalcoCard() {
   const grid = document.getElementById('nalcoGrid');
@@ -1740,7 +1863,6 @@ function getGithubToken() {
   }
   return tok;
 }
-function b64encodeUtf8(str) { return btoa(unescape(encodeURIComponent(str))); }
 async function getFileSha(token) {
   const api = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${CSP_FILE_PATH}?ref=${REPO_BRANCH}`;
   const res = await fetch(api, { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
@@ -1888,7 +2010,6 @@ function wireCspUpdater() {
     const st = document.getElementById('cspUpdateStatus');
     if (st) { st.textContent = 'Token cleared.'; st.style.color = 'var(--muted)'; }
   });
-  document.getElementById('cspSaveBtn')?.addEventListener('click', () => setTimeout(refreshTokenUI, 500));
 }
 
 /* ========================================================================
@@ -1991,11 +2112,11 @@ function renderSbiChart() {
   if (!SBI_RAW.length && !usdinr.length) {
     if (sbiChart) { sbiChart.destroy(); sbiChart = null; }
     canvas.style.display = 'none';
-    emptyEl.style.display = 'block';
+    if (emptyEl) emptyEl.style.display = 'block';
     return;
   }
   canvas.style.display = 'block';
-  emptyEl.style.display = 'none';
+  if (emptyEl) emptyEl.style.display = 'none';
   const tf = document.getElementById('sbiTf').value;
   const cutoff = tfCutoff(tf);
   const filtUsd = cutoff ? usdinr.filter(p => p.t >= cutoff) : usdinr;
@@ -2016,18 +2137,18 @@ function renderSbiChart() {
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } }, tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(4)}` } } },
+      plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } },
       scales: {
         x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
-        y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } }, title: { display: true, text: 'INR per USD', color: '#7c8aa0', font: { size: 10 } } },
-        y1: { position: 'right', grid: { display: false }, ticks: { color: '#e8a33d', font: { size: 9 } }, title: { display: true, text: 'Spread (₹)', color: '#e8a33d', font: { size: 9 } } }
+        y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
+        y1: { position: 'right', grid: { display: false }, ticks: { color: '#e8a33d', font: { size: 9 } } }
       }
     }
   });
 }
 
 /* ========================================================================
-   LME–MCX SPREAD HISTORY
+   LME–MCX SPREAD
    ======================================================================== */
 function computeLmcSpreadSeries(metal) {
   const out = [];
@@ -2058,7 +2179,7 @@ function renderLmcChart() {
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } }, tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ₹${ctx.parsed.y.toFixed(2)}` } } },
+      plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } },
       scales: {
         x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
         y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 }, callback: v => '₹' + v } }
@@ -2451,7 +2572,7 @@ function renderCorrRolling() {
   if (corrChart) corrChart.destroy();
   corrChart = new Chart(document.getElementById('corrChart'), {
     type: 'line',
-    data: { datasets: [{ label: `${a} vs ${b} — ${win}d ρ (${mode})`, data: series.map(r => ({ x: r.t, y: r.corr })), borderColor: '#e8a33d', backgroundColor: 'rgba(232,163,61,0.1)', borderWidth: 1.8, pointRadius: 0, tension: 0.15, fill: true }]},
+    data: { datasets: [{ label: `${a} vs ${b} — ${win}d ρ`, data: series.map(r => ({ x: r.t, y: r.corr })), borderColor: '#e8a33d', backgroundColor: 'rgba(232,163,61,0.1)', borderWidth: 1.8, pointRadius: 0, tension: 0.15, fill: true }]},
     options: { responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: { legend: { labels: { color: '#a9b6cb', font: { size: 10 } } } },
@@ -2507,7 +2628,7 @@ function renderCorrChart() {
 }
 
 /* ========================================================================
-   TREND ANALYSIS
+   TREND
    ======================================================================== */
 function computeTrend(seriesName) {
   const prices = [];
@@ -2557,20 +2678,18 @@ function renderTrendAnalysis() {
     const shortCls = t.shortTrend === 'up' ? 'up' : t.shortTrend === 'down' ? 'down' : 'na';
     const shortIcon = t.shortTrend === 'up' ? '▲' : t.shortTrend === 'down' ? '▼' : '—';
     const shortTxt = t.shortTrend === 'up' ? 'UPTREND' : t.shortTrend === 'down' ? 'DOWNTREND' : 'N/A';
-    const shortDistCls = t.shortDist >= 0 ? 'up' : 'down';
     const shortDistTxt = t.shortDist != null ? `${t.shortDist>=0?'+':''}${t.shortDist.toFixed(2)}%` : '';
     const medCls = t.mediumTrend === 'up' ? 'up' : t.mediumTrend === 'down' ? 'down' : 'na';
     const medIcon = t.mediumTrend === 'up' ? '▲' : t.mediumTrend === 'down' ? '▼' : '—';
     const medTxt = t.mediumTrend === 'up' ? 'UPTREND' : t.mediumTrend === 'down' ? 'DOWNTREND' : 'N/A';
-    const medDistCls = t.mediumDist >= 0 ? 'up' : 'down';
     const medDistTxt = t.mediumDist != null ? `${t.mediumDist>=0?'+':''}${t.mediumDist.toFixed(2)}%` : '';
     html += `<tr>
       <td class="metal-name" style="color:${m.color}">${m.label}</td>
       <td class="val">${fmt(t.latestPrice, 2)}</td>
       <td class="val">${t.ema20d != null ? fmt(t.ema20d, 2) : '—'}</td>
-      <td><span class="trend-tag ${shortCls}">${shortIcon} ${shortTxt}</span> ${shortDistTxt ? `<span class="dist ${shortDistCls}">${shortDistTxt}</span>` : ''}</td>
+      <td><span class="trend-tag ${shortCls}">${shortIcon} ${shortTxt}</span> ${shortDistTxt ? `<span class="dist ${t.shortDist>=0?'up':'down'}">${shortDistTxt}</span>` : ''}</td>
       <td class="val">${t.ema20w != null ? fmt(t.ema20w, 2) : '—'}</td>
-      <td><span class="trend-tag ${medCls}">${medIcon} ${medTxt}</span> ${medDistTxt ? `<span class="dist ${medDistCls}">${medDistTxt}</span>` : ''}</td>
+      <td><span class="trend-tag ${medCls}">${medIcon} ${medTxt}</span> ${medDistTxt ? `<span class="dist ${t.mediumDist>=0?'up':'down'}">${medDistTxt}</span>` : ''}</td>
     </tr>`;
   }
   html += '</tbody></table>';
@@ -2878,16 +2997,265 @@ function wireControls() {
     for (const k of Object.keys(parityEdits)) delete parityEdits[k];
     parityEdits.__usdinr = null;
     parityEdited.clear();
-    initParityEdits();          // re-applies fixed default duty/freight
+    initParityEdits();
     scheduleSaveParityOverrides();
     renderParity();
   });
 }
 
 /* ========================================================================
+   LME TAB
+   ======================================================================== */
+function lmeFmtChg(c) {
+  if (c == null || c === 0) return '';
+  const s = c > 0 ? '+' : '';
+  const a = c > 0 ? '▲' : '▼';
+  const cls = c > 0 ? 'pos' : 'neg';
+  return '<div class="chg ' + cls + '">' + a + ' ' + s + Math.abs(c).toLocaleString() + '</div>';
+}
+function lmeCardHtml(metalKey, latest, prev) {
+  const meta = LME_METAL_META[metalKey];
+  const cur = latest[metalKey] || {};
+  const pv = prev[metalKey] || {};
+  const total = cur.total ?? 0;
+  const totalChg = (cur.total != null && pv.total != null) ? cur.total - pv.total : 0;
+  const live = cur.live ?? 0;
+  const liveChg = (cur.live != null && pv.live != null) ? cur.live - pv.live : 0;
+  const canc = cur.cancelled ?? 0;
+  const cancChg = (cur.cancelled != null && pv.cancelled != null) ? cur.cancelled - pv.cancelled : 0;
+  const fmtN = n => (n == null || isNaN(n)) ? '—' : Number(n).toLocaleString();
+  const active = LME_ACTIVE === metalKey ? ' active' : '';
+  return '<div class="lme-sum-card' + active + '" data-metal="' + metalKey + '">' +
+    '<div class="bar" style="background:' + meta.color + '"></div>' +
+    '<div class="lme-sum-head"><span class="lme-sum-title" style="color:' + meta.color + '">' + meta.label + ' <span style="color:#7c8aa0;font-size:.75rem;">' + meta.symbol + '</span></span><span class="lme-sum-date">' + (latest.date || '—') + '</span></div>' +
+    '<div class="lme-sum-row">' +
+      '<div class="lme-sum-cell"><div class="lbl">Live</div><div class="val">' + fmtN(live) + '</div>' + lmeFmtChg(liveChg) + '</div>' +
+      '<div class="lme-sum-cell"><div class="lbl">Cancelled</div><div class="val">' + fmtN(canc) + '</div>' + lmeFmtChg(cancChg) + '</div>' +
+      '<div class="lme-sum-cell"><div class="lbl">Total</div><div class="val">' + fmtN(total) + '</div>' + lmeFmtChg(totalChg) + '</div>' +
+    '</div></div>';
+}
+function lmeRender() {
+  const entries = LME_HISTORY.entries || [];
+  const g = document.getElementById('lmeMetalsGrid');
+  document.getElementById('lmeMetaUpdated').innerHTML = '<span style="color:var(--green);">●</span> Loaded';
+  document.getElementById('lmeMetaCounts').textContent = entries.length + ' days';
+  if (!entries.length) {
+    g.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);text-align:center;padding:40px;">No LME data yet. Paste your WhatsApp message above and click Save.</div>';
+    document.getElementById('lmeChartsSection').style.display = 'none';
+    return;
+  }
+  const latest = entries[entries.length-1];
+  const prev = entries.length > 1 ? entries[entries.length-2] : {};
+  g.innerHTML = LME_ORDER.map(k => lmeCardHtml(k, latest, prev)).join('');
+  g.querySelectorAll('.lme-sum-card').forEach(card => {
+    card.onclick = () => {
+      LME_ACTIVE = card.dataset.metal;
+      g.querySelectorAll('.lme-sum-card').forEach(c => c.classList.toggle('active', c.dataset.metal === LME_ACTIVE));
+      lmeRenderCharts();
+    };
+  });
+  document.getElementById('lmeChartsSection').style.display = 'block';
+  lmeRenderCharts();
+}
+function lmeRenderCharts() {
+  const entries = LME_HISTORY.entries || [];
+  if (!entries.length) return;
+  const recent = entries.slice(-30);
+  const labels = recent.map(e => e.date);
+  const mk = LME_ACTIVE;
+  const meta = LME_METAL_META[mk];
+  document.getElementById('lmeChartsMetalName').textContent = meta.label;
+  const liveD = recent.map(e => e[mk]?.live ?? null);
+  const cancD = recent.map(e => e[mk]?.cancelled ?? null);
+  const totalD = recent.map(e => e[mk]?.total ?? null);
+  const ratioD = recent.map(e => { const l = e[mk]?.live, c = e[mk]?.cancelled; if (l == null || c == null || (l+c) === 0) return null; return +((c/(l+c))*100).toFixed(2); });
+  const changeD = recent.map((e,i) => { if (i === 0) return 0; const p = recent[i-1][mk]?.total; const c = e[mk]?.total; if (p == null || c == null) return 0; return c - p; });
+  const opts = () => ({ responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#a9b6cb', font: { size: 10 } } } }, scales: { x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } } } });
+  Object.values(LME_CHARTS).forEach(c => { if (c) c.destroy(); });
+  LME_CHARTS.live = new Chart(document.getElementById('lmeChLive'), { type: 'line', data: { labels, datasets: [ { label: 'Live', data: liveD, borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,.15)', borderWidth: 2, pointRadius: 0, tension: .15, fill: true }, { label: 'Cancelled', data: cancD, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,.15)', borderWidth: 2, pointRadius: 0, tension: .15, fill: true } ] }, options: opts() });
+  LME_CHARTS.total = new Chart(document.getElementById('lmeChTotal'), { type: 'line', data: { labels, datasets: [{ label: 'Total', data: totalD, borderColor: meta.color, backgroundColor: meta.color + '20', borderWidth: 2, pointRadius: 0, tension: .15, fill: true }] }, options: opts() });
+  LME_CHARTS.ratio = new Chart(document.getElementById('lmeChRatio'), { type: 'line', data: { labels, datasets: [{ label: 'Cancelled %', data: ratioD, borderColor: '#f39c12', backgroundColor: 'rgba(243,156,18,.15)', borderWidth: 2, pointRadius: 0, tension: .15, fill: true }] }, options: opts() });
+  LME_CHARTS.change = new Chart(document.getElementById('lmeChChange'), { type: 'bar', data: { labels, datasets: [{ label: 'Daily Change', data: changeD, backgroundColor: changeD.map(v => v >= 0 ? 'rgba(46,204,113,.6)' : 'rgba(231,76,60,.6)') }] }, options: opts() });
+}
+function lmeParseMessage(text) {
+  const r = { total:{}, live:{}, cancelled:{} };
+  let mode = null;
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (/market\s*hub/i.test(line)) { mode = 'total'; continue; }
+    if (/live\s*warrants?/i.test(line)) { mode = 'live'; continue; }
+    if (/cancle?d?\s*warrants?/i.test(line)) { mode = 'cancelled'; continue; }
+    const m = line.match(/^(CU|AL|ZN|PB|NI|SN)\s*[:\s]\s*([\d,]+)\s*([+\-])\s*([\d,]+)/i);
+    if (m && mode) {
+      const key = LME_SYMBOL_MAP[m[1].toUpperCase()];
+      if (!key) continue;
+      r[mode][key] = { value: parseInt(m[2].replace(/,/g,''), 10), change: (m[3] === '-' ? -1 : 1) * parseInt(m[4].replace(/,/g,''), 10) };
+    }
+  }
+  return r;
+}
+async function lmeLoadHistory() {
+  document.getElementById('lmeMetaUpdated').textContent = 'Loading…';
+  try {
+    const r = await fetch(LME_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) {
+      if (r.status === 404) { LME_HISTORY = { version:1, entries:[] }; lmeRender(); return; }
+      throw new Error('HTTP ' + r.status);
+    }
+    const data = await r.json();
+    if (!data.entries) data.entries = [];
+    data.entries.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+    LME_HISTORY = data;
+    lmeRender();
+  } catch (e) {
+    document.getElementById('lmeMetalsGrid').innerHTML = '<div style="grid-column:1/-1;color:#e74c3c;text-align:center;padding:40px;">Load failed: ' + e.message + '</div>';
+    document.getElementById('lmeMetaUpdated').textContent = 'Failed';
+  }
+}
+async function lmeSaveEntry(date, parsed) {
+  const token = SAFE_STORE.getItem(GITHUB_TOKEN_KEY);
+  if (!token) throw new Error('Save a GitHub token first');
+  const keys = Object.keys(parsed.total);
+  if (!keys.length) throw new Error('Nothing parsed');
+  const entries = LME_HISTORY.entries || [];
+  const idx = entries.findIndex(e => e.date === date);
+  const entry = { date };
+  for (const k of keys) entry[k] = { total: parsed.total[k]?.value ?? null, live: parsed.live[k]?.value ?? null, cancelled: parsed.cancelled[k]?.value ?? null };
+  if (idx >= 0) entries[idx] = entry; else entries.push(entry);
+  entries.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+  LME_HISTORY.entries = entries;
+  const content = b64encodeUtf8(JSON.stringify(LME_HISTORY, null, 2));
+  const api = 'https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME + '/contents/' + LME_FILE;
+  const cur = await fetch(api + '?ref=' + REPO_BRANCH, { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
+  const sha = cur.ok ? (await cur.json()).sha : undefined;
+  const put = await fetch(api, { method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: 'LME ' + date, content, branch: REPO_BRANCH, ...(sha ? { sha } : {}) }) });
+  if (!put.ok) throw new Error('Commit failed (' + put.status + ')');
+}
+async function lmeBackfill() {
+  const st = document.getElementById('lmeSaveStatus');
+  const btn = document.getElementById('lmeBackfillBtn');
+  const token = SAFE_STORE.getItem(GITHUB_TOKEN_KEY);
+  if (!token) { st.textContent = 'Save token first.'; st.className = 'lme-status err'; return; }
+  btn.disabled = true;
+  st.textContent = 'Fetching lme_csp.csv…';
+  st.className = 'lme-status';
+  try {
+    const r = await fetch(CSP_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) throw new Error('CSV fetch failed (' + r.status + ')');
+    const text = await r.text();
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    const header = parseCSVLine(lines[0]);
+    const col = {};
+    header.forEach((h, i) => {
+      const hl = h.toLowerCase();
+      if (/lme.*copper.*stock/i.test(hl)) col.copper = i;
+      else if (/lme.*zinc.*stock/i.test(hl)) col.zinc = i;
+      else if (/lme.*alum.*stock/i.test(hl)) col.aluminium = i;
+    });
+    if (col.copper == null && col.zinc == null && col.aluminium == null) throw new Error('Stock columns not found');
+    const monthMap = { january:'01',february:'02',march:'03',april:'04',may:'05',june:'06',july:'07',august:'08',september:'09',october:'10',november:'11',december:'12' };
+    const newEntries = [];
+    for (let i = 1; i < lines.length; i++) {
+      const p = parseCSVLine(lines[i]);
+      const dm = p[0].match(/^(\d{1,2})\.?\s+([A-Za-z]+)\s+(\d{4})$/);
+      if (!dm) continue;
+      const mon = monthMap[dm[2].toLowerCase()];
+      if (!mon) continue;
+      const date = dm[3] + '-' + mon + '-' + dm[1].padStart(2,'0');
+      const entry = { date };
+      if (col.copper != null) { const v = parseInt(String(p[col.copper]).replace(/,/g,''), 10); if (isFinite(v)) entry.copper = { total: v, live: null, cancelled: null }; }
+      if (col.zinc != null) { const v = parseInt(String(p[col.zinc]).replace(/,/g,''), 10); if (isFinite(v)) entry.zinc = { total: v, live: null, cancelled: null }; }
+      if (col.aluminium != null) { const v = parseInt(String(p[col.aluminium]).replace(/,/g,''), 10); if (isFinite(v)) entry.aluminium = { total: v, live: null, cancelled: null }; }
+      if (Object.keys(entry).length > 1) newEntries.push(entry);
+    }
+    if (!newEntries.length) throw new Error('No valid rows');
+    const merged = {};
+    for (const e of LME_HISTORY.entries || []) merged[e.date] = e;
+    let added = 0, updated = 0;
+    for (const e of newEntries) {
+      if (!merged[e.date]) { merged[e.date] = e; added++; }
+      else {
+        for (const k of Object.keys(e)) { if (k === 'date') continue; if (!merged[e.date][k]) merged[e.date][k] = e[k]; else if (merged[e.date][k].total == null) merged[e.date][k].total = e[k].total; }
+        updated++;
+      }
+    }
+    const sorted = Object.values(merged).sort((a,b) => a.date.localeCompare(b.date));
+    LME_HISTORY.entries = sorted;
+    st.textContent = 'Saving ' + sorted.length + ' entries…';
+    const content = b64encodeUtf8(JSON.stringify(LME_HISTORY, null, 2));
+    const api = 'https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME + '/contents/' + LME_FILE;
+    const cur = await fetch(api + '?ref=' + REPO_BRANCH, { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
+    const sha = cur.ok ? (await cur.json()).sha : undefined;
+    const put = await fetch(api, { method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: 'Backfill', content, branch: REPO_BRANCH, ...(sha ? { sha } : {}) }) });
+    if (!put.ok) throw new Error('Commit failed (' + put.status + ')');
+    st.textContent = '✓ ' + added + ' new + ' + updated + ' merged · ' + sorted.length + ' total';
+    st.className = 'lme-status ok';
+    lmeRender();
+  } catch (e) {
+    st.textContent = 'Error: ' + e.message;
+    st.className = 'lme-status err';
+  } finally { btn.disabled = false; }
+}
+function lmeWire() {
+  document.getElementById('lmePasteDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('lmeRefreshBtn').addEventListener('click', lmeLoadHistory);
+  document.getElementById('lmeBackfillBtn').addEventListener('click', lmeBackfill);
+  document.getElementById('lmeSaveBtn').addEventListener('click', async () => {
+    const st = document.getElementById('lmeSaveStatus');
+    const btn = document.getElementById('lmeSaveBtn');
+    const text = document.getElementById('lmePasteArea').value.trim();
+    const date = document.getElementById('lmePasteDate').value;
+    if (!text) { st.textContent = 'Paste a message first.'; st.className = 'lme-status err'; return; }
+    if (!date) { st.textContent = 'Pick a date.'; st.className = 'lme-status err'; return; }
+    if (!SAFE_STORE.getItem(GITHUB_TOKEN_KEY)) { st.textContent = 'Save a GitHub token above first.'; st.className = 'lme-status err'; return; }
+    const parsed = lmeParseMessage(text);
+    const count = Object.keys(parsed.total).length;
+    if (!count) { st.textContent = 'Nothing parsed.'; st.className = 'lme-status err'; return; }
+    btn.disabled = true;
+    st.textContent = 'Saving ' + count + ' metals…';
+    st.className = 'lme-status';
+    try {
+      await lmeSaveEntry(date, parsed);
+      st.textContent = '✓ Saved ' + date;
+      st.className = 'lme-status ok';
+      lmeRender();
+    } catch (e) {
+      st.textContent = 'Error: ' + e.message;
+      st.className = 'lme-status err';
+    } finally { btn.disabled = false; }
+  });
+  document.getElementById('lmeClearBtn').addEventListener('click', () => {
+    document.getElementById('lmePasteArea').value = '';
+    document.getElementById('lmeSaveStatus').textContent = '';
+    document.getElementById('lmeSaveStatus').className = 'lme-status';
+  });
+  document.getElementById('lmeTokenSave').addEventListener('click', () => {
+    const v = document.getElementById('lmeTokenInput').value.trim();
+    if (!v) { document.getElementById('lmeTokenStatus').textContent = 'Enter token'; return; }
+    SAFE_STORE.setItem(GITHUB_TOKEN_KEY, v);
+    document.getElementById('lmeTokenInput').value = '';
+    document.getElementById('lmeTokenStatus').textContent = '✓ Token saved';
+    document.getElementById('lmeTokenStatus').className = 'lme-status ok';
+  });
+  document.getElementById('lmeTokenClear').addEventListener('click', () => {
+    SAFE_STORE.removeItem(GITHUB_TOKEN_KEY);
+    document.getElementById('lmeTokenStatus').textContent = 'Cleared.';
+    document.getElementById('lmeTokenStatus').className = 'lme-status';
+  });
+  if (SAFE_STORE.getItem(GITHUB_TOKEN_KEY)) {
+    document.getElementById('lmeTokenStatus').textContent = '✓ Token active';
+    document.getElementById('lmeTokenStatus').className = 'lme-status ok';
+  }
+  document.querySelectorAll('.tab-btn').forEach(t => {
+    t.addEventListener('click', () => switchTab(t.dataset.tab));
+  });
+}
+
+/* ========================================================================
    INIT
    ======================================================================== */
-document.addEventListener('DOMContentLoaded', () => {
+function init() {
   document.getElementById('fileMetals').addEventListener('change', e => {
     const f = e.target.files[0]; if (!f) return;
     readFile(f, txt => { if (loadMetalsFile(txt)) maybeRender(); });
@@ -2913,7 +3281,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadParityOverrides();
   setInterval(loadParityOverrides, 60 * 1000);
-});
+
+  lmeWire();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 </script>
 </body>
 </html>
