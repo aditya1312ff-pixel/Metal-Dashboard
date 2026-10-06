@@ -1,7 +1,7 @@
 {
   "Cu_basis": 66.5,
   "Zn_basis": 55,
-  "Al_basis": -9,
+  "Al_basis": -7.25,
   "Cu_premium": 285,
   "Zn_premium": 126,
   "Al_premium": 172,
@@ -10,5 +10,5 @@
   "Al_dutyPct": 8.25,
   "Cu_freight": 0,
   "Zn_freight": 0,
-  "Al_freight": 2
+  "Al_freight": 2800
 }
