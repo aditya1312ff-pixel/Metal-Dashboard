@@ -260,6 +260,25 @@
   .tag.bear { background:rgba(231,76,60,0.14); color:var(--red);}
   .tag.neut { background:rgba(243,156,18,0.14); color:var(--amber);}
   .tag.metal { background:#22304a; color:#9db3d1;}
+  .tag.yield { background:rgba(155,89,182,0.18); color:#b48ad0;}
+  .tag.macro { background:rgba(243,156,18,0.14); color:var(--amber);}
+  .tag.fx    { background:rgba(46,204,113,0.16); color:#7ee8a7;}
+
+  /* ===== News grid ===== */
+  .news-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 1400px) { .news-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 800px)  { .news-grid { grid-template-columns: 1fr; } }
+  .news-grid > .card { padding: 12px; background: var(--card2); margin: 0; }
+  .news-grid .feed { max-height: 420px; }
+  .news-grid h3 .count {
+    font-size: 0.6rem; color: var(--muted); font-weight: 400;
+    background: #0e1724; padding: 2px 7px; border-radius: 10px;
+    margin-left: auto;
+  }
 
   .foot { text-align:center; color:#4a5971; font-size:0.7rem; padding:24px 10px 10px; border-top:1px solid var(--border); margin-top:20px;}
   .loading { display:flex; align-items:center; justify-content:center; height:230px; color:var(--muted); font-size:0.85rem; }
@@ -773,12 +792,43 @@
       </div>
     </div>
 
+    <!-- ============ NEWS GRID (Base / Yields / Macro / FX) ============ -->
     <div class="grid">
-      <div class="card span-6">
-        <h3><i class="fas fa-newspaper"></i> News <span class="sub">— Mining.com</span> <span style="font-size:0.65rem;color:var(--muted);font-weight:400;margin-left:auto;" id="newsUpdated"></span></h3>
-        <ul class="feed" id="newsFeed"><li class="empty">Loading…</li></ul>
+      <div class="card span-12">
+        <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:10px;">
+          <span><i class="fas fa-newspaper"></i> News <span class="sub">— Base Metals · Yields · Macro · Currency</span></span>
+          <span class="controls" style="gap:6px;">
+            <button class="btn small active" data-news-filter="all">All</button>
+            <button class="btn small" data-news-filter="base">Metals</button>
+            <button class="btn small" data-news-filter="yield">Yields</button>
+            <button class="btn small" data-news-filter="macro">Macro</button>
+            <button class="btn small" data-news-filter="fx">FX</button>
+            <span id="newsUpdated" style="font-size:0.65rem;color:var(--muted);margin-left:8px;"></span>
+          </span>
+        </h3>
+        <div class="news-grid" id="newsGrid">
+          <div class="card" data-news-cat="base">
+            <h3 style="font-size:0.72rem;"><span><i class="fas fa-cube"></i> Base Metals</span><span class="count" id="newsCount-base">0</span></h3>
+            <ul class="feed" id="newsFeed-base"><li class="empty">Loading…</li></ul>
+          </div>
+          <div class="card" data-news-cat="yield">
+            <h3 style="font-size:0.72rem;"><span><i class="fas fa-percent"></i> Yields & Bonds</span><span class="count" id="newsCount-yield">0</span></h3>
+            <ul class="feed" id="newsFeed-yield"><li class="empty">Loading…</li></ul>
+          </div>
+          <div class="card" data-news-cat="macro">
+            <h3 style="font-size:0.72rem;"><span><i class="fas fa-globe"></i> Macro</span><span class="count" id="newsCount-macro">0</span></h3>
+            <ul class="feed" id="newsFeed-macro"><li class="empty">Loading…</li></ul>
+          </div>
+          <div class="card" data-news-cat="fx">
+            <h3 style="font-size:0.72rem;"><span><i class="fas fa-dollar-sign"></i> Currency</span><span class="count" id="newsCount-fx">0</span></h3>
+            <ul class="feed" id="newsFeed-fx"><li class="empty">Loading…</li></ul>
+          </div>
+        </div>
       </div>
-      <div class="card span-6">
+    </div>
+
+    <div class="grid">
+      <div class="card span-12">
         <h3><i class="fas fa-brain"></i> Quant Sentiment</h3>
         <div id="sentimentPanel"></div>
       </div>
@@ -794,7 +844,7 @@
       </div>
     </div>
 
-    <div class="foot">Live: Google Sheet (LMEMCX) | CSP: lme_csp.csv | SBI TT: sbi.bank.in PDF + sahilgupta CSV | News: Mining.com | NALCO: mudira.nalcoindia.co.in</div>
+    <div class="foot">Live: Google Sheet (LMEMCX) | CSP: lme_csp.csv | SBI TT: sbi.bank.in PDF + sahilgupta CSV | News: Google News + CNBC | NALCO: mudira.nalcoindia.co.in</div>
   </div>
   </div>
   <!-- ============ END MAIN TAB ============ -->
@@ -897,7 +947,6 @@
       </div>
     </div>
 
-    <!-- ===== CHARTS SECTION ===== -->
     <div class="card">
       <h3 style="justify-content:space-between;display:flex;">
         <span><i class="fas fa-chart-line"></i> SHFE Inventory Trends <span class="sub">— history from GitHub + live snapshot</span></span>
@@ -1148,7 +1197,6 @@ let LME_ACTIVE = 'copper';
 let LME_CHARTS = { live:null, total:null, ratio:null, change:null };
 let lmeLoadedOnce = false;
 
-// LME chart prefs
 let LME_TF_DAYS = 30;
 let LME_Y_AXIS = 'linear';
 let LME_RATIO_MODE = 'abs';
@@ -2876,7 +2924,7 @@ function renderFreshness() {
 }
 
 /* ========================================================================
-   NEWS
+   NEWS — Base Metals / Yields / Macro / Currency
    ======================================================================== */
 function timeAgo(iso) {
   if (!iso) return '';
@@ -2889,42 +2937,134 @@ function timeAgo(iso) {
   if (secs < 86400*7) return Math.floor(secs/86400) + ' d ago';
   return new Date(iso).toISOString().slice(0,10);
 }
-function detectMetals(title) {
-  const hits = [];
-  const low = title.toLowerCase();
-  const map = { copper:'Copper', aluminium:'Aluminium', zinc:'Zinc', nickel:'Nickel', lme:'LME', mcx:'MCX' };
-  for (const [kw, tag] of Object.entries(map)) if (low.includes(kw)) hits.push(tag);
-  return [...new Set(hits)];
+
+const NEWS_FEEDS = [
+  /* BASE METALS */
+  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=(copper+OR+aluminium+OR+aluminum+OR+zinc+OR+nickel+OR+lead+OR+tin)+price+when:7d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=("base+metals"+OR+LME+OR+SHFE)+when:7d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=(copper+supply+OR+aluminium+smelter+OR+zinc+mine+OR+nickel+Indonesia)+when:7d&hl=en-US&gl=US&ceid=US:en' },
+  /* YIELDS & BONDS */
+  { category:'yield', source:'Google News', url:'https://news.google.com/rss/search?q=("treasury+yield"+OR+"bond+yield"+OR+"10-year+yield"+OR+"30-year+yield")+when:3d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'yield', source:'Google News', url:'https://news.google.com/rss/search?q=(Federal+Reserve+OR+"interest+rate"+OR+"rate+cut"+OR+"rate+hike"+OR+inflation)+bond+when:3d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'yield', source:'Google News', url:'https://news.google.com/rss/search?q=(US+Treasury+OR+yield+curve+OR+inverted+yield)+when:5d&hl=en-US&gl=US&ceid=US:en' },
+  /* MACRO */
+  { category:'macro', source:'Google News', url:'https://news.google.com/rss/search?q=(macro+OR+GDP+OR+inflation+OR+"central+bank"+OR+CPI+OR+PMI)+when:3d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'macro', source:'Google News', url:'https://news.google.com/rss/search?q=(China+economy+OR+US+economy+OR+global+growth)+when:3d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'macro', source:'CNBC',        url:'https://www.cnbc.com/id/100003114/device/rss/rss.html' },
+  /* CURRENCY */
+  { category:'fx', source:'Google News', url:'https://news.google.com/rss/search?q=(USD/INR+OR+rupee+OR+"Indian+rupee")+when:3d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'fx', source:'Google News', url:'https://news.google.com/rss/search?q=("dollar+index"+OR+DXY+OR+"US+dollar")+when:3d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'fx', source:'Google News', url:'https://news.google.com/rss/search?q=(EUR/USD+OR+"euro+dollar"+OR+USD/JPY+OR+yen)+when:3d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'fx', source:'Google News', url:'https://news.google.com/rss/search?q=("Chinese+yuan"+OR+USD/CNY+OR+renminbi+OR+offshore+yuan)+when:5d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'fx', source:'Google News', url:'https://news.google.com/rss/search?q=("forex+market"+OR+"currency+market"+OR+"exchange+rate")+when:3d&hl=en-US&gl=US&ceid=US:en' },
+];
+
+const NEWS_CATEGORIES = ['base','yield','macro','fx'];
+const NEWS_TAG_LABEL  = { base:'Base', yield:'Yield', macro:'Macro', fx:'FX' };
+const NEWS_TAG_CLASS  = { base:'metal', yield:'yield', macro:'macro', fx:'fx' };
+
+const NEWS_STOCK_BLOCK_STRICT = /stock|share price|earnings|equity|ticker|NYSE|Nasdaq|S&P 500|Dow Jones|market cap|dividend|IPO|buyback|price target|analyst rating|quarterly profit|revenue beat|guidance|shareholder/i;
+const NEWS_STOCK_BLOCK_LOOSE  = /stock market|wall street|equities|S&P|Nasdaq|Dow/i;
+
+let NEWS_ITEMS = [];
+let newsStrict = true;
+
+function isStockNews(title, desc) {
+  const text = (title + ' ' + desc).toLowerCase();
+  return newsStrict ? NEWS_STOCK_BLOCK_STRICT.test(text) : NEWS_STOCK_BLOCK_LOOSE.test(text);
 }
+
+async function fetchNewsFeed(feedInfo) {
+  const api = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feedInfo.url) + '&count=10';
+  const res = await fetch(api);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  if (data.status !== 'ok' || !data.items) throw new Error(data.message || 'Bad response');
+  const items = [];
+  for (const it of data.items) {
+    const title = (it.title || '').trim();
+    const desc = (it.description || '').replace(/<[^>]+>/g, '').trim();
+    if (!title) continue;
+    if (isStockNews(title, desc)) continue;
+    items.push({
+      title, link: it.link, pubDate: it.pubDate,
+      source: feedInfo.source, category: feedInfo.category,
+    });
+  }
+  return items;
+}
+
 async function loadNews() {
-  const feed = document.getElementById('newsFeed');
   const stamp = document.getElementById('newsUpdated');
-  try {
-    const api = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.mining.com/feed/') + '&count=20';
-    const res = await fetch(api);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    if (data.status === 'ok' && data.items && data.items.length) {
-      feed.innerHTML = data.items.map(it => {
-        const metals = detectMetals(it.title || '').map(m => `<span class="tag metal">${m}</span>`).join(' ');
-        return `<li><div class="title"><a href="${it.link}" target="_blank" rel="noopener">${it.title}</a></div><div class="meta">Mining.com · ${timeAgo(it.pubDate)} ${metals ? '· '+metals : ''}</div></li>`;
-      }).join('');
-      stamp.textContent = 'live · ' + new Date().toLocaleTimeString();
-      return;
+  const results = await Promise.allSettled(NEWS_FEEDS.map(f => fetchNewsFeed(f)));
+
+  const all = [];
+  results.forEach((r, i) => {
+    if (r.status === 'fulfilled') all.push(...r.value);
+    else console.warn('Feed failed:', NEWS_FEEDS[i].url, r.reason?.message);
+  });
+
+  const seen = new Set();
+  NEWS_ITEMS = all.filter(it => {
+    const key = it.title.toLowerCase().slice(0, 60);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  NEWS_ITEMS.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+
+  renderNews();
+  if (stamp) stamp.textContent = 'live · ' + new Date().toLocaleTimeString();
+}
+
+function renderNews() {
+  for (const cat of NEWS_CATEGORIES) {
+    const items = NEWS_ITEMS.filter(it => it.category === cat);
+    const feed = document.getElementById('newsFeed-' + cat);
+    const count = document.getElementById('newsCount-' + cat);
+    if (count) count.textContent = items.length;
+    if (!feed) continue;
+    if (!items.length) {
+      feed.innerHTML = '<li class="empty">No items.</li>';
+      continue;
     }
-  } catch (e) {}
-  try {
-    const api = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://www.mining.com/feed/');
-    const res = await fetch(api);
-    const xml = new DOMParser().parseFromString(await res.text(), 'text/xml');
-    const items = xml.querySelectorAll('item');
-    feed.innerHTML = Array.from(items).slice(0, 20).map(it => {
-      const title = (it.querySelector('title')?.textContent || '').trim();
-      const metals = detectMetals(title).map(m => `<span class="tag metal">${m}</span>`).join(' ');
-      return `<li><div class="title"><a href="${it.querySelector('link')?.textContent}" target="_blank">${title}</a></div><div class="meta">Mining.com · ${timeAgo(it.querySelector('pubDate')?.textContent)} ${metals ? '· '+metals : ''}</div></li>`;
+    feed.innerHTML = items.slice(0, 25).map(it => {
+      const tagCls = NEWS_TAG_CLASS[cat] || 'metal';
+      const tagLbl = NEWS_TAG_LABEL[cat] || cat;
+      return `<li>
+        <div class="title"><a href="${it.link}" target="_blank" rel="noopener">${escapeNewsHtml(it.title)}</a></div>
+        <div class="meta">
+          <span>${escapeNewsHtml(it.source)}</span>
+          <span>· ${timeAgo(it.pubDate)}</span>
+          <span class="tag ${tagCls}">${tagLbl}</span>
+        </div>
+      </li>`;
     }).join('');
-    stamp.textContent = 'live · ' + new Date().toLocaleTimeString();
-  } catch (err) { feed.innerHTML = '<li class="empty">Could not load feed.</li>'; }
+  }
+}
+
+function escapeNewsHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function wireNewsControls() {
+  document.querySelectorAll('[data-news-filter]').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('[data-news-filter]').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      const filter = b.dataset.newsFilter;
+      const grid = document.getElementById('newsGrid');
+      if (filter === 'all') {
+        grid.style.gridTemplateColumns = '';
+        grid.querySelectorAll('.card').forEach(c => c.style.display = '');
+      } else {
+        grid.style.gridTemplateColumns = '1fr';
+        grid.querySelectorAll('.card').forEach(c => {
+          c.style.display = c.dataset.newsCat === filter ? '' : 'none';
+        });
+      }
+    });
+  });
 }
 
 /* ========================================================================
@@ -3691,21 +3831,6 @@ function shfeRenderCharts() {
   const labels = SHFE_HISTORY.map(e => e.date);
   const colors = SHFE_CHART_METALS.map(m => SHFE_METAL_META[m].color);
 
-  const tooltipCfg = (suffix='') => ({
-    mode: 'index', intersect: false,
-    backgroundColor: 'rgba(14,20,32,0.95)',
-    borderColor: '#232d42', borderWidth: 1,
-    titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10,
-    callbacks: {
-      label: function(ctx) {
-        const v = ctx.parsed.y;
-        if (v == null) return `${ctx.dataset.label}: —`;
-        const sign = (v > 0 && suffix === ' signed') ? '+' : '';
-        return `${ctx.dataset.label}: ${sign}${Number(v).toLocaleString()}${suffix === ' signed' ? ' t' : (suffix ? ' '+suffix : '')}`;
-      }
-    }
-  });
-
   const totalDatasets = SHFE_CHART_METALS.map((m, i) => ({
     label: SHFE_METAL_META[m].label,
     data: SHFE_HISTORY.map(e => e.metals[m]?.qty ?? null),
@@ -3998,6 +4123,8 @@ function init() {
   autoLoadFromGitHub(true);
   startLiveFeed();
   loadNews();
+  setInterval(loadNews, 15 * 60 * 1000);
+  wireNewsControls();
   startNalcoFeed();
 
   fetchSbiFromCsv(document.getElementById('sbiUrl').value.trim());
@@ -4009,7 +4136,6 @@ function init() {
 
   lmeWire();
   shfeWire().then(() => {
-    // After history is loaded, trigger today's snapshot
     setTimeout(() => shfeFetch(), 500);
   });
 }
