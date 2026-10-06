@@ -192,6 +192,10 @@
   .tag.yield { background:rgba(155,89,182,0.18); color:#b48ad0; }
   .tag.macro { background:rgba(243,156,18,0.14); color:var(--amber); }
   .tag.fx { background:rgba(46,204,113,0.16); color:#7ee8a7; }
+  .tag.producer { background:rgba(214,139,77,0.18); color:#f0a760; }
+  .tag.mine { background:rgba(91,143,201,0.18); color:#8ab4e0; }
+  .tag.country { background:rgba(147,162,181,0.18); color:#c2cddd; }
+  .tag.critical { background:rgba(231,76,60,0.22); color:#ff8f83; font-weight:700; }
   .news-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
   @media (max-width:1400px) { .news-grid { grid-template-columns:repeat(2,1fr); } }
   @media (max-width:800px) { .news-grid { grid-template-columns:1fr; } }
@@ -322,7 +326,6 @@
   .shfe-card .shfe-wh td.wh-chg.pos { color:var(--green); }
   .shfe-card .shfe-wh td.wh-chg.neg { color:var(--red); }
   .shfe-card .shfe-wh td.wh-chg.zero { color:var(--muted); }
-  /* Positioning tab */
   .cotr-upload-panel { background:var(--card2); border:1px solid var(--accent); border-radius:12px; padding:14px; margin-bottom:14px; }
   .cotr-drop-zone { display:block; border:2px dashed var(--border); border-radius:10px; padding:26px; text-align:center; cursor:pointer; transition:all 0.15s; }
   .cotr-drop-zone:hover, .cotr-drop-zone.dragover { border-color:var(--accent); background:rgba(232,163,61,0.04); }
@@ -346,7 +349,6 @@
     </div>
   </div>
 
-  <!-- ============ MAIN TAB ============ -->
   <div id="tab-main" class="tab-panel">
     <div class="upload-bar">
       <span class="title"><i class="fas fa-folder-open"></i> Data</span>
@@ -382,7 +384,6 @@
       <div class="placeholder"><i class="fas fa-spinner fa-spin"></i> Loading data…</div>
     </div>
     <div id="content" style="display:none;">
-
       <div class="grid">
         <div class="card span-12">
           <h3 style="justify-content:space-between;display:flex;">
@@ -392,86 +393,62 @@
           <div id="priceGrid"></div>
         </div>
       </div>
-
       <div class="grid">
         <div class="card span-12">
           <h3 style="justify-content:space-between;display:flex;">
             <span><i class="fas fa-calculator"></i> Import Parity Model <span class="sub">— LME → Landed ₹ vs MCX</span></span>
-            <span class="controls"><button class="btn" id="parityResetBtn" title="Reset all edits"><i class="fas fa-undo"></i> Reset</button></span>
+            <span class="controls"><button class="btn" id="parityResetBtn"><i class="fas fa-undo"></i> Reset</button></span>
           </h3>
           <div class="parity-sbi-bar">
             <span class="psb-label"><i class="fas fa-university" style="color:var(--sbi)"></i> USD/INR (SBI TT)</span>
             <input type="number" class="pr-input" id="parityUsdinr" step="0.01" placeholder="e.g. 96.50">
             <span class="psb-hint">Auto-filled from SBI PDF · editable</span>
           </div>
-          <div class="parity-grid" id="parityGrid">
-            <div class="loading"><div class="spinner"></div> Waiting for data…</div>
-          </div>
+          <div class="parity-grid" id="parityGrid"><div class="loading"><div class="spinner"></div> Waiting for data…</div></div>
         </div>
       </div>
-
       <div class="grid">
         <div class="card span-12">
           <h3 style="justify-content:space-between;display:flex;">
             <span><i class="fas fa-industry"></i> NALCO Aluminium <span class="sub">— revision tracking & rolling 3-day signal</span></span>
             <span id="nalcoUpdated" style="font-size:0.65rem;color:var(--muted);font-weight:400;"></span>
           </h3>
-          <div class="parity-grid" id="nalcoGrid">
-            <div class="loading"><div class="spinner"></div> Waiting for NALCO data…</div>
-          </div>
+          <div class="parity-grid" id="nalcoGrid"><div class="loading"><div class="spinner"></div> Waiting for NALCO data…</div></div>
         </div>
       </div>
-
       <div class="grid">
         <div class="card span-12">
           <h3 style="justify-content:space-between;display:flex;">
             <span><i class="fas fa-university" style="color:var(--sbi);"></i> SBI TT Sell vs USDINR <span class="sub">— spot comparison</span></span>
             <span class="controls">
-              <select class="tf-select" id="sbiTf">
-                <option value="1m">1M</option><option value="3m">3M</option><option value="6m">6M</option>
-                <option value="1y" selected>1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option>
-              </select>
-              <span class="freq-group" id="sbiFreq">
-                <button data-freq="daily" class="active">D</button>
-                <button data-freq="weekly">W</button>
-                <button data-freq="monthly">M</button>
-              </span>
+              <select class="tf-select" id="sbiTf"><option value="1m">1M</option><option value="3m">3M</option><option value="6m">6M</option><option value="1y" selected>1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option></select>
+              <span class="freq-group" id="sbiFreq"><button data-freq="daily" class="active">D</button><button data-freq="weekly">W</button><button data-freq="monthly">M</button></span>
             </span>
           </h3>
           <div class="chart-wrap tall" id="sbiChartWrap"><canvas id="sbiChart"></canvas></div>
           <div id="sbiEmpty" style="text-align:center;color:var(--muted);font-size:0.78rem;padding:8px;display:none;">Click CSV to load SBI TT Sell history.</div>
         </div>
       </div>
-
       <div class="grid">
         <div class="card span-12">
           <h3 style="justify-content:space-between;display:flex;">
             <span><i class="fas fa-balance-scale"></i> Latest Cash / 3M / Stock <span class="sub">— LME official</span></span>
             <span id="cspLatestDate" style="font-size:0.68rem;color:var(--muted);font-weight:400;"></span>
           </h3>
-          <div class="csp-latest-grid" id="cspLatestGrid">
-            <div class="loading"><div class="spinner"></div> Waiting for lme_csp.csv…</div>
-          </div>
+          <div class="csp-latest-grid" id="cspLatestGrid"><div class="loading"><div class="spinner"></div> Waiting for lme_csp.csv…</div></div>
         </div>
       </div>
-
       <div class="grid">
         <div class="card span-12">
           <h3 style="justify-content:space-between;display:flex;">
             <span><i class="fas fa-history"></i> Last Days Cash / 3M / Stock</span>
             <span class="controls">
-              <select class="tf-select" id="cspDaysCount">
-                <option value="3">3 days</option><option value="4">4 days</option>
-                <option value="5" selected>5 days</option><option value="7">7 days</option><option value="10">10 days</option>
-              </select>
+              <select class="tf-select" id="cspDaysCount"><option value="3">3 days</option><option value="4">4 days</option><option value="5" selected>5 days</option><option value="7">7 days</option><option value="10">10 days</option></select>
             </span>
           </h3>
-          <div id="cspDaysTable" class="csp-days-wrap">
-            <div class="loading"><div class="spinner"></div> Waiting for lme_csp.csv…</div>
-          </div>
+          <div id="cspDaysTable" class="csp-days-wrap"><div class="loading"><div class="spinner"></div> Waiting for lme_csp.csv…</div></div>
         </div>
       </div>
-
       <div class="grid" id="cspUpdaterCard" style="display:none;">
         <div class="card span-12">
           <h3 style="justify-content:space-between;display:flex;">
@@ -482,30 +459,13 @@
             </span>
           </h3>
           <div class="controls" style="margin-bottom:8px;gap:12px;align-items:center;">
-            <label style="font-size:0.72rem;color:var(--muted);display:inline-flex;align-items:center;gap:6px;">
-              Date: <input type="date" id="cspNewDate" class="date-input">
-            </label>
+            <label style="font-size:0.72rem;color:var(--muted);display:inline-flex;align-items:center;gap:6px;">Date: <input type="date" id="cspNewDate" class="date-input"></label>
             <span style="font-size:0.68rem;color:var(--muted);">Fill only today's values · leave blank to skip</span>
           </div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
-            <div class="parity-card al">
-              <div class="pc-header"><span class="pc-title" style="color:#93a2b5">Aluminium</span></div>
-              <div class="parity-row"><div class="pr-label">Cash</div><input type="number" class="pr-input" id="newAlCash" step="0.01"></div>
-              <div class="parity-row"><div class="pr-label">3M</div><input type="number" class="pr-input" id="newAlThree" step="0.01"></div>
-              <div class="parity-row"><div class="pr-label">Stock</div><input type="number" class="pr-input" id="newAlStock" step="1"></div>
-            </div>
-            <div class="parity-card">
-              <div class="pc-header"><span class="pc-title" style="color:#d68b4d">Copper</span></div>
-              <div class="parity-row"><div class="pr-label">Cash</div><input type="number" class="pr-input" id="newCuCash" step="0.01"></div>
-              <div class="parity-row"><div class="pr-label">3M</div><input type="number" class="pr-input" id="newCuThree" step="0.01"></div>
-              <div class="parity-row"><div class="pr-label">Stock</div><input type="number" class="pr-input" id="newCuStock" step="1"></div>
-            </div>
-            <div class="parity-card zn">
-              <div class="pc-header"><span class="pc-title" style="color:#5b8fc9">Zinc</span></div>
-              <div class="parity-row"><div class="pr-label">Cash</div><input type="number" class="pr-input" id="newZnCash" step="0.01"></div>
-              <div class="parity-row"><div class="pr-label">3M</div><input type="number" class="pr-input" id="newZnThree" step="0.01"></div>
-              <div class="parity-row"><div class="pr-label">Stock</div><input type="number" class="pr-input" id="newZnStock" step="1"></div>
-            </div>
+            <div class="parity-card al"><div class="pc-header"><span class="pc-title" style="color:#93a2b5">Aluminium</span></div><div class="parity-row"><div class="pr-label">Cash</div><input type="number" class="pr-input" id="newAlCash" step="0.01"></div><div class="parity-row"><div class="pr-label">3M</div><input type="number" class="pr-input" id="newAlThree" step="0.01"></div><div class="parity-row"><div class="pr-label">Stock</div><input type="number" class="pr-input" id="newAlStock" step="1"></div></div>
+            <div class="parity-card"><div class="pc-header"><span class="pc-title" style="color:#d68b4d">Copper</span></div><div class="parity-row"><div class="pr-label">Cash</div><input type="number" class="pr-input" id="newCuCash" step="0.01"></div><div class="parity-row"><div class="pr-label">3M</div><input type="number" class="pr-input" id="newCuThree" step="0.01"></div><div class="parity-row"><div class="pr-label">Stock</div><input type="number" class="pr-input" id="newCuStock" step="1"></div></div>
+            <div class="parity-card zn"><div class="pc-header"><span class="pc-title" style="color:#5b8fc9">Zinc</span></div><div class="parity-row"><div class="pr-label">Cash</div><input type="number" class="pr-input" id="newZnCash" step="0.01"></div><div class="parity-row"><div class="pr-label">3M</div><input type="number" class="pr-input" id="newZnThree" step="0.01"></div><div class="parity-row"><div class="pr-label">Stock</div><input type="number" class="pr-input" id="newZnStock" step="1"></div></div>
           </div>
           <div class="controls" style="margin-top:8px;gap:10px;align-items:center;">
             <span id="tokenStatus" style="font-size:0.7rem;color:var(--muted);"></span>
@@ -517,7 +477,6 @@
           </div>
         </div>
       </div>
-
       <div class="grid">
         <div class="card span-12">
           <h3 style="justify-content:space-between;display:flex;">
@@ -526,45 +485,25 @@
               <button class="btn active" data-lmc="Copper">Cu</button>
               <button class="btn" data-lmc="Zinc">Zn</button>
               <button class="btn" data-lmc="Aluminium">Al</button>
-              <select class="tf-select" id="lmcTf">
-                <option value="1m">1M</option><option value="3m">3M</option><option value="6m">6M</option>
-                <option value="1y" selected>1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option>
-              </select>
-              <span class="freq-group" id="lmcFreq">
-                <button data-freq="daily" class="active">D</button>
-                <button data-freq="weekly">W</button>
-                <button data-freq="monthly">M</button>
-              </span>
+              <select class="tf-select" id="lmcTf"><option value="1m">1M</option><option value="3m">3M</option><option value="6m">6M</option><option value="1y" selected>1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option></select>
+              <span class="freq-group" id="lmcFreq"><button data-freq="daily" class="active">D</button><button data-freq="weekly">W</button><button data-freq="monthly">M</button></span>
             </span>
           </h3>
           <div class="chart-wrap" style="height:240px;"><canvas id="lmcChart"></canvas></div>
         </div>
       </div>
-
       <div class="grid">
         <div class="card span-12">
           <h3 style="justify-content:space-between;display:flex;">
             <span><i class="fas fa-chart-area"></i> Price Chart</span>
             <span class="controls">
-              <select class="tf-select" id="priceTf">
-                <option value="2d">2D</option><option value="5d">5D</option><option value="8d">8D</option>
-                <option value="15d">15D</option><option value="1m" selected>1M</option>
-                <option value="3m">3M</option><option value="6m">6M</option>
-                <option value="1y">1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option>
-                <option value="custom">Custom…</option>
-              </select>
-              <span class="freq-group" id="priceFreq">
-                <button data-freq="daily" class="active">D</button>
-                <button data-freq="weekly">W</button>
-                <button data-freq="monthly">M</button>
-              </span>
+              <select class="tf-select" id="priceTf"><option value="2d">2D</option><option value="5d">5D</option><option value="8d">8D</option><option value="15d">15D</option><option value="1m" selected>1M</option><option value="3m">3M</option><option value="6m">6M</option><option value="1y">1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option><option value="custom">Custom…</option></select>
+              <span class="freq-group" id="priceFreq"><button data-freq="daily" class="active">D</button><button data-freq="weekly">W</button><button data-freq="monthly">M</button></span>
             </span>
           </h3>
           <div id="priceCustomRange" class="controls" style="display:none;margin-bottom:4px;gap:8px;align-items:center;">
-            <span style="font-size:0.68rem;color:var(--muted);">From:</span>
-            <input type="date" class="date-input" id="priceDateFrom">
-            <span style="font-size:0.68rem;color:var(--muted);">To:</span>
-            <input type="date" class="date-input" id="priceDateTo">
+            <span style="font-size:0.68rem;color:var(--muted);">From:</span><input type="date" class="date-input" id="priceDateFrom">
+            <span style="font-size:0.68rem;color:var(--muted);">To:</span><input type="date" class="date-input" id="priceDateTo">
             <button class="btn small" id="priceApplyRange">Apply</button>
             <span id="priceRangeLabel" style="font-size:0.68rem;color:var(--accent);"></span>
           </div>
@@ -572,15 +511,12 @@
             <button class="btn small" id="priceAllBtn">All</button>
             <button class="btn small" id="priceNoneBtn">None</button>
             <button class="btn small" id="priceMetalsBtn">Metals only</button>
-            <label style="margin-left:8px;font-size:0.68rem;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
-              <input type="checkbox" id="priceLogToggle" style="accent-color:var(--accent);"> Log scale
-            </label>
+            <label style="margin-left:8px;font-size:0.68rem;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox" id="priceLogToggle" style="accent-color:var(--accent);"> Log scale</label>
           </div>
           <div class="price-picker" id="pricePicker"></div>
           <div class="chart-wrap tall"><canvas id="priceChart"></canvas></div>
         </div>
       </div>
-
       <div class="grid">
         <div class="card span-12">
           <h3><i class="fas fa-calendar-alt"></i> Seasonality</h3>
@@ -588,43 +524,26 @@
             <button class="btn active" data-metal="copper" data-season>Cu</button>
             <button class="btn" data-metal="aluminium" data-season>Al</button>
             <button class="btn" data-metal="zinc" data-season>Zn</button>
-            <select class="tf-select" id="seasonYears">
-              <option value="all" selected>All</option><option value="10">10Y</option><option value="5">5Y</option><option value="3">3Y</option>
-            </select>
-            <select class="tf-select" id="seasonMode">
-              <option value="monthly">Monthly</option>
-              <option value="weekly">Weekly</option>
-              <option value="matrix" selected>Month Matrix</option>
-            </select>
+            <select class="tf-select" id="seasonYears"><option value="all" selected>All</option><option value="10">10Y</option><option value="5">5Y</option><option value="3">3Y</option></select>
+            <select class="tf-select" id="seasonMode"><option value="monthly">Monthly</option><option value="weekly">Weekly</option><option value="matrix" selected>Month Matrix</option></select>
           </div>
           <div class="chart-wrap tall" id="seasonChartWrap"><canvas id="seasonChart"></canvas></div>
           <div id="seasonMatrixWrap" style="display:none;"></div>
         </div>
       </div>
-
       <div class="grid">
         <div class="card span-6">
           <h3 style="justify-content:space-between;display:flex;">
             <span><i class="fas fa-balance-scale"></i> LME Cash–3M Spread</span>
             <span class="controls">
-              <button class="btn active" data-csp="Cu">Cu</button>
-              <button class="btn" data-csp="Zn">Zn</button>
-              <button class="btn" data-csp="Al">Al</button>
-              <span class="freq-group" id="cspFreq">
-                <button data-freq="daily" class="active">D</button>
-                <button data-freq="weekly">W</button>
-                <button data-freq="monthly">M</button>
-              </span>
+              <button class="btn active" data-csp="Cu">Cu</button><button class="btn" data-csp="Zn">Zn</button><button class="btn" data-csp="Al">Al</button>
+              <span class="freq-group" id="cspFreq"><button data-freq="daily" class="active">D</button><button data-freq="weekly">W</button><button data-freq="monthly">M</button></span>
             </span>
           </h3>
           <div class="spread-stats" id="cspStats">
             <div class="spread-stat"><div class="lbl">Cash</div><div class="val" id="cspCash">—</div></div>
             <div class="spread-stat"><div class="lbl">3M</div><div class="val" id="csp3m">—</div></div>
-            <div class="spread-stat">
-              <div class="lbl">Spread (C–3M)</div>
-              <div class="val" id="cspSpread">—</div>
-              <div id="cspBadge"></div>
-            </div>
+            <div class="spread-stat"><div class="lbl">Spread (C–3M)</div><div class="val" id="cspSpread">—</div><div id="cspBadge"></div></div>
           </div>
           <div class="chart-wrap" style="height:200px;"><canvas id="cspChart"></canvas></div>
         </div>
@@ -632,58 +551,36 @@
           <h3 style="justify-content:space-between;display:flex;">
             <span><i class="fas fa-chart-line"></i> Cash Price vs LME Stock</span>
             <span class="controls">
-              <button class="btn active" data-csp2="Cu">Cu</button>
-              <button class="btn" data-csp2="Zn">Zn</button>
-              <button class="btn" data-csp2="Al">Al</button>
-              <span class="freq-group" id="csp2Freq">
-                <button data-freq="daily" class="active">D</button>
-                <button data-freq="weekly">W</button>
-                <button data-freq="monthly">M</button>
-              </span>
+              <button class="btn active" data-csp2="Cu">Cu</button><button class="btn" data-csp2="Zn">Zn</button><button class="btn" data-csp2="Al">Al</button>
+              <span class="freq-group" id="csp2Freq"><button data-freq="daily" class="active">D</button><button data-freq="weekly">W</button><button data-freq="monthly">M</button></span>
             </span>
           </h3>
           <div class="chart-wrap" style="height:270px;"><canvas id="csp2Chart"></canvas></div>
         </div>
       </div>
-
       <div class="grid">
         <div class="card span-12">
           <h3 style="justify-content:space-between;display:flex;">
             <span><i class="fas fa-project-diagram"></i> Correlations</span>
             <span class="controls">
-              <select class="tf-select" id="corrData">
-                <option value="returns" selected>Returns</option>
-                <option value="levels">Levels</option>
-              </select>
-              <select class="tf-select" id="corrTf">
-                <option value="1m">1M</option><option value="3m">3M</option><option value="6m">6M</option>
-                <option value="1y" selected>1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option>
-              </select>
-              <select class="tf-select" id="corrMode">
-                <option value="rolling" selected>Rolling</option>
-                <option value="matrix">Matrix</option>
-              </select>
+              <select class="tf-select" id="corrData"><option value="returns" selected>Returns</option><option value="levels">Levels</option></select>
+              <select class="tf-select" id="corrTf"><option value="1m">1M</option><option value="3m">3M</option><option value="6m">6M</option><option value="1y" selected>1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option></select>
+              <select class="tf-select" id="corrMode"><option value="rolling" selected>Rolling</option><option value="matrix">Matrix</option></select>
             </span>
           </h3>
           <div id="corrPairControls" class="controls" style="margin-bottom:6px;">
             <select class="tf-select" id="corrA"></select>
             <span style="color:var(--muted);font-size:0.75rem;">vs</span>
             <select class="tf-select" id="corrB"></select>
-            <select class="tf-select" id="corrWindow">
-              <option value="30">30d</option><option value="60">60d</option><option value="90" selected>90d</option>
-              <option value="180">180d</option><option value="365">365d</option>
-            </select>
+            <select class="tf-select" id="corrWindow"><option value="30">30d</option><option value="60">60d</option><option value="90" selected>90d</option><option value="180">180d</option><option value="365">365d</option></select>
             <span id="corrCurrent" style="font-size:0.85rem;font-weight:700;color:var(--accent);margin-left:8px;"></span>
             <span id="corrSample" style="font-size:0.68rem;color:var(--muted);margin-left:8px;"></span>
           </div>
-          <div id="corrMatrixControls" style="display:none;">
-            <div class="series-picker" id="seriesPicker"></div>
-          </div>
+          <div id="corrMatrixControls" style="display:none;"><div class="series-picker" id="seriesPicker"></div></div>
           <div class="chart-wrap" id="corrRollingWrap" style="height:260px;"><canvas id="corrChart"></canvas></div>
           <div id="corrMatrixWrap" style="display:none;overflow-x:auto;"></div>
         </div>
       </div>
-
       <div class="grid">
         <div class="card span-12">
           <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:10px;">
@@ -698,33 +595,16 @@
             </span>
           </h3>
           <div class="news-grid" id="newsGrid">
-            <div class="card" data-news-cat="base">
-              <h3 style="font-size:0.72rem;"><span><i class="fas fa-cube"></i> Base Metals</span><span class="count" id="newsCount-base">0</span></h3>
-              <ul class="feed" id="newsFeed-base"><li class="empty">Loading…</li></ul>
-            </div>
-            <div class="card" data-news-cat="yield">
-              <h3 style="font-size:0.72rem;"><span><i class="fas fa-percent"></i> Yields & Bonds</span><span class="count" id="newsCount-yield">0</span></h3>
-              <ul class="feed" id="newsFeed-yield"><li class="empty">Loading…</li></ul>
-            </div>
-            <div class="card" data-news-cat="macro">
-              <h3 style="font-size:0.72rem;"><span><i class="fas fa-globe"></i> Macro</span><span class="count" id="newsCount-macro">0</span></h3>
-              <ul class="feed" id="newsFeed-macro"><li class="empty">Loading…</li></ul>
-            </div>
-            <div class="card" data-news-cat="fx">
-              <h3 style="font-size:0.72rem;"><span><i class="fas fa-dollar-sign"></i> Currency</span><span class="count" id="newsCount-fx">0</span></h3>
-              <ul class="feed" id="newsFeed-fx"><li class="empty">Loading…</li></ul>
-            </div>
+            <div class="card" data-news-cat="base"><h3 style="font-size:0.72rem;"><span><i class="fas fa-cube"></i> Base Metals</span><span class="count" id="newsCount-base">0</span></h3><ul class="feed" id="newsFeed-base"><li class="empty">Loading…</li></ul></div>
+            <div class="card" data-news-cat="yield"><h3 style="font-size:0.72rem;"><span><i class="fas fa-percent"></i> Yields & Bonds</span><span class="count" id="newsCount-yield">0</span></h3><ul class="feed" id="newsFeed-yield"><li class="empty">Loading…</li></ul></div>
+            <div class="card" data-news-cat="macro"><h3 style="font-size:0.72rem;"><span><i class="fas fa-globe"></i> Macro</span><span class="count" id="newsCount-macro">0</span></h3><ul class="feed" id="newsFeed-macro"><li class="empty">Loading…</li></ul></div>
+            <div class="card" data-news-cat="fx"><h3 style="font-size:0.72rem;"><span><i class="fas fa-dollar-sign"></i> Currency</span><span class="count" id="newsCount-fx">0</span></h3><ul class="feed" id="newsFeed-fx"><li class="empty">Loading…</li></ul></div>
           </div>
         </div>
       </div>
-
       <div class="grid">
-        <div class="card span-12">
-          <h3><i class="fas fa-brain"></i> Quant Sentiment</h3>
-          <div id="sentimentPanel"></div>
-        </div>
+        <div class="card span-12"><h3><i class="fas fa-brain"></i> Quant Sentiment</h3><div id="sentimentPanel"></div></div>
       </div>
-
       <div class="grid">
         <div class="card span-12">
           <h3 style="justify-content:space-between;display:flex;">
@@ -734,13 +614,11 @@
           <div id="trendPanel"></div>
         </div>
       </div>
-
       <div class="foot">Live: Google Sheet (LMEMCX) | CSP: lme_csp.csv | SBI TT: sbi.bank.in PDF + sahilgupta CSV | News: Google News + CNBC | NALCO: mudira.nalcoindia.co.in</div>
     </div>
   </div>
   <!-- ============ END MAIN TAB ============ -->
 
-  <!-- ============ LME TAB ============ -->
   <div id="tab-lme" class="tab-panel" style="display:none;">
     <div class="head" style="padding-bottom:16px;">
       <h1><i class="fas fa-globe" style="color:#e74c3c;"></i> LME Warehouse Stock</h1>
@@ -771,37 +649,17 @@
         <span id="lmeSaveStatus" class="lme-status"></span>
       </div>
     </div>
-    <div class="lme-metals-grid" id="lmeMetalsGrid">
-      <div class="loading" style="grid-column:1/-1;"><div class="spinner"></div> Loading…</div>
-    </div>
+    <div class="lme-metals-grid" id="lmeMetalsGrid"><div class="loading" style="grid-column:1/-1;"><div class="spinner"></div> Loading…</div></div>
     <div id="lmeChartsSection" style="display:none;">
       <div class="lme-charts-title" style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:10px;">
         <span><i class="fas fa-chart-line"></i> <span id="lmeChartsMetalName">Copper</span> — <span id="lmeChartsRangeLabel">Last 30 days</span></span>
         <span class="controls" style="gap:8px;">
-          <span class="freq-group" id="lmeTfGroup">
-            <button data-lme-tf="30" class="active">30D</button>
-            <button data-lme-tf="90">90D</button>
-            <button data-lme-tf="180">6M</button>
-            <button data-lme-tf="365">1Y</button>
-            <button data-lme-tf="all">All</button>
-          </span>
-          <span class="freq-group" id="lmeYAxisGroup">
-            <button data-lme-y="linear" class="active">Linear</button>
-            <button data-lme-y="log">Log</button>
-          </span>
-          <span class="freq-group" id="lmeRatioModeGroup">
-            <button data-lme-ratio="abs" class="active">Abs</button>
-            <button data-lme-ratio="pct">% of Total</button>
-          </span>
+          <span class="freq-group" id="lmeTfGroup"><button data-lme-tf="30" class="active">30D</button><button data-lme-tf="90">90D</button><button data-lme-tf="180">6M</button><button data-lme-tf="365">1Y</button><button data-lme-tf="all">All</button></span>
+          <span class="freq-group" id="lmeYAxisGroup"><button data-lme-y="linear" class="active">Linear</button><button data-lme-y="log">Log</button></span>
+          <span class="freq-group" id="lmeRatioModeGroup"><button data-lme-ratio="abs" class="active">Abs</button><button data-lme-ratio="pct">% of Total</button></span>
         </span>
       </div>
-      <div class="lme-chart-box">
-        <div class="ct" style="justify-content:space-between;display:flex;">
-          <span>Live vs Cancelled</span>
-          <span id="lmeChLiveHint" style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;"></span>
-        </div>
-        <div class="cw"><canvas id="lmeChLive"></canvas></div>
-      </div>
+      <div class="lme-chart-box"><div class="ct" style="justify-content:space-between;display:flex;"><span>Live vs Cancelled</span><span id="lmeChLiveHint" style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;"></span></div><div class="cw"><canvas id="lmeChLive"></canvas></div></div>
       <div class="lme-chart-box"><div class="ct">Total Inventory Trend</div><div class="cw"><canvas id="lmeChTotal"></canvas></div></div>
       <div class="lme-chart-box"><div class="ct">Cancelled Ratio (%)</div><div class="cw"><canvas id="lmeChRatio"></canvas></div></div>
       <div class="lme-chart-box"><div class="ct">Daily Change</div><div class="cw"><canvas id="lmeChChange"></canvas></div></div>
@@ -809,7 +667,6 @@
   </div>
   <!-- ============ END LME TAB ============ -->
 
-  <!-- ============ SHFE TAB ============ -->
   <div id="tab-shfe" class="tab-panel" style="display:none;">
     <div class="upload-bar" style="border-color:#e8a33d;">
       <span class="title"><i class="fas fa-flask"></i> SHFE Data</span>
@@ -830,37 +687,21 @@
         <span class="controls"><span id="shfeHistoryDays" style="font-size:0.68rem;color:var(--muted);"></span></span>
       </h3>
       <div class="grid" style="margin-bottom:0;">
-        <div class="card span-8" style="margin-bottom:0;background:var(--card2);">
-          <h3 style="font-size:0.72rem;"><i class="fas fa-warehouse"></i> Total Inventory by Metal (tonnes)</h3>
-          <div class="chart-wrap tall" style="height:280px;"><canvas id="shfeChartTotal"></canvas></div>
-        </div>
-        <div class="card span-4" style="margin-bottom:0;background:var(--card2);">
-          <h3 style="font-size:0.72rem;"><i class="fas fa-balance-scale"></i> Daily Change (tonnes)</h3>
-          <div class="chart-wrap tall" style="height:280px;"><canvas id="shfeChartChange"></canvas></div>
-        </div>
+        <div class="card span-8" style="margin-bottom:0;background:var(--card2);"><h3 style="font-size:0.72rem;"><i class="fas fa-warehouse"></i> Total Inventory by Metal (tonnes)</h3><div class="chart-wrap tall" style="height:280px;"><canvas id="shfeChartTotal"></canvas></div></div>
+        <div class="card span-4" style="margin-bottom:0;background:var(--card2);"><h3 style="font-size:0.72rem;"><i class="fas fa-balance-scale"></i> Daily Change (tonnes)</h3><div class="chart-wrap tall" style="height:280px;"><canvas id="shfeChartChange"></canvas></div></div>
       </div>
       <div class="grid" style="margin-bottom:0;margin-top:14px;">
-        <div class="card span-12" style="margin-bottom:0;background:var(--card2);">
-          <h3 style="font-size:0.72rem;"><i class="fas fa-chart-area"></i> Copper vs Aluminium (tonnes)</h3>
-          <div class="chart-wrap" style="height:240px;"><canvas id="shfeChartCuAl"></canvas></div>
-        </div>
+        <div class="card span-12" style="margin-bottom:0;background:var(--card2);"><h3 style="font-size:0.72rem;"><i class="fas fa-chart-area"></i> Copper vs Aluminium (tonnes)</h3><div class="chart-wrap" style="height:240px;"><canvas id="shfeChartCuAl"></canvas></div></div>
       </div>
     </div>
     <div class="card">
       <h3><i class="fas fa-warehouse"></i> Warehouse Warrants & Settlement <span class="sub">— today's snapshot</span></h3>
-      <div id="shfeGrid" class="shfe-grid">
-        <div class="loading"><div class="spinner"></div> Loading SHFE data...</div>
-      </div>
+      <div id="shfeGrid" class="shfe-grid"><div class="loading"><div class="spinner"></div> Loading SHFE data...</div></div>
     </div>
   </div>
   <!-- ============ END SHFE TAB ============ -->
-  
-    <!-- ============ COT REPORT TAB ============ -->
-  <div id="tab-positioning" class="tab-panel" style="display:none;">
 
-    <!-- ============================================================
-         LME COTR — Cu / Al / Zn  (now on top)
-         ============================================================ -->
+  <div id="tab-positioning" class="tab-panel" style="display:none;">
     <div class="head" style="padding-bottom:16px;">
       <h1><i class="fas fa-users" style="color:#93a2b5;"></i> LME Commitments of Traders — Cu / Al / Zn</h1>
       <div class="meta">
@@ -869,7 +710,6 @@
         <button class="btn small" id="lmeCotrRefreshBtn"><i class="fas fa-sync-alt"></i></button>
       </div>
     </div>
-
     <div id="lmeCotrUploadPanel" class="cotr-upload-panel" style="display:none;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <span style="font-size:0.8rem;color:var(--accent);font-weight:600;"><i class="fas fa-file-excel"></i> Drop LME COTR XLSX files here</span>
@@ -887,90 +727,44 @@
         <button class="btn-refresh" id="lmeCotrSaveBtn" disabled><i class="fas fa-cloud-upload-alt"></i> Save to GitHub</button>
       </div>
     </div>
-
-    <div class="parity-grid" id="lmeCotrSnapshot" style="margin-bottom:14px;">
-      <div class="loading" style="grid-column:1/-1;"><div class="spinner"></div> Loading LME COTR…</div>
-    </div>
-
+    <div class="parity-grid" id="lmeCotrSnapshot" style="margin-bottom:14px;"><div class="loading" style="grid-column:1/-1;"><div class="spinner"></div> Loading LME COTR…</div></div>
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:10px;">
           <span><i class="fas fa-chart-area" style="color:#d68b4d;"></i> Copper — COT Net Positions</span>
           <span class="controls" style="gap:6px;">
-            <span class="freq-group" data-lme-ctrl="range" data-metal="copper">
-              <button data-val="3m">3M</button>
-              <button data-val="6m">6M</button>
-              <button data-val="1y" class="active">1Y</button>
-              <button data-val="2y">2Y</button>
-              <button data-val="all">All</button>
-            </span>
-            <span class="freq-group" data-lme-ctrl="mode" data-metal="copper">
-              <button data-val="net" class="active">Net</button>
-              <button data-val="pct">% of OI</button>
-              <button data-val="both">+ Price</button>
-            </span>
+            <span class="freq-group" data-lme-ctrl="range" data-metal="copper"><button data-val="3m">3M</button><button data-val="6m">6M</button><button data-val="1y" class="active">1Y</button><button data-val="2y">2Y</button><button data-val="all">All</button></span>
+            <span class="freq-group" data-lme-ctrl="mode" data-metal="copper"><button data-val="net" class="active">Net</button><button data-val="pct">% of OI</button><button data-val="both">+ Price</button></span>
           </span>
         </h3>
         <div class="chart-wrap" style="height:340px;"><canvas id="chart-copper"></canvas></div>
       </div>
     </div>
-
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:10px;">
           <span><i class="fas fa-chart-area" style="color:#93a2b5;"></i> Aluminium — COT Net Positions</span>
           <span class="controls" style="gap:6px;">
-            <span class="freq-group" data-lme-ctrl="range" data-metal="aluminium">
-              <button data-val="3m">3M</button>
-              <button data-val="6m">6M</button>
-              <button data-val="1y" class="active">1Y</button>
-              <button data-val="2y">2Y</button>
-              <button data-val="all">All</button>
-            </span>
-            <span class="freq-group" data-lme-ctrl="mode" data-metal="aluminium">
-              <button data-val="net" class="active">Net</button>
-              <button data-val="pct">% of OI</button>
-              <button data-val="both">+ Price</button>
-            </span>
+            <span class="freq-group" data-lme-ctrl="range" data-metal="aluminium"><button data-val="3m">3M</button><button data-val="6m">6M</button><button data-val="1y" class="active">1Y</button><button data-val="2y">2Y</button><button data-val="all">All</button></span>
+            <span class="freq-group" data-lme-ctrl="mode" data-metal="aluminium"><button data-val="net" class="active">Net</button><button data-val="pct">% of OI</button><button data-val="both">+ Price</button></span>
           </span>
         </h3>
         <div class="chart-wrap" style="height:340px;"><canvas id="chart-aluminium"></canvas></div>
       </div>
     </div>
-
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:10px;">
           <span><i class="fas fa-chart-area" style="color:#5b8fc9;"></i> Zinc — COT Net Positions</span>
           <span class="controls" style="gap:6px;">
-            <span class="freq-group" data-lme-ctrl="range" data-metal="zinc">
-              <button data-val="3m">3M</button>
-              <button data-val="6m">6M</button>
-              <button data-val="1y" class="active">1Y</button>
-              <button data-val="2y">2Y</button>
-              <button data-val="all">All</button>
-            </span>
-            <span class="freq-group" data-lme-ctrl="mode" data-metal="zinc">
-              <button data-val="net" class="active">Net</button>
-              <button data-val="pct">% of OI</button>
-              <button data-val="both">+ Price</button>
-            </span>
+            <span class="freq-group" data-lme-ctrl="range" data-metal="zinc"><button data-val="3m">3M</button><button data-val="6m">6M</button><button data-val="1y" class="active">1Y</button><button data-val="2y">2Y</button><button data-val="all">All</button></span>
+            <span class="freq-group" data-lme-ctrl="mode" data-metal="zinc"><button data-val="net" class="active">Net</button><button data-val="pct">% of OI</button><button data-val="both">+ Price</button></span>
           </span>
         </h3>
         <div class="chart-wrap" style="height:340px;"><canvas id="chart-zinc"></canvas></div>
       </div>
     </div>
-
-    <div class="grid">
-      <div class="card span-12">
-        <h3><i class="fas fa-table"></i> LME COTR Last 12 Weeks Summary</h3>
-        <div id="lmeCotrTable" style="overflow-x:auto;margin-top:8px;"></div>
-      </div>
-    </div>
-
-    <!-- ============================================================
-         CFTC COMEX COPPER COT (now below LME)
-         ============================================================ -->
+    <div class="grid"><div class="card span-12"><h3><i class="fas fa-table"></i> LME COTR Last 12 Weeks Summary</h3><div id="lmeCotrTable" style="overflow-x:auto;margin-top:8px;"></div></div></div>
     <div class="head" style="padding:24px 4px 16px;border-top:1px solid var(--border);margin-top:8px;">
       <h1><i class="fas fa-balance-scale" style="color:#d68b4d;"></i> CFTC Commitments of Traders — COMEX Copper</h1>
       <div class="meta">
@@ -978,41 +772,20 @@
         <button class="btn small" id="cftcRefreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
       </div>
     </div>
-
-    <div id="cftcSnapshot" class="parity-grid" style="margin-bottom:14px;">
-      <div class="loading" style="grid-column:1/-1;"><div class="spinner"></div> Loading CFTC data…</div>
-    </div>
-
+    <div id="cftcSnapshot" class="parity-grid" style="margin-bottom:14px;"><div class="loading" style="grid-column:1/-1;"><div class="spinner"></div> Loading CFTC data…</div></div>
     <div class="grid">
       <div class="card span-12">
         <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:10px;">
           <span><i class="fas fa-chart-area" style="color:#2ecc71;"></i> COMEX Copper — COT Net Positions</span>
           <span class="controls" style="gap:6px;">
-            <span class="freq-group" id="cftcRangeGroup">
-              <button data-cftc-range="3m">3M</button>
-              <button data-cftc-range="6m">6M</button>
-              <button data-cftc-range="1y" class="active">1Y</button>
-              <button data-cftc-range="2y">2Y</button>
-              <button data-cftc-range="all">All</button>
-            </span>
-            <span class="freq-group" id="cftcModeGroup">
-              <button data-cftc-mode="net" class="active">Net</button>
-              <button data-cftc-mode="pct">% of OI</button>
-              <button data-cftc-mode="both">+ Price</button>
-            </span>
+            <span class="freq-group" id="cftcRangeGroup"><button data-cftc-range="3m">3M</button><button data-cftc-range="6m">6M</button><button data-cftc-range="1y" class="active">1Y</button><button data-cftc-range="2y">2Y</button><button data-cftc-range="all">All</button></span>
+            <span class="freq-group" id="cftcModeGroup"><button data-cftc-mode="net" class="active">Net</button><button data-cftc-mode="pct">% of OI</button><button data-cftc-mode="both">+ Price</button></span>
           </span>
         </h3>
         <div class="chart-wrap" style="height:340px;"><canvas id="cftcNetChart"></canvas></div>
       </div>
     </div>
-
-    <div class="grid">
-      <div class="card span-12">
-        <h3><i class="fas fa-table"></i> CFTC Last 12 Weeks</h3>
-        <div id="cftcTable" style="overflow-x:auto;margin-top:8px;"></div>
-      </div>
-    </div>
-
+    <div class="grid"><div class="card span-12"><h3><i class="fas fa-table"></i> CFTC Last 12 Weeks</h3><div id="cftcTable" style="overflow-x:auto;margin-top:8px;"></div></div></div>
   </div>
   <!-- ============ END COT REPORT TAB ============ -->
 
@@ -1794,10 +1567,7 @@ async function saveParityOverrides() {
   try {
     const cur = await fetch(api + '?ref=' + REPO_BRANCH, { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
     const sha = cur.ok ? (await cur.json()).sha : undefined;
-    const putRes = await fetch(api, {
-      method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: `Parity overrides update`, content: b64encodeUtf8(JSON.stringify(body, null, 2)), branch: REPO_BRANCH, ...(sha ? { sha } : {}) }),
-    });
+    const putRes = await fetch(api, { method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Parity overrides update`, content: b64encodeUtf8(JSON.stringify(body, null, 2)), branch: REPO_BRANCH, ...(sha ? { sha } : {}) }) });
     if (!putRes.ok) throw new Error('HTTP ' + putRes.status);
   } catch (e) { console.warn('Save parity overrides failed:', e); }
 }
@@ -2025,12 +1795,7 @@ function wireCspUpdater() {
   document.getElementById('cspClearBtn')?.addEventListener('click', () => { ['newCuCash','newCuThree','newCuStock','newZnCash','newZnThree','newZnStock','newAlCash','newAlThree','newAlStock'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; }); });
   document.getElementById('cspCloseBtn')?.addEventListener('click', closeCspUpdater);
   refreshTokenUI();
-  document.getElementById('forgetTokenBtn')?.addEventListener('click', () => {
-    SAFE_STORE.removeItem(GITHUB_TOKEN_KEY);
-    refreshTokenUI();
-    const st = document.getElementById('cspUpdateStatus');
-    if (st) { st.textContent = 'Token cleared.'; st.style.color = 'var(--muted)'; }
-  });
+  document.getElementById('forgetTokenBtn')?.addEventListener('click', () => { SAFE_STORE.removeItem(GITHUB_TOKEN_KEY); refreshTokenUI(); const st = document.getElementById('cspUpdateStatus'); if (st) { st.textContent = 'Token cleared.'; st.style.color = 'var(--muted)'; } });
 }
 
 /* ========================================================================
@@ -2056,15 +1821,7 @@ function renderCSPLatest() {
       else if (spread < -0.5) { badge = 'Contango'; badgeCls = 'ctg'; }
       else { badge = 'Flat'; badgeCls = 'na'; }
     }
-    html += `<div class="csp-latest-card ${m.cls}">
-      <div class="metal-header"><span class="metal-name" style="color:${CSP_COLORS[m.key]}">${m.name} (${m.key})</span><span class="metal-date">${last.date}</span></div>
-      <div class="row-grid">
-        <div class="cell"><div class="lbl">Cash</div><div class="val">${cash!=null?fmt(cash):'—'}</div></div>
-        <div class="cell"><div class="lbl">3M</div><div class="val">${threeM!=null?fmt(threeM):'—'}</div></div>
-        <div class="cell"><div class="lbl">Stock</div><div class="val">${stock!=null?fmt(stock,0):'—'}</div></div>
-      </div>
-      <div class="spread-row"><span class="lbl">Cash–3M Spread</span><span><span class="val ${spreadCls}">${spread!=null?fmt(spread,1):'—'}</span>${badge ? `<span class="badge ${badgeCls}">${badge}</span>` : ''}</span></div>
-    </div>`;
+    html += `<div class="csp-latest-card ${m.cls}"><div class="metal-header"><span class="metal-name" style="color:${CSP_COLORS[m.key]}">${m.name} (${m.key})</span><span class="metal-date">${last.date}</span></div><div class="row-grid"><div class="cell"><div class="lbl">Cash</div><div class="val">${cash!=null?fmt(cash):'—'}</div></div><div class="cell"><div class="lbl">3M</div><div class="val">${threeM!=null?fmt(threeM):'—'}</div></div><div class="cell"><div class="lbl">Stock</div><div class="val">${stock!=null?fmt(stock,0):'—'}</div></div></div><div class="spread-row"><span class="lbl">Cash–3M Spread</span><span><span class="val ${spreadCls}">${spread!=null?fmt(spread,1):'—'}</span>${badge ? `<span class="badge ${badgeCls}">${badge}</span>` : ''}</span></div></div>`;
   }
   grid.innerHTML = html;
 }
@@ -2131,19 +1888,7 @@ function renderSbiChart() {
   if (sbiData.length) datasets.push({ label: 'SBI TT Sell', data: sbiData, borderColor: '#ff6b9d', backgroundColor: 'rgba(255,107,157,0.08)', borderWidth: 1.8, pointRadius: 0, tension: 0.15, yAxisID: 'y', borderDash: [6, 3] });
   if (spreadData.length) datasets.push({ label: 'Spread (Spot − SBI)', data: spreadData, borderColor: '#e8a33d', backgroundColor: 'rgba(232,163,61,0.06)', borderWidth: 1.2, pointRadius: 0, tension: 0.15, yAxisID: 'y1' });
   if (sbiChart) sbiChart.destroy();
-  sbiChart = new Chart(canvas, {
-    type: 'line', data: { datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } },
-      scales: {
-        x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
-        y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
-        y1: { position: 'right', grid: { display: false }, ticks: { color: '#e8a33d', font: { size: 9 } } }
-      }
-    }
-  });
+  sbiChart = new Chart(canvas, { type: 'line', data: { datasets }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } }, y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } }, y1: { position: 'right', grid: { display: false }, ticks: { color: '#e8a33d', font: { size: 9 } } } } } });
 }
 
 /* ========================================================================
@@ -2172,19 +1917,7 @@ function renderLmcChart() {
   const color = CSP_COLORS[LMC_METAL_MAP[currentLMC]] || '#e8a33d';
   const data = resampled.map(p => ({ x: p.t, y: p.spread }));
   if (lmcChart) lmcChart.destroy();
-  lmcChart = new Chart(canvas, {
-    type: 'line',
-    data: { datasets: [{ label: `${currentLMC} MCX − LME (₹/kg)`, data, borderColor: color, backgroundColor: color + '20', borderWidth: 2, pointRadius: 0, tension: 0.15, fill: true }]},
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } },
-      scales: {
-        x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
-        y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 }, callback: v => '₹' + v } }
-      }
-    }
-  });
+  lmcChart = new Chart(canvas, { type: 'line', data: { datasets: [{ label: `${currentLMC} MCX − LME (₹/kg)`, data, borderColor: color, backgroundColor: color + '20', borderWidth: 2, pointRadius: 0, tension: 0.15, fill: true }]}, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } }, y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 }, callback: v => '₹' + v } } } } });
 }
 
 /* ========================================================================
@@ -2203,21 +1936,12 @@ function populatePricePicker() {
     picker.appendChild(lbl);
   });
   ['LME Copper','LME Aluminium','LME Zinc','USDINR'].forEach(name => {
-    if (SERIES_NAMES.includes(name)) {
-      selectedPriceSeries.add(name);
-      const lbl = [...picker.children].find(c => c.textContent === name);
-      if (lbl) { lbl.querySelector('input').checked = true; lbl.classList.add('active'); }
-    }
+    if (SERIES_NAMES.includes(name)) { selectedPriceSeries.add(name); const lbl = [...picker.children].find(c => c.textContent === name); if (lbl) { lbl.querySelector('input').checked = true; lbl.classList.add('active'); } }
   });
 }
 function updatePricePickerUI() {
   const picker = document.getElementById('pricePicker');
-  [...picker.children].forEach(lbl => {
-    const name = lbl.textContent;
-    const checked = selectedPriceSeries.has(name);
-    lbl.querySelector('input').checked = checked;
-    lbl.classList.toggle('active', checked);
-  });
+  [...picker.children].forEach(lbl => { const name = lbl.textContent; const checked = selectedPriceSeries.has(name); lbl.querySelector('input').checked = checked; lbl.classList.toggle('active', checked); });
 }
 function renderPriceChart() {
   const tf = document.getElementById('priceTf').value;
@@ -2248,19 +1972,7 @@ function renderPriceChart() {
   const logScale = document.getElementById('priceLogToggle').checked;
   const hasFx = datasets.some(d => d.yAxisID === 'y1');
   if (priceChart) priceChart.destroy();
-  priceChart = new Chart(document.getElementById('priceChart'), {
-    type: 'line', data: { datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } },
-      scales: {
-        x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
-        y: { position: 'left', type: logScale ? 'logarithmic' : 'linear', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
-        ...(hasFx ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 9 } } } } : {})
-      }
-    }
-  });
+  priceChart = new Chart(document.getElementById('priceChart'), { type: 'line', data: { datasets }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } }, y: { position: 'left', type: logScale ? 'logarithmic' : 'linear', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } }, ...(hasFx ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 9 } } } } : {}) } } });
 }
 
 /* ========================================================================
@@ -2322,10 +2034,7 @@ function renderSeasonChart() {
   if (mode === 'weekly') { isWeekly = true; labels = Array.from({length:53}, (_,i) => 'W'+(i+1)); data = computeSeasonalityWeekly(currentSeasonMetal, years); }
   else { isWeekly = false; labels = MONTHS; data = computeSeasonalityMonthly(currentSeasonMetal, years); }
   if (seasonChart) seasonChart.destroy();
-  seasonChart = new Chart(document.getElementById('seasonChart'), {
-    type: 'bar', data: { labels, datasets: [{ data, backgroundColor: data.map(v => v >= 0 ? 'rgba(46,204,113,0.65)' : 'rgba(231,76,60,0.65)'), borderRadius: 3 }]},
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#7c8aa0', font: { size: isWeekly ? 7 : 9 } } }, y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } } } }
-  });
+  seasonChart = new Chart(document.getElementById('seasonChart'), { type: 'bar', data: { labels, datasets: [{ data, backgroundColor: data.map(v => v >= 0 ? 'rgba(46,204,113,0.65)' : 'rgba(231,76,60,0.65)'), borderRadius: 3 }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#7c8aa0', font: { size: isWeekly ? 7 : 9 } } }, y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } } } } });
 }
 function renderMatrix() {
   const yearsSel = document.getElementById('seasonYears').value;
@@ -2376,13 +2085,10 @@ function renderCSP() {
   const stockData = data.map(r => r.stock);
   const hasStock = stockData.some(s => s != null);
   if (cspChart) cspChart.destroy();
-  cspChart = new Chart(document.getElementById('cspChart'), {
-    data: { labels, datasets: [
-      { type:'bar', label:'Cash − 3M', data: spreadData, backgroundColor: spreadData.map(v => v >= 0 ? 'rgba(46,204,113,0.6)' : 'rgba(231,76,60,0.6)'), yAxisID: 'y', order: 2 },
-      ...(hasStock ? [{ type:'line', label:'LME Stock', data: stockData, borderColor: '#e8a33d', borderWidth: 1.5, pointRadius: 0, tension: 0.15, yAxisID: 'y1', order: 1 }] : []),
-    ]},
-    options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, ...(hasStock ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 8 } } } } : {}) } }
-  });
+  cspChart = new Chart(document.getElementById('cspChart'), { data: { labels, datasets: [
+    { type:'bar', label:'Cash − 3M', data: spreadData, backgroundColor: spreadData.map(v => v >= 0 ? 'rgba(46,204,113,0.6)' : 'rgba(231,76,60,0.6)'), yAxisID: 'y', order: 2 },
+    ...(hasStock ? [{ type:'line', label:'LME Stock', data: stockData, borderColor: '#e8a33d', borderWidth: 1.5, pointRadius: 0, tension: 0.15, yAxisID: 'y1', order: 1 }] : []),
+  ]}, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, ...(hasStock ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 8 } } } } : {}) } } });
 }
 function renderCSP2() {
   const metal = currentCSP2;
@@ -2396,13 +2102,10 @@ function renderCSP2() {
   const hasStock = stockData.some(s => s.y != null);
   const color = CSP_COLORS[metal] || '#d68b4d';
   if (csp2Chart) csp2Chart.destroy();
-  csp2Chart = new Chart(document.getElementById('csp2Chart'), {
-    data: { datasets: [
-      { type:'line', label: `${metal} Cash`, data: cashData, borderColor: color, backgroundColor: color + '20', borderWidth: 2, pointRadius: 0, tension: 0.15, yAxisID: 'y' },
-      ...(hasStock ? [{ type:'line', label: `${metal} Stock`, data: stockData, borderColor: '#e8a33d', borderWidth: 1.5, borderDash: [5, 3], pointRadius: 0, tension: 0.15, yAxisID: 'y1' }] : []),
-    ]},
-    options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, ...(hasStock ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 9 } } } } : {}) } }
-  });
+  csp2Chart = new Chart(document.getElementById('csp2Chart'), { data: { datasets: [
+    { type:'line', label: `${metal} Cash`, data: cashData, borderColor: color, backgroundColor: color + '20', borderWidth: 2, pointRadius: 0, tension: 0.15, yAxisID: 'y' },
+    ...(hasStock ? [{ type:'line', label: `${metal} Stock`, data: stockData, borderColor: '#e8a33d', borderWidth: 1.5, borderDash: [5, 3], pointRadius: 0, tension: 0.15, yAxisID: 'y1' }] : []),
+  ]}, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, ...(hasStock ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 9 } } } } : {}) } } });
 }
 
 /* ========================================================================
@@ -2487,11 +2190,7 @@ function renderCorrRolling() {
   const cls = cur > 0.3 ? 'var(--green)' : cur < -0.3 ? 'var(--red)' : 'var(--accent)';
   document.getElementById('corrCurrent').innerHTML = `ρ = <span style="color:${cls};">${cur.toFixed(3)}</span>`;
   if (corrChart) corrChart.destroy();
-  corrChart = new Chart(document.getElementById('corrChart'), {
-    type: 'line',
-    data: { datasets: [{ label: `${a} vs ${b} — ${win}d ρ`, data: series.map(r => ({ x: r.t, y: r.corr })), borderColor: '#e8a33d', backgroundColor: 'rgba(232,163,61,0.1)', borderWidth: 1.8, pointRadius: 0, tension: 0.15, fill: true }]},
-    options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { min: -1, max: 1, grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } } } }
-  });
+  corrChart = new Chart(document.getElementById('corrChart'), { type: 'line', data: { datasets: [{ label: `${a} vs ${b} — ${win}d ρ`, data: series.map(r => ({ x: r.t, y: r.corr })), borderColor: '#e8a33d', backgroundColor: 'rgba(232,163,61,0.1)', borderWidth: 1.8, pointRadius: 0, tension: 0.15, fill: true }]}, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { min: -1, max: 1, grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } } } } });
 }
 function renderCorrMatrix() {
   const tf = document.getElementById('corrTf').value;
@@ -2659,10 +2358,52 @@ function timeAgo(iso) {
   if (secs < 86400*7) return Math.floor(secs/86400) + ' d ago';
   return new Date(iso).toISOString().slice(0,10);
 }
+const NEWS_STOCK_BLOCK_STRICT = /stock market|wall street|equities only|S&P 500|Dow Jones index|market cap|dividend yield|IPO pricing|buyback program|price target|analyst upgrade|analyst downgrade|quarterly profit|revenue beat|guidance cut|shareholder vote/i;
+const NEWS_STOCK_BLOCK_LOOSE  = /stock market|wall street|equities|S&P|Nasdaq|Dow/i;
+const NEWS_PRODUCERS = {
+  'bhp':'BHP','codelco':'Codelco','freeport':'Freeport','glencore':'Glencore',
+  'rio tinto':'Rio Tinto','antofagasta':'Antofagasta','teck':'Teck',
+  'hindustan zinc':'Hindustan Zinc','vedanta':'Vedanta','nexa':'Nexa',
+  'alcoa':'Alcoa','rusal':'Rusal','chinalco':'Chinalco','hongqiao':'Hongqiao',
+  'zijin':'Zijin','mmg':'MMG','capstone':'Capstone','first quantum':'First Quantum',
+  'anglo american':'Anglo American','vale':'Vale','south32':'South32',
+  'norilsk':'Norilsk','minsur':'Minsur','alphamin':'Alphamin','yunnan tin':'Yunnan Tin',
+};
+const NEWS_MINES = {
+  'escondida':'Escondida','grasberg':'Grasberg','las bambas':'Las Bambas',
+  'centinela':'Centinela','mantoverde':'Mantoverde','rampura agucha':'Rampura Agucha',
+  'red dog':'Red Dog','mount isa':'Mount Isa','olympic dam':'Olympic Dam',
+  'weda bay':'Weda Bay','san rafael':'San Rafael','bisie':'Bisie',
+  'huoshaoyun':'Huoshaoyun','ozernoe':'Ozernoe','tara':'Tara','antamina':'Antamina',
+  'cerro verde':'Cerro Verde','morenci':'Morenci','cobre panama':'Cobre Panama',
+  'kamoa-kakula':'Kamoa-Kakula','tenke fungurume':'Tenke Fungurume','mutanda':'Mutanda',
+  'kamoto':'Kamoto','oyu tolgoi':'Oyu Tolgoi','kghm':'KGHM',
+};
+const NEWS_COUNTRIES = {
+  'chile':'Chile','peru':'Peru','china':'China','indonesia':'Indonesia',
+  'australia':'Australia','russia':'Russia','congo':'DRC','democratic republic of congo':'DRC',
+  'drc':'DRC','zambia':'Zambia','mexico':'Mexico','usa':'USA','united states':'USA',
+  'canada':'Canada','india':'India','philippines':'Philippines','myanmar':'Myanmar',
+  'bolivia':'Bolivia','kazakhstan':'Kazakhstan','brazil':'Brazil','south africa':'South Africa',
+  'mongolia':'Mongolia','guinea':'Guinea','mozambique':'Mozambique','ireland':'Ireland','panama':'Panama',
+};
+const NEWS_CRITICAL = /strike|walkout|shutdown|curtailment|production cut|force majeure|smelter closure|mine halt|power crisis|energy crisis|export ban|tariff|sanction|nationalis|expropriat|fire|flood|earthquake|disruption/i;
+function detectNewsTags(title, desc) {
+  const text = (title + ' ' + desc).toLowerCase();
+  const out = { producers: [], mines: [], countries: [], critical: false };
+  for (const [kw, label] of Object.entries(NEWS_PRODUCERS)) if (text.includes(kw)) out.producers.push(label);
+  for (const [kw, label] of Object.entries(NEWS_MINES))     if (text.includes(kw)) out.mines.push(label);
+  for (const [kw, label] of Object.entries(NEWS_COUNTRIES)) if (text.includes(kw)) out.countries.push(label);
+  out.critical = NEWS_CRITICAL.test(text);
+  return out;
+}
 const NEWS_FEEDS = [
-  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=(copper+OR+aluminium+OR+aluminum+OR+zinc+OR+nickel+OR+lead+OR+tin)+price+when:7d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=("base+metals"+OR+LME+OR+SHFE)+when:7d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=(copper+supply+OR+aluminium+smelter+OR+zinc+mine+OR+nickel+Indonesia)+when:7d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=(copper+OR+aluminium+OR+aluminum+OR+zinc+OR+nickel+OR+lead+OR+tin)+price+when:3d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=(copper+OR+aluminium+OR+zinc+OR+nickel+OR+tin)+AND+(strike+OR+walkout+OR+smelter+OR+mine+OR+shutdown+OR+curtailment+OR+"production+cut"+OR+"force+majeure"+OR+"power+cuts")+when:7d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=(BHP+OR+Codelco+OR+Glencore+OR+"Freeport-McMoRan"+OR+"Rio+Tinto"+OR+Antofagasta+OR+Teck+OR+Vedanta+OR+"Hindustan+Zinc")+(copper+OR+zinc+OR+aluminium)+when:7d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=(Escondida+OR+Grasberg+OR+"Las+Bambas"+OR+Centinela+OR+"Rampura+Agucha"+OR+"Red+Dog"+OR+"Weda+Bay"+OR+"Oyu+Tolgoi")+when:14d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=(LME+OR+SHFE+OR+"warehouse+stocks"+OR+inventory)+(copper+OR+aluminium+OR+zinc+OR+nickel)+when:5d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=(Chile+OR+Peru+OR+Indonesia+OR+DRC+OR+Zambia+OR+Guinea+OR+Myanmar)+(copper+OR+aluminium+OR+zinc+OR+nickel+OR+bauxite+OR+tin)+when:7d&hl=en-US&gl=US&ceid=US:en' },
   { category:'yield', source:'Google News', url:'https://news.google.com/rss/search?q=("treasury+yield"+OR+"bond+yield"+OR+"10-year+yield"+OR+"30-year+yield")+when:3d&hl=en-US&gl=US&ceid=US:en' },
   { category:'yield', source:'Google News', url:'https://news.google.com/rss/search?q=(Federal+Reserve+OR+"interest+rate"+OR+"rate+cut"+OR+"rate+hike"+OR+inflation)+bond+when:3d&hl=en-US&gl=US&ceid=US:en' },
   { category:'yield', source:'Google News', url:'https://news.google.com/rss/search?q=(US+Treasury+OR+yield+curve+OR+inverted+yield)+when:5d&hl=en-US&gl=US&ceid=US:en' },
@@ -2678,8 +2419,6 @@ const NEWS_FEEDS = [
 const NEWS_CATEGORIES = ['base','yield','macro','fx'];
 const NEWS_TAG_LABEL = { base:'Base', yield:'Yield', macro:'Macro', fx:'FX' };
 const NEWS_TAG_CLASS = { base:'metal', yield:'yield', macro:'macro', fx:'fx' };
-const NEWS_STOCK_BLOCK_STRICT = /stock|share price|earnings|equity|ticker|NYSE|Nasdaq|S&P 500|Dow Jones|market cap|dividend|IPO|buyback|price target|analyst rating|quarterly profit|revenue beat|guidance|shareholder/i;
-const NEWS_STOCK_BLOCK_LOOSE = /stock market|wall street|equities|S&P|Nasdaq|Dow/i;
 let NEWS_ITEMS = [];
 let newsStrict = true;
 function isStockNews(title, desc) { const text = (title + ' ' + desc).toLowerCase(); return newsStrict ? NEWS_STOCK_BLOCK_STRICT.test(text) : NEWS_STOCK_BLOCK_LOOSE.test(text); }
@@ -2695,7 +2434,8 @@ async function fetchNewsFeed(feedInfo) {
     const desc = (it.description || '').replace(/<[^>]+>/g, '').trim();
     if (!title) continue;
     if (isStockNews(title, desc)) continue;
-    items.push({ title, link: it.link, pubDate: it.pubDate, source: feedInfo.source, category: feedInfo.category });
+    const tags = detectNewsTags(title, desc);
+    items.push({ title, link: it.link, pubDate: it.pubDate, source: feedInfo.source, category: feedInfo.category, producers: tags.producers, mines: tags.mines, countries: tags.countries, critical: tags.critical });
   }
   return items;
 }
@@ -2706,7 +2446,7 @@ async function loadNews() {
   results.forEach((r, i) => { if (r.status === 'fulfilled') all.push(...r.value); else console.warn('Feed failed:', NEWS_FEEDS[i].url, r.reason?.message); });
   const seen = new Set();
   NEWS_ITEMS = all.filter(it => { const key = it.title.toLowerCase().slice(0, 60); if (seen.has(key)) return false; seen.add(key); return true; });
-  NEWS_ITEMS.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+  NEWS_ITEMS.sort((a, b) => { if (a.critical !== b.critical) return a.critical ? -1 : 1; return new Date(b.pubDate) - new Date(a.pubDate); });
   renderNews();
   if (stamp) stamp.textContent = 'live · ' + new Date().toLocaleTimeString();
 }
@@ -2721,7 +2461,12 @@ function renderNews() {
     feed.innerHTML = items.slice(0, 25).map(it => {
       const tagCls = NEWS_TAG_CLASS[cat] || 'metal';
       const tagLbl = NEWS_TAG_LABEL[cat] || cat;
-      return `<li><div class="title"><a href="${it.link}" target="_blank" rel="noopener">${escapeNewsHtml(it.title)}</a></div><div class="meta"><span>${escapeNewsHtml(it.source)}</span><span>· ${timeAgo(it.pubDate)}</span><span class="tag ${tagCls}">${tagLbl}</span></div></li>`;
+      const intel = [];
+      if (it.critical) intel.push(`<span class="tag critical">⚠ Event</span>`);
+      for (const c of (it.countries || []).slice(0, 2)) intel.push(`<span class="tag country">${c}</span>`);
+      for (const p of (it.producers || []).slice(0, 2)) intel.push(`<span class="tag producer">${p}</span>`);
+      for (const m of (it.mines || []).slice(0, 2)) intel.push(`<span class="tag mine">${m}</span>`);
+      return `<li><div class="title"><a href="${it.link}" target="_blank" rel="noopener">${escapeNewsHtml(it.title)}</a></div><div class="meta"><span>${escapeNewsHtml(it.source)}</span><span>· ${timeAgo(it.pubDate)}</span><span class="tag ${tagCls}">${tagLbl}</span>${intel.join(' ')}</div></li>`;
     }).join('');
   }
 }
@@ -2807,7 +2552,6 @@ function loadCSPFile(text) {
   return true;
 }
 function readFile(file, onLoad) { const r = new FileReader(); r.onload = e => onLoad(e.target.result); r.readAsText(file); }
-
 function maybeRender() {
   if (!RAW.length && !LIVE_RAW.length && !CSP_RAW.length) return;
   showContent();
@@ -2880,14 +2624,7 @@ function lmeCardHtml(metalKey, latest, prev) {
   const cancChg = (cur.cancelled != null && pv.cancelled != null) ? cur.cancelled - pv.cancelled : 0;
   const fmtN = n => (n == null || isNaN(n)) ? '—' : Number(n).toLocaleString();
   const active = LME_ACTIVE === metalKey ? ' active' : '';
-  return '<div class="lme-sum-card' + active + '" data-metal="' + metalKey + '">' +
-    '<div class="bar" style="background:' + meta.color + '"></div>' +
-    '<div class="lme-sum-head"><span class="lme-sum-title" style="color:' + meta.color + '">' + meta.label + ' <span style="color:#7c8aa0;font-size:.75rem;">' + meta.symbol + '</span></span><span class="lme-sum-date">' + (latest.date || '—') + '</span></div>' +
-    '<div class="lme-sum-row">' +
-      '<div class="lme-sum-cell"><div class="lbl">Live</div><div class="val">' + fmtN(live) + '</div>' + lmeFmtChg(liveChg) + '</div>' +
-      '<div class="lme-sum-cell"><div class="lbl">Cancelled</div><div class="val">' + fmtN(canc) + '</div>' + lmeFmtChg(cancChg) + '</div>' +
-      '<div class="lme-sum-cell"><div class="lbl">Total</div><div class="val">' + fmtN(total) + '</div>' + lmeFmtChg(totalChg) + '</div>' +
-    '</div></div>';
+  return '<div class="lme-sum-card' + active + '" data-metal="' + metalKey + '"><div class="bar" style="background:' + meta.color + '"></div><div class="lme-sum-head"><span class="lme-sum-title" style="color:' + meta.color + '">' + meta.label + ' <span style="color:#7c8aa0;font-size:.75rem;">' + meta.symbol + '</span></span><span class="lme-sum-date">' + (latest.date || '—') + '</span></div><div class="lme-sum-row"><div class="lme-sum-cell"><div class="lbl">Live</div><div class="val">' + fmtN(live) + '</div>' + lmeFmtChg(liveChg) + '</div><div class="lme-sum-cell"><div class="lbl">Cancelled</div><div class="val">' + fmtN(canc) + '</div>' + lmeFmtChg(cancChg) + '</div><div class="lme-sum-cell"><div class="lbl">Total</div><div class="val">' + fmtN(total) + '</div>' + lmeFmtChg(totalChg) + '</div></div></div>';
 }
 function lmeRender() {
   const entries = LME_HISTORY.entries || [];
@@ -2919,26 +2656,18 @@ function lmeRenderCharts() {
   const ratioD = recent.map(e => { const l = e[mk]?.live, c = e[mk]?.cancelled; if (l == null || c == null || (l + c) === 0) return null; return +((c / (l + c)) * 100).toFixed(2); });
   const changeD = recent.map((e, i) => { if (i === 0) return 0; const p = recent[i-1][mk]?.total; const c = e[mk]?.total; if (p == null || c == null) return 0; return c - p; });
   let liveSeries = liveD, cancSeries = cancD, liveLabel = 'Live', cancLabel = 'Cancelled';
-  if (LME_RATIO_MODE === 'pct') {
-    liveSeries = recent.map(e => { const l = e[mk]?.live, c = e[mk]?.cancelled; if (l == null || c == null || (l + c) === 0) return null; return +((l / (l + c)) * 100).toFixed(2); });
-    cancSeries = ratioD; liveLabel = 'Live % of total'; cancLabel = 'Cancelled % of total';
-  }
+  if (LME_RATIO_MODE === 'pct') { liveSeries = recent.map(e => { const l = e[mk]?.live, c = e[mk]?.cancelled; if (l == null || c == null || (l + c) === 0) return null; return +((l / (l + c)) * 100).toFixed(2); }); cancSeries = ratioD; liveLabel = 'Live % of total'; cancLabel = 'Cancelled % of total'; }
   const hint = document.getElementById('lmeChLiveHint');
   if (hint) hint.textContent = LME_RATIO_MODE === 'pct' ? 'Values shown as % of (live + cancelled)' : '';
   const yType = LME_Y_AXIS;
   const opts = (optsExtra = {}) => ({
     responsive: true, maintainAspectRatio: false,
     interaction: { mode: 'index', intersect: false },
-    plugins: { legend: { labels: { color: '#a9b6cb', font: { size: 10 } } }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(14,20,32,0.95)', borderColor: '#232d42', borderWidth: 1, titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10,
-      callbacks: { label: function(ctx) { const v = ctx.parsed.y; if (v == null) return `${ctx.dataset.label}: —`; const isPct = /%\s*of total/i.test(ctx.dataset.label) || ctx.dataset.label.includes('%'); const val = isPct ? v.toFixed(2) + '%' : Number(v).toLocaleString(); return `${ctx.dataset.label}: ${val}`; } }
-    }},
+    plugins: { legend: { labels: { color: '#a9b6cb', font: { size: 10 } } }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(14,20,32,0.95)', borderColor: '#232d42', borderWidth: 1, titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10, callbacks: { label: function(ctx) { const v = ctx.parsed.y; if (v == null) return `${ctx.dataset.label}: —`; const isPct = /%\s*of total/i.test(ctx.dataset.label) || ctx.dataset.label.includes('%'); const val = isPct ? v.toFixed(2) + '%' : Number(v).toLocaleString(); return `${ctx.dataset.label}: ${val}`; } } } },
     scales: { x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { type: yType, grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } }, ...(optsExtra.y || {}) } }
   });
   Object.values(LME_CHARTS).forEach(c => { if (c) c.destroy(); });
-  LME_CHARTS.live = new Chart(document.getElementById('lmeChLive'), { type: 'line', data: { labels, datasets: [
-    { label: liveLabel, data: liveSeries, borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,.15)', borderWidth: 2, pointRadius: 0, tension: .15, fill: true },
-    { label: cancLabel, data: cancSeries, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,.15)', borderWidth: 2, pointRadius: 0, tension: .15, fill: true },
-  ]}, options: opts() });
+  LME_CHARTS.live = new Chart(document.getElementById('lmeChLive'), { type: 'line', data: { labels, datasets: [{ label: liveLabel, data: liveSeries, borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,.15)', borderWidth: 2, pointRadius: 0, tension: .15, fill: true }, { label: cancLabel, data: cancSeries, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,.15)', borderWidth: 2, pointRadius: 0, tension: .15, fill: true }]}, options: opts() });
   LME_CHARTS.total = new Chart(document.getElementById('lmeChTotal'), { type: 'line', data: { labels, datasets: [{ label: 'Total', data: totalD, borderColor: meta.color, backgroundColor: meta.color + '20', borderWidth: 2, pointRadius: 0, tension: .15, fill: true }] }, options: opts() });
   LME_CHARTS.ratio = new Chart(document.getElementById('lmeChRatio'), { type: 'line', data: { labels, datasets: [{ label: 'Cancelled %', data: ratioD, borderColor: '#f39c12', backgroundColor: 'rgba(243,156,18,.15)', borderWidth: 2, pointRadius: 0, tension: .15, fill: true }] }, options: opts({ y: { type: 'linear', min: 0, max: 100 } }) });
   const maxAbs = Math.max(...changeD.map(v => Math.abs(v || 0)), 1);
@@ -3003,12 +2732,7 @@ async function lmeBackfill() {
     const lines = text.split(/\r?\n/).filter(l => l.trim());
     const header = parseCSVLine(lines[0]);
     const col = {};
-    header.forEach((h, i) => {
-      const hl = h.toLowerCase();
-      if (/lme.*copper.*stock/i.test(hl)) col.copper = i;
-      else if (/lme.*zinc.*stock/i.test(hl)) col.zinc = i;
-      else if (/lme.*alum.*stock/i.test(hl)) col.aluminium = i;
-    });
+    header.forEach((h, i) => { const hl = h.toLowerCase(); if (/lme.*copper.*stock/i.test(hl)) col.copper = i; else if (/lme.*zinc.*stock/i.test(hl)) col.zinc = i; else if (/lme.*alum.*stock/i.test(hl)) col.aluminium = i; });
     if (col.copper == null && col.zinc == null && col.aluminium == null) throw new Error('Stock columns not found');
     const monthMap = { january:'01',february:'02',march:'03',april:'04',may:'05',june:'06',july:'07',august:'08',september:'09',october:'10',november:'11',december:'12' };
     const newEntries = [];
@@ -3029,10 +2753,7 @@ async function lmeBackfill() {
     const merged = {};
     for (const e of LME_HISTORY.entries || []) merged[e.date] = e;
     let added = 0, updated = 0;
-    for (const e of newEntries) {
-      if (!merged[e.date]) { merged[e.date] = e; added++; }
-      else { for (const k of Object.keys(e)) { if (k === 'date') continue; if (!merged[e.date][k]) merged[e.date][k] = e[k]; else if (merged[e.date][k].total == null) merged[e.date][k].total = e[k].total; } updated++; }
-    }
+    for (const e of newEntries) { if (!merged[e.date]) { merged[e.date] = e; added++; } else { for (const k of Object.keys(e)) { if (k === 'date') continue; if (!merged[e.date][k]) merged[e.date][k] = e[k]; else if (merged[e.date][k].total == null) merged[e.date][k].total = e[k].total; } updated++; } }
     const sorted = Object.values(merged).sort((a,b) => a.date.localeCompare(b.date));
     LME_HISTORY.entries = sorted;
     st.textContent = 'Saving ' + sorted.length + ' entries…';
@@ -3157,10 +2878,7 @@ function shfeRenderCharts() {
   if (shfeChartChange) shfeChartChange.destroy();
   shfeChartChange = new Chart(document.getElementById('shfeChartChange'), { type: 'bar', data: { labels, datasets: changeDatasets }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 9 } } }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(14,20,32,0.95)', borderColor: '#232d42', borderWidth: 1, titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10, callbacks: { label: ctx => { const v = ctx.parsed.y; if (v == null) return `${ctx.dataset.label}: —`; const sign = v > 0 ? '+' : ''; return `${ctx.dataset.label}: ${sign}${Number(v).toLocaleString()} t`; } } } }, scales: { x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } } } } });
   if (shfeChartCuAl) shfeChartCuAl.destroy();
-  shfeChartCuAl = new Chart(document.getElementById('shfeChartCuAl'), { type: 'line', data: { labels, datasets: [
-    { label: 'Copper', data: SHFE_HISTORY.map(e => e.metals.copper?.qty ?? null), borderColor: '#d68b4d', backgroundColor: '#d68b4d20', borderWidth: 2, pointRadius: 0, tension: 0.15, fill: true, yAxisID: 'y' },
-    { label: 'Aluminium', data: SHFE_HISTORY.map(e => e.metals.aluminium?.qty ?? null), borderColor: '#93a2b5', backgroundColor: '#93a2b520', borderWidth: 2, pointRadius: 0, tension: 0.15, fill: true, yAxisID: 'y1' },
-  ]}, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(14,20,32,0.95)', borderColor: '#232d42', borderWidth: 1, titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10, callbacks: { label: ctx => { const v = ctx.parsed.y; return `${ctx.dataset.label}: ${v != null ? Number(v).toLocaleString() + ' t' : '—'}`; } } } }, scales: { x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#d68b4d', font: { size: 9 } } }, y1: { position: 'right', grid: { display: false }, ticks: { color: '#93a2b5', font: { size: 9 } } } } } });
+  shfeChartCuAl = new Chart(document.getElementById('shfeChartCuAl'), { type: 'line', data: { labels, datasets: [ { label: 'Copper', data: SHFE_HISTORY.map(e => e.metals.copper?.qty ?? null), borderColor: '#d68b4d', backgroundColor: '#d68b4d20', borderWidth: 2, pointRadius: 0, tension: 0.15, fill: true, yAxisID: 'y' }, { label: 'Aluminium', data: SHFE_HISTORY.map(e => e.metals.aluminium?.qty ?? null), borderColor: '#93a2b5', backgroundColor: '#93a2b520', borderWidth: 2, pointRadius: 0, tension: 0.15, fill: true, yAxisID: 'y1' } ]}, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(14,20,32,0.95)', borderColor: '#232d42', borderWidth: 1, titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10, callbacks: { label: ctx => { const v = ctx.parsed.y; return `${ctx.dataset.label}: ${v != null ? Number(v).toLocaleString() + ' t' : '—'}`; } } } }, scales: { x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#d68b4d', font: { size: 9 } } }, y1: { position: 'right', grid: { display: false }, ticks: { color: '#93a2b5', font: { size: 9 } } } } } });
 }
 function shfeSetStatus(kind, msg) { const el = document.getElementById('shfeStatus'); if (!el) return; el.className = 'status-banner ' + kind; el.style.display = 'block'; el.innerHTML = msg; }
 function shfeFmt(n, dp = 0) { if (n == null || isNaN(n)) return '—'; return Number(n).toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp }); }
@@ -3302,11 +3020,7 @@ function renderCftcChart() {
   datasets.push({ label: 'Hedgers (Commercial) __neg', data: commSplit.neg, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.35)', borderWidth: 1.5, pointRadius: 0, tension: 0.15, fill: 'origin', yAxisID: 'y' });
   if (settings.mode === 'both') datasets.push({ label: 'LME Copper ($/t)', data: priceData, borderColor: '#e8a33d', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.15, fill: false, yAxisID: 'y1', borderDash: [6, 3] });
   if (cftcNetChart) cftcNetChart.destroy();
-  cftcNetChart = new Chart(canvas, { type: 'line', data: { labels, datasets }, options: {
-    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-    plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 10, font: { size: 10 }, filter: item => !item.text.includes('__neg') } }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(14,20,32,0.95)', borderColor: '#232d42', borderWidth: 1, titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10, filter: item => !item.dataset.label.includes('__neg') && item.parsed.y != null, callbacks: { label: ctx => { const v = ctx.parsed.y; if (v == null) return null; if (ctx.dataset.yAxisID === 'y1') return `${ctx.dataset.label}: $${Math.round(v).toLocaleString()}`; if (isPct) return `${ctx.dataset.label}: ${v.toFixed(2)}%`; return `${ctx.dataset.label}: ${v >= 0 ? '+' : ''}${Math.round(v).toLocaleString()}`; } } } },
-    scales: { x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 }, maxTicksLimit: 10 } }, y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 }, callback: v => isPct ? v.toFixed(1) + '%' : (v >= 0 ? '+' : '') + (v / 1000).toFixed(0) + 'k' }, title: { display: true, text: isPct ? 'Net % of OI' : 'Net Position (lots)', color: '#7c8aa0', font: { size: 10 } } }, ...(settings.mode === 'both' ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#e8a33d', font: { size: 9 }, callback: v => '$' + Math.round(v) }, title: { display: true, text: 'Price ($/t)', color: '#e8a33d', font: { size: 10 } } } } : {}) }
-  }});
+  cftcNetChart = new Chart(canvas, { type: 'line', data: { labels, datasets }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 10, font: { size: 10 }, filter: item => !item.text.includes('__neg') } }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(14,20,32,0.95)', borderColor: '#232d42', borderWidth: 1, titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10, filter: item => !item.dataset.label.includes('__neg') && item.parsed.y != null, callbacks: { label: ctx => { const v = ctx.parsed.y; if (v == null) return null; if (ctx.dataset.yAxisID === 'y1') return `${ctx.dataset.label}: $${Math.round(v).toLocaleString()}`; if (isPct) return `${ctx.dataset.label}: ${v.toFixed(2)}%`; return `${ctx.dataset.label}: ${v >= 0 ? '+' : ''}${Math.round(v).toLocaleString()}`; } } } }, scales: { x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 }, maxTicksLimit: 10 } }, y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 }, callback: v => isPct ? v.toFixed(1) + '%' : (v >= 0 ? '+' : '') + (v / 1000).toFixed(0) + 'k' }, title: { display: true, text: isPct ? 'Net % of OI' : 'Net Position (lots)', color: '#7c8aa0', font: { size: 10 } } }, ...(settings.mode === 'both' ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#e8a33d', font: { size: 9 }, callback: v => '$' + Math.round(v) }, title: { display: true, text: 'Price ($/t)', color: '#e8a33d', font: { size: 10 } } } } : {}) } }});
 }
 function renderCftcTable() {
   const el = document.getElementById('cftcTable'); if (!el || !CFTC_COT.length) { if (el) el.innerHTML = '<div style="color:var(--muted);font-size:0.78rem;padding:8px;">No data.</div>'; return; }
@@ -3487,8 +3201,7 @@ function renderLmeMetalChart(metalKey) {
   const specPct = series.map(e => e.metals[metalKey].fundNetPct ?? 0);
   const hedgerData = mode === 'pct' ? hedgerPct : hedgerNet;
   const specData = mode === 'pct' ? specPct : specNet;
-  const hedgerSplit = splitPosNeg(hedgerData);
-  const specSplit = splitPosNeg(specData);
+  const hedgerSplit = splitPosNeg(hedgerData); const specSplit = splitPosNeg(specData);
   let priceData = [];
   if (mode === 'both') {
     const meta = LME_COTR_METALS[Object.keys(LME_COTR_METALS).find(c => LME_COTR_METALS[c].key === metalKey)];
@@ -3504,11 +3217,7 @@ function renderLmeMetalChart(metalKey) {
   datasets.push({ label: 'Hedgers (Commercial) __neg', data: hedgerSplit.neg, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.35)', borderWidth: 1.5, pointRadius: 0, tension: 0.15, fill: 'origin', yAxisID: 'y' });
   if (mode === 'both') datasets.push({ label: 'LME Price ($/t)', data: priceData, borderColor: '#e8a33d', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.15, fill: false, yAxisID: 'y1', borderDash: [6, 3] });
   if (lmeChartInstances[metalKey]) lmeChartInstances[metalKey].destroy();
-  lmeChartInstances[metalKey] = new Chart(canvas, { type: 'line', data: { labels, datasets }, options: {
-    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-    plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 10, font: { size: 10 }, filter: item => !item.text.includes('__neg') } }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(14,20,32,0.95)', borderColor: '#232d42', borderWidth: 1, titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10, filter: item => !item.dataset.label.includes('__neg') && item.parsed.y != null, callbacks: { label: ctx => { const v = ctx.parsed.y; if (v == null) return null; if (ctx.dataset.yAxisID === 'y1') return `${ctx.dataset.label}: $${Math.round(v).toLocaleString()}`; if (mode === 'pct') return `${ctx.dataset.label}: ${v.toFixed(2)}%`; return `${ctx.dataset.label}: ${v >= 0 ? '+' : ''}${Math.round(v).toLocaleString()}`; } } } },
-    scales: { x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 }, maxTicksLimit: 10 } }, y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 }, callback: v => mode === 'pct' ? v.toFixed(1) + '%' : (v >= 0 ? '+' : '') + (v / 1000).toFixed(0) + 'k' }, title: { display: true, text: mode === 'pct' ? 'Net % of OI' : 'Net Position (lots)', color: '#7c8aa0', font: { size: 10 } } }, ...(mode === 'both' ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#e8a33d', font: { size: 9 }, callback: v => '$' + Math.round(v) }, title: { display: true, text: 'Price ($/t)', color: '#e8a33d', font: { size: 10 } } } } : {}) }
-  }});
+  lmeChartInstances[metalKey] = new Chart(canvas, { type: 'line', data: { labels, datasets }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 10, font: { size: 10 }, filter: item => !item.text.includes('__neg') } }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(14,20,32,0.95)', borderColor: '#232d42', borderWidth: 1, titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10, filter: item => !item.dataset.label.includes('__neg') && item.parsed.y != null, callbacks: { label: ctx => { const v = ctx.parsed.y; if (v == null) return null; if (ctx.dataset.yAxisID === 'y1') return `${ctx.dataset.label}: $${Math.round(v).toLocaleString()}`; if (mode === 'pct') return `${ctx.dataset.label}: ${v.toFixed(2)}%`; return `${ctx.dataset.label}: ${v >= 0 ? '+' : ''}${Math.round(v).toLocaleString()}`; } } } }, scales: { x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 }, maxTicksLimit: 10 } }, y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 }, callback: v => mode === 'pct' ? v.toFixed(1) + '%' : (v >= 0 ? '+' : '') + (v / 1000).toFixed(0) + 'k' }, title: { display: true, text: mode === 'pct' ? 'Net % of OI' : 'Net Position (lots)', color: '#7c8aa0', font: { size: 10 } } }, ...(mode === 'both' ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#e8a33d', font: { size: 9 }, callback: v => '$' + Math.round(v) }, title: { display: true, text: 'Price ($/t)', color: '#e8a33d', font: { size: 10 } } } } : {}) } }});
 }
 function renderLmeCotrCharts() { for (const key of ['copper','aluminium','zinc']) renderLmeMetalChart(key); }
 function renderLmeCotrTable() {
