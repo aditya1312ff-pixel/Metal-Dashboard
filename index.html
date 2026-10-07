@@ -472,6 +472,9 @@
             <button class="btn small" id="forgetTokenBtn" style="display:none;">Forget token</button>
           </div>
           <div class="controls" style="margin-top:10px;justify-content:flex-end;">
+            <button class="btn" id="cspDeleteBtn" style="border-color:#e74c3c;color:#e74c3c;">
+  <i class="fas fa-trash"></i> Delete this date
+</button>
             <button class="btn" id="cspClearBtn" style="margin-right:8px;">Clear</button>
             <button class="btn-refresh" id="cspSaveBtn"><i class="fas fa-cloud-upload-alt"></i> Save to GitHub</button>
           </div>
@@ -1778,6 +1781,81 @@ async function saveCspToGitHub() {
     if (/401|403/.test(e.message)) { SAFE_STORE.removeItem(GITHUB_TOKEN_KEY); statusEl.textContent = 'Token invalid — cleared.'; }
   } finally { btn.disabled = false; }
 }
+  async function deleteCspRow() {
+  const statusEl = document.getElementById('cspUpdateStatus');
+  const btn = document.getElementById('cspDeleteBtn');
+  const token = getGithubToken();
+  if (!token) { statusEl.textContent = 'No token — aborted.'; return; }
+
+  const date = document.getElementById('cspNewDate').value;
+  if (!date) { statusEl.textContent = 'Pick a date.'; return; }
+  if (!confirm(`Delete CSP row for ${date}? This commits to GitHub.`)) return;
+
+  btn.disabled = true;
+  statusEl.textContent = 'Deleting…';
+  statusEl.style.color = 'var(--muted)';
+
+  try {
+    const currentText = await getFileText(token);
+    const sha = await getFileSha(token);
+    const lines = currentText.split(/\r?\n/);
+
+    let removed = false;
+    const outLines = lines.filter((l, i) => {
+      if (i === 0) return true;                    // keep header
+      if (!l.trim()) return false;
+      const firstCell = parseCSVLine(l)[0];
+      const d = parseDateLoose(firstCell);
+      if (d === date) { removed = true; return false; }
+      return true;
+    });
+
+    if (!removed) {
+      statusEl.textContent = `No row found for ${date}.`;
+      statusEl.style.color = 'var(--amber)';
+      btn.disabled = false;
+      return;
+    }
+
+    const finalText = outLines.join('\n') + '\n';
+    const putRes = await fetch(
+      `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${CSP_FILE_PATH}`,
+      {
+        method: 'PUT',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `Delete CSP row ${date}`,
+          content: b64encodeUtf8(finalText),
+          sha,
+          branch: REPO_BRANCH
+        })
+      }
+    );
+    if (!putRes.ok) throw new Error('Commit failed: ' + putRes.status);
+
+    statusEl.textContent = `Deleted ${date} ✓`;
+    statusEl.style.color = 'var(--green)';
+
+    setTimeout(async () => {
+      try {
+        const txt = await fetchText(CSP_URL + '?t=' + Date.now());
+        const r = parseCSPCSV(txt);
+        if (r.ok) {
+          renderCSPLatest();
+          renderCSPDaysTable();
+          renderNalcoCard();
+          renderCSP();
+          renderCSP2();
+        }
+      } catch (e) {}
+    }, 3000);
+  } catch (e) {
+    statusEl.textContent = 'Error: ' + e.message;
+    statusEl.style.color = 'var(--red)';
+  } finally {
+    btn.disabled = false;
+  }
+}
 function refreshTokenUI() {
   const el = document.getElementById('tokenStatus');
   const btn = document.getElementById('forgetTokenBtn');
@@ -1792,6 +1870,7 @@ function wireCspUpdater() {
   const dateInput = document.getElementById('cspNewDate');
   if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
   document.getElementById('cspSaveBtn')?.addEventListener('click', saveCspToGitHub);
+    document.getElementById('cspDeleteBtn')?.addEventListener('click', deleteCspRow);
   document.getElementById('cspClearBtn')?.addEventListener('click', () => { ['newCuCash','newCuThree','newCuStock','newZnCash','newZnThree','newZnStock','newAlCash','newAlThree','newAlStock'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; }); });
   document.getElementById('cspCloseBtn')?.addEventListener('click', closeCspUpdater);
   refreshTokenUI();
