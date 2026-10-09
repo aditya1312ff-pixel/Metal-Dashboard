@@ -37,10 +37,28 @@
   .roll-table td.pos { color:var(--red); }
   .roll-table td.neg { color:var(--green); }
   .roll-table td.muted { color:var(--muted); font-weight:400; }
-  .roll-table input.avg-input { width:100%; background:#0e1724; border:1px solid var(--border); color:#fff; padding:8px 10px; border-radius:6px; font-size:0.88rem; font-weight:600; font-variant-numeric:tabular-nums; text-align:right; font-family:inherit; }
+
+  .roll-table input.avg-input {
+    width:100%; background:#0e1724; border:1px solid var(--border); color:#fff;
+    padding:8px 10px; border-radius:6px; font-size:0.88rem; font-weight:600;
+    font-variant-numeric:tabular-nums; text-align:right; font-family:inherit;
+  }
   .roll-table input.avg-input:focus { outline:none; border-color:var(--accent); background:rgba(232,163,61,0.05); }
   .roll-table input.avg-input.edited { border-color:var(--accent); background:rgba(232,163,61,0.10); }
   .roll-table input.avg-input::placeholder { color:var(--muted); }
+
+  .roll-table input.roll-input {
+    width:100%; background:#0e1724; border:1px solid var(--border); color:#c6d0de;
+    padding:8px 10px; border-radius:6px; font-size:0.88rem; font-weight:600;
+    font-variant-numeric:tabular-nums; text-align:right; font-family:inherit;
+  }
+  .roll-table input.roll-input:focus { outline:none; border-color:var(--accent); background:rgba(232,163,61,0.05); }
+  .roll-table input.roll-input.edited { border-color:var(--accent); background:rgba(232,163,61,0.10); }
+  /* .pos → red  ·  .neg → green */
+  .roll-table input.roll-input.pos { color:var(--red); }
+  .roll-table input.roll-input.neg { color:var(--green); }
+  .roll-table input.roll-input::placeholder { color:var(--muted); }
+
   .status { padding:10px 14px; border-radius:10px; margin-bottom:16px; font-size:0.78rem; }
   .status.ok   { background:rgba(46,204,113,0.12); border:1px solid var(--green); color:#7ee8a7; }
   .status.err  { background:rgba(231,76,60,0.12);  border:1px solid var(--red);   color:#f5a3a3; }
@@ -98,12 +116,14 @@ const CSP_URL = 'https://raw.githubusercontent.com/aditya1312ff-pixel/Metal-Dash
 const LIVE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vROr3cjVUMAqL9qXYAp6rxcekcbiacZmQ4JfSMOjgoEKKAxhLLDCsMddPf6G3ZgnN0b4dWl7RrghaZ9/pub?gid=0&single=true&output=csv';
 const LIVE_PROXY = 'https://round-cake-56f6.aditya1312ff.workers.dev/?url=';
 const CSP_COLORS = { Cu:'#d68b4d', Zn:'#5b8fc9', Al:'#93a2b5' };
-const EDITS_KEY = 'rollover_avg_edits_v1';
+const AVG_EDITS_KEY = 'rollover_avg_edits_v1';
+const ROLL_EDITS_KEY = 'rollover_roll_edits_v1';
 
 let CSP_RAW = [];
 let LATEST_CSP = null;
 let LIVE_NOW = null;
 let AVG_EDITS = {};
+let ROLL_EDITS = {};
 
 const STORE = (() => {
   const mem = {};
@@ -115,8 +135,10 @@ const STORE = (() => {
     removeItem: k => { if (ok) try { localStorage.removeItem(k); } catch(e) { delete mem[k]; } else delete mem[k]; },
   };
 })();
-function loadEdits() { try { const r = STORE.getItem(EDITS_KEY); return r ? JSON.parse(r) : {}; } catch(e) { return {}; } }
-function saveEdits() { try { STORE.setItem(EDITS_KEY, JSON.stringify(AVG_EDITS)); } catch(e) {} }
+function loadEdits() { try { const r = STORE.getItem(AVG_EDITS_KEY); return r ? JSON.parse(r) : {}; } catch(e) { return {}; } }
+function saveEdits() { try { STORE.setItem(AVG_EDITS_KEY, JSON.stringify(AVG_EDITS)); } catch(e) {} }
+function loadRollEdits() { try { const r = STORE.getItem(ROLL_EDITS_KEY); return r ? JSON.parse(r) : {}; } catch(e) { return {}; } }
+function saveRollEdits() { try { STORE.setItem(ROLL_EDITS_KEY, JSON.stringify(ROLL_EDITS)); } catch(e) {} }
 
 function parseCSVLine(line) {
   const delim = line.indexOf('\t') >= 0 ? '\t' : ',';
@@ -154,8 +176,8 @@ function parseDateLoose(s) {
   }
   return null;
 }
-function fmt2(v) { return v == null ? '—' : v.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}); }
 function fmt0(v) { return v == null ? '—' : Math.round(v).toLocaleString(); }
+function fmt2(v) { return v == null ? '—' : v.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}); }
 
 function parseCSPCSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
@@ -180,6 +202,10 @@ function parseCSPCSV(text) {
     if (!map[metal]) map[metal] = {};
     map[metal][field] = idx;
   });
+  if (!Object.keys(map).length) {
+    const rest = header.map((h, i) => ({h, i})).filter(x => x.i !== dateCol);
+    if (rest.length >= 9) ['Cu','Zn','Al'].forEach((metal, mi) => { map[metal] = { cash: rest[mi*3+0].i, three: rest[mi*3+1].i, stock: rest[mi*3+2].i }; });
+  }
   if (!Object.keys(map).length) return { ok:false, msg:'no cols' };
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
@@ -219,7 +245,6 @@ function parseLiveCSV(text) {
   }
   return rows;
 }
-
 async function fetchLive() {
   try {
     const bustedUrl = LIVE_URL + (LIVE_URL.includes('?') ? '&' : '?') + '_cb=' + Date.now();
@@ -242,16 +267,13 @@ async function fetchLive() {
       fetchedAt: new Date().toISOString(),
     };
     return { ok: true };
-  } catch (e) {
-    return { ok: false, error: e.message };
-  }
+  } catch (e) { return { ok: false, error: e.message }; }
 }
 
 async function loadAll() {
   const status = document.getElementById('status');
   status.className = 'status info';
   status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading…';
-
   const [cspRes, liveRes] = await Promise.all([
     (async () => {
       try {
@@ -262,28 +284,44 @@ async function loadAll() {
     })(),
     fetchLive(),
   ]);
-
   const msgs = [];
   if (cspRes.ok) msgs.push('✓ ' + cspRes.msg); else msgs.push('✗ ' + cspRes.msg);
   if (liveRes.ok && LIVE_NOW) msgs.push(`✓ Live: CU1=${LIVE_NOW.cu1 ?? '—'} CU2=${LIVE_NOW.cu2 ?? '—'} ZN1=${LIVE_NOW.zinc1 ?? '—'} ZN2=${LIVE_NOW.zinc2 ?? '—'}`);
   else msgs.push('✗ Live: ' + (liveRes.error || 'unknown'));
-
   status.className = (cspRes.ok && liveRes.ok) ? 'status ok' : 'status err';
   status.innerHTML = msgs.join(' · ');
-
   render();
 }
 
+/* LME defaults — Roll = 3M (next) − Cash (front) · walks back to previous day */
 function lmeDefaults(metal) {
-  if (!LATEST_CSP || !LATEST_CSP[metal]) return { avgBuy: null, current: null, roll: null, stock: null };
-  const row = LATEST_CSP[metal];
+  if (!LATEST_CSP || !LATEST_CSP[metal]) {
+    return { avgBuy: null, current: null, roll: null, stock: null };
+  }
+  const curRow = LATEST_CSP[metal];
+
+  let prevRow = null;
+  for (let i = CSP_RAW.length - 2; i >= 0; i--) {
+    const row = CSP_RAW[i];
+    const mRow = row && row[metal];
+    if (mRow && mRow.cash != null && mRow.threeM != null) {
+      prevRow = mRow;
+      break;
+    }
+  }
+  const rollSource = prevRow || curRow;
+
   return {
-    avgBuy:  row.threeM,
-    current: row.cash,
-    roll:    (row.cash != null && row.threeM != null) ? row.cash - row.threeM : null,
-    stock:   row.stock,
+    avgBuy:  curRow.threeM,
+    current: curRow.cash,
+    // 3M (next) − Cash (front)
+    roll:    (rollSource.cash != null && rollSource.threeM != null)
+             ? rollSource.threeM - rollSource.cash
+             : null,
+    stock:   curRow.stock,
   };
 }
+
 function mcxDefaults(metal) {
   let front = null, next = null;
   if (LIVE_NOW) {
@@ -291,7 +329,24 @@ function mcxDefaults(metal) {
     else if (metal === 'Cu') { front = LIVE_NOW.cu1; next = LIVE_NOW.cu2; }
     else if (metal === 'Al') { front = LIVE_NOW.al1; next = LIVE_NOW.al2; }
   }
-  return { avgBuy: next, current: front, next: next, roll: (front != null && next != null) ? front - next : null };
+  // Roll = Next Month − Front Month
+  return { avgBuy: next, current: front, next: next, roll: (front != null && next != null) ? next - front : null };
+}
+
+/* Roll input renderer
+   Positive → "neg" class (CSS: green)
+   Negative → "pos" class (CSS: red) */
+function rollInputHtml(editKey, value) {
+  const isEdited = ROLL_EDITS[editKey] !== undefined && ROLL_EDITS[editKey] !== null;
+  const v = isEdited ? ROLL_EDITS[editKey] : value;
+  const cls = v == null ? '' : (v > 0 ? 'neg' : v < 0 ? 'pos' : '');
+  const sign = v == null ? '' : (v >= 0 ? '+' : '');
+  const display = v == null ? '' : (sign + v.toFixed(2));
+  return `<input type="number" step="0.01"
+                 class="roll-input ${isEdited ? 'edited' : ''} ${cls}"
+                 data-roll-key="${editKey}"
+                 value="${display}"
+                 placeholder="—">`;
 }
 
 function render() {
@@ -316,35 +371,36 @@ function render() {
     { key:'Zn', name:'Zn', color: CSP_COLORS.Zn },
   ];
 
+  /* LME section */
   let lmeHtml = '';
   for (const m of metals) {
     const d = lmeDefaults(m.key);
-    const editKey = 'LME_' + m.key;
-    const isEdited = AVG_EDITS[editKey] !== undefined && AVG_EDITS[editKey] !== null;
-    const avgValue = isEdited ? AVG_EDITS[editKey] : d.avgBuy;
-    const rollCls = d.roll == null ? 'muted' : (d.roll > 0 ? 'pos' : d.roll < 0 ? 'neg' : 'muted');
-    const rollSign = d.roll == null ? '' : (d.roll >= 0 ? '+' : '');
+    const avgKey = 'LME_' + m.key;
+    const rollKey = 'ROLL_LME_' + m.key;
+    const isAvgEdited = AVG_EDITS[avgKey] !== undefined && AVG_EDITS[avgKey] !== null;
+    const avgValue = isAvgEdited ? AVG_EDITS[avgKey] : d.avgBuy;
     lmeHtml += `<tr>
       <td class="metal-name" style="color:${m.color}">${m.name}</td>
-      <td><input type="number" step="0.01" class="avg-input ${isEdited ? 'edited' : ''}" data-key="${editKey}" value="${avgValue != null ? avgValue : ''}" placeholder="—"></td>
+      <td><input type="number" step="0.01" class="avg-input ${isAvgEdited ? 'edited' : ''}" data-key="${avgKey}" value="${avgValue != null ? avgValue : ''}" placeholder="—"></td>
       <td>${fmt2(d.current)}</td>
-      <td class="${rollCls}">${d.roll == null ? '—' : rollSign + fmt2(d.roll)}</td>
+      <td>${rollInputHtml(rollKey, d.roll)}</td>
       <td>${fmt0(d.stock)}</td>
     </tr>`;
   }
   lmeBody.innerHTML = lmeHtml;
 
+  /* MCX section — Positive → green (class "neg") · Negative → red (class "pos") */
   let mcxHtml = '';
   for (const m of metals) {
     const d = mcxDefaults(m.key);
-    const editKey = 'MCX_' + m.key;
-    const isEdited = AVG_EDITS[editKey] !== undefined && AVG_EDITS[editKey] !== null;
-    const avgValue = isEdited ? AVG_EDITS[editKey] : d.avgBuy;
-    const rollCls = d.roll == null ? 'muted' : (d.roll > 0 ? 'pos' : d.roll < 0 ? 'neg' : 'muted');
+    const avgKey = 'MCX_' + m.key;
+    const isAvgEdited = AVG_EDITS[avgKey] !== undefined && AVG_EDITS[avgKey] !== null;
+    const avgValue = isAvgEdited ? AVG_EDITS[avgKey] : d.avgBuy;
+    const rollCls = d.roll == null ? 'muted' : (d.roll > 0 ? 'neg' : d.roll < 0 ? 'pos' : 'muted');
     const rollSign = d.roll == null ? '' : (d.roll >= 0 ? '+' : '');
     mcxHtml += `<tr>
       <td class="metal-name" style="color:${m.color}">${m.name}</td>
-      <td><input type="number" step="0.01" class="avg-input ${isEdited ? 'edited' : ''}" data-key="${editKey}" value="${avgValue != null ? avgValue : ''}" placeholder="—"></td>
+      <td><input type="number" step="0.01" class="avg-input ${isAvgEdited ? 'edited' : ''}" data-key="${avgKey}" value="${avgValue != null ? avgValue : ''}" placeholder="—"></td>
       <td>${fmt2(d.current)}</td>
       <td>${fmt2(d.next)}</td>
       <td class="${rollCls}">${d.roll == null ? '—' : rollSign + fmt2(d.roll)}</td>
@@ -352,6 +408,7 @@ function render() {
   }
   mcxBody.innerHTML = mcxHtml;
 
+  /* Wire Average Buying inputs */
   document.querySelectorAll('.avg-input').forEach(inp => {
     inp.addEventListener('input', () => {
       const key = inp.dataset.key;
@@ -359,6 +416,27 @@ function render() {
       if (val == null || isNaN(val)) { delete AVG_EDITS[key]; inp.classList.remove('edited'); }
       else { AVG_EDITS[key] = val; inp.classList.add('edited'); }
       saveEdits();
+      showSaveHint();
+    });
+  });
+
+  /* Wire Roll-Over inputs */
+  document.querySelectorAll('.roll-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const key = inp.dataset.rollKey;
+      const raw = inp.value.replace(/^\+/, '');
+      const val = raw === '' ? null : parseFloat(raw);
+      if (val == null || isNaN(val)) {
+        delete ROLL_EDITS[key];
+        inp.classList.remove('edited', 'pos', 'neg');
+      } else {
+        ROLL_EDITS[key] = val;
+        inp.classList.add('edited');
+        // Positive → "neg" (green via CSS), Negative → "pos" (red via CSS)
+        inp.classList.toggle('neg', val > 0);
+        inp.classList.toggle('pos', val < 0);
+      }
+      saveRollEdits();
       showSaveHint();
     });
   });
@@ -375,13 +453,16 @@ function showSaveHint() {
 
 document.getElementById('reloadBtn').addEventListener('click', loadAll);
 document.getElementById('resetEditsBtn').addEventListener('click', () => {
-  if (!confirm('Reset all Average Buying edits? This cannot be undone.')) return;
+  if (!confirm('Reset all edits (Average Buying + Roll-Over)? This cannot be undone.')) return;
   AVG_EDITS = {};
-  STORE.removeItem(EDITS_KEY);
+  ROLL_EDITS = {};
+  STORE.removeItem(AVG_EDITS_KEY);
+  STORE.removeItem(ROLL_EDITS_KEY);
   render();
 });
 
 AVG_EDITS = loadEdits();
+ROLL_EDITS = loadRollEdits();
 loadAll();
 setInterval(loadAll, 60000);
 </script>
