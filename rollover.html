@@ -14,30 +14,52 @@
     --text:#e6ecf5; --muted:#7c8aa0; --accent:#e8a33d;
     --green:#2ecc71; --red:#e74c3c;
   }
-  body { background:var(--bg); color:var(--text); padding:24px; min-height:100vh; }
-  .wrap { max-width:1100px; margin:0 auto; }
-  .head { display:flex; justify-content:space-between; align-items:center; padding:6px 4px 20px; flex-wrap:wrap; gap:14px; }
-  .head h1 { font-size:1.4rem; font-weight:700; display:flex; align-items:center; gap:10px; }
+  body { background:var(--bg); color:var(--text); padding:10px; min-height:100vh; }
+  .wrap { max-width:520px; margin:0 auto; }
+  .head { display:flex; justify-content:space-between; align-items:center; padding:2px 4px 8px; flex-wrap:wrap; gap:6px; }
+  .head h1 { font-size:0.92rem; font-weight:700; display:flex; align-items:center; gap:6px; }
   .head h1 i { color:var(--accent); }
-  .head .meta { color:var(--muted); font-size:0.8rem; display:flex; gap:18px; flex-wrap:wrap; }
+  .head .meta { color:var(--muted); font-size:0.62rem; display:flex; gap:8px; flex-wrap:wrap; }
   .head .meta strong { color:var(--text); font-weight:600; }
-  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:16px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:8px; margin-bottom:8px; }
   .card h3 {
-    font-size:0.82rem; font-weight:600; text-transform:uppercase; letter-spacing:0.8px;
-    color:var(--muted); display:flex; justify-content:space-between; align-items:center;
-    margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border);
+    font-size:0.66rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+    color:var(--accent); display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:6px; padding-bottom:5px; border-bottom:1px solid var(--border);
   }
-  .card h3 i { color:var(--accent); margin-right:6px; }
-  .save-hint { font-size:0.66rem; color:var(--accent); margin-left:8px; opacity:0; transition:opacity 0.3s; text-transform:none; letter-spacing:0; font-weight:600; }
+  .card h3 i { color:var(--accent); margin-right:5px; }
+  .save-hint { font-size:0.55rem; color:var(--accent); margin-left:6px; opacity:0; transition:opacity 0.3s; text-transform:none; letter-spacing:0; font-weight:600; }
   .save-hint.show { opacity:1; }
-  .roll-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
-  .roll-table th { text-align:center; color:var(--muted); font-weight:600; padding:10px 12px; border:1px solid var(--border); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.5px; background:#0e1724; }
-  .roll-table th.section-h { background:#1a2334; color:var(--accent); text-align:left; font-size:0.75rem; letter-spacing:1px; }
-  .roll-table th.metal-h { text-align:left; min-width:90px; }
-  .roll-table td { padding:8px 12px; border:1px solid var(--border); text-align:right; color:#c6d0de; font-variant-numeric:tabular-nums; font-weight:600; font-size:0.9rem; }
-  .roll-table td.metal-name { text-align:left; font-weight:700; font-size:0.95rem; padding:12px; }
 
-  /* Positive → green · Negative → red */
+  /* ===== Table ===== */
+  .roll-table { width:100%; border-collapse:collapse; font-size:0.7rem; table-layout:fixed; }
+  .roll-table col.c1 { width:9%; }
+  .roll-table col.c2 { width:26%; }
+  .roll-table col.c3 { width:21%; }
+  .roll-table col.c4 { width:24%; }
+  .roll-table col.c5 { width:20%; }
+
+  .roll-table th {
+    text-align:center; color:var(--muted); font-weight:600;
+    padding:5px 3px; border:1px solid var(--border);
+    font-size:0.58rem; text-transform:uppercase; letter-spacing:0.4px;
+    background:#0e1724;
+  }
+  .roll-table th.section-h {
+    background:#1a2334; color:var(--accent); text-align:left;
+    font-size:0.62rem; letter-spacing:0.5px; padding:4px 6px; font-weight:600;
+  }
+  .roll-table th.metal-h { text-align:left; }
+
+  .roll-table td {
+    padding:5px 3px; border:1px solid var(--border);
+    text-align:center; color:#c6d0de;
+    font-variant-numeric:tabular-nums; font-weight:600; font-size:0.7rem;
+  }
+  .roll-table td.metal-name {
+    text-align:left; font-weight:700; font-size:0.72rem; padding:5px 6px;
+  }
+
   .roll-table td.pos { color:var(--green); }
   .roll-table td.neg { color:var(--red); }
   .roll-table td.muted { color:var(--muted); font-weight:400; }
@@ -45,34 +67,32 @@
   .roll-table input.avg-input,
   .roll-table input.roll-input {
     width:100%; background:#0e1724; border:1px solid var(--border); color:#fff;
-    padding:8px 10px; border-radius:6px; font-size:0.88rem; font-weight:600;
-    font-variant-numeric:tabular-nums; text-align:right; font-family:inherit;
+    padding:3px 4px; border-radius:4px; font-size:0.68rem; font-weight:600;
+    font-variant-numeric:tabular-nums; text-align:center; font-family:inherit;
   }
   .roll-table input.avg-input:focus,
   .roll-table input.roll-input:focus { outline:none; border-color:var(--accent); background:rgba(232,163,61,0.05); }
 
-  /* No highlight on edited cells — just the base style */
   .roll-table input.avg-input.edited,
   .roll-table input.roll-input.edited { border-color:var(--border); background:#0e1724; }
 
   .roll-table input.avg-input::placeholder,
   .roll-table input.roll-input::placeholder { color:var(--muted); }
 
-  /* Roll input colors — value-driven */
   .roll-table input.roll-input.pos { color:var(--green); }
   .roll-table input.roll-input.neg { color:var(--red); }
 
-  .status { padding:10px 14px; border-radius:10px; margin-bottom:16px; font-size:0.78rem; }
+  .status { padding:4px 7px; border-radius:5px; margin-bottom:6px; font-size:0.58rem; }
   .status.ok   { background:rgba(46,204,113,0.12); border:1px solid var(--green); color:#7ee8a7; }
   .status.err  { background:rgba(231,76,60,0.12);  border:1px solid var(--red);   color:#f5a3a3; }
   .status.info { background:rgba(232,163,61,0.10); border:1px solid var(--accent); color:var(--accent); }
-  .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
-  .btn { background:#0e1724; border:1px solid var(--border); color:var(--muted); padding:6px 12px; border-radius:8px; font-size:0.75rem; font-weight:500; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
+  .toolbar { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px; }
+  .btn { background:#0e1724; border:1px solid var(--border); color:var(--muted); padding:3px 7px; border-radius:4px; font-size:0.58rem; font-weight:500; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:3px; }
   .btn:hover { color:var(--text); border-color:#33425e; }
-  .freq-group { display:inline-flex; background:#0e1724; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
-  .freq-group button { background:transparent; border:none; color:var(--muted); padding:5px 12px; font-size:0.7rem; font-weight:600; cursor:pointer; font-family:inherit; }
+  .freq-group { display:inline-flex; background:#0e1724; border:1px solid var(--border); border-radius:4px; overflow:hidden; }
+  .freq-group button { background:transparent; border:none; color:var(--muted); padding:2px 6px; font-size:0.54rem; font-weight:600; cursor:pointer; font-family:inherit; }
   .freq-group button.active { background:var(--accent); color:#0e1420; }
-  .chart-wrap { position:relative; width:100%; height:320px; }
+  .chart-wrap { position:relative; width:100%; height:130px; }
 </style>
 </head>
 <body>
@@ -89,49 +109,50 @@
   <div class="card">
     <h3>
       <span><i class="fas fa-balance-scale"></i> Roll-Over Summary <span id="saveHint" class="save-hint">Saved ✓</span></span>
-      <span id="snapshotDate" style="font-size:0.7rem;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;"></span>
+      <span id="snapshotDate" style="font-size:0.55rem;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;"></span>
     </h3>
     <table class="roll-table">
+      <colgroup>
+        <col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5">
+      </colgroup>
       <thead>
         <tr><th class="section-h" colspan="5">LME</th></tr>
         <tr>
-          <th class="metal-h">Metal</th>
-          <th>Average Buying</th>
-          <th>Current</th>
-          <th>Roll-Over Cost (±/ton)</th>
-          <th>LME Stock</th>
+          <th class="metal-h">METAL</th>
+          <th>AVG BUY</th>
+          <th>CURR</th>
+          <th>1M ROLL</th>
+          <th>STOCK</th>
         </tr>
       </thead>
       <tbody id="lmeBody"><tr><td colspan="5" class="muted" style="text-align:center;">Loading…</td></tr></tbody>
       <thead>
         <tr><th class="section-h" colspan="5">MCX</th></tr>
         <tr>
-          <th class="metal-h">Metal</th>
-          <th>Average Buying</th>
-          <th>Current (Front)</th>
-          <th>Next Month</th>
-          <th>Roll-Over Cost (±/ton)</th>
+          <th class="metal-h">METAL</th>
+          <th>AVG BUY</th>
+          <th>FRONT</th>
+          <th>NEXT</th>
+          <th>1M ROLL</th>
         </tr>
       </thead>
       <tbody id="mcxBody"><tr><td colspan="5" class="muted" style="text-align:center;">Loading…</td></tr></tbody>
     </table>
   </div>
 
-  <!-- ============ MCX ZINC CHART ============ -->
   <div class="card">
     <h3>
-      <span><i class="fas fa-chart-line"></i> MCX Zinc Price (₹/kg)</span>
+      <span><i class="fas fa-chart-line"></i> MCX Zinc (₹/kg)</span>
       <span class="freq-group" id="zincRangeGroup">
         <button data-range="7d">1W</button>
         <button data-range="1m" class="active">1M</button>
         <button data-range="3m">3M</button>
-        <button data-range="6m">6M</button>
         <button data-range="1y">1Y</button>
         <button data-range="all">All</button>
       </span>
     </h3>
     <div class="chart-wrap"><canvas id="zincChart"></canvas></div>
-    <div id="zincNote" style="font-size:0.68rem;color:var(--muted);margin-top:8px;"></div>
+    <div id="zincNote" style="font-size:0.55rem;color:var(--muted);margin-top:4px;"></div>
   </div>
 </div>
 
@@ -144,6 +165,15 @@ const CSP_COLORS = { Cu:'#d68b4d', Zn:'#5b8fc9', Al:'#93a2b5' };
 const AVG_EDITS_KEY = 'rollover_avg_edits_v1';
 const ROLL_EDITS_KEY = 'rollover_roll_edits_v1';
 const ZINC_HISTORY_KEY = 'rollover_mcx_zinc_history_v1';
+
+const DEFAULT_AVG_BUYING = {
+  LME_Al: 2764.8,
+  LME_Cu: 8360,
+  LME_Zn: 2724.98,
+  MCX_Al: 0,
+  MCX_Cu: 0,
+  MCX_Zn: 282.8,
+};
 
 let CSP_RAW = [];
 let METALS_RAW = [];
@@ -254,7 +284,7 @@ function parseCSPCSV(text) {
   rows.sort((a,b) => a.t - b.t);
   CSP_RAW = rows;
   LATEST_CSP = rows.length ? rows[rows.length-1] : null;
-  return { ok: true, msg: `CSP ${rows.length} rows (latest ${LATEST_CSP?.date || '—'})` };
+  return { ok: true, msg: `CSP ${rows.length}` };
 }
 
 function parseMetalsCSV(text) {
@@ -292,7 +322,7 @@ function parseMetalsCSV(text) {
   }
   rows.sort((a,b) => a.t - b.t);
   METALS_RAW = rows;
-  return { ok: true, msg: `metals.csv ${rows.length} rows · MCX Zn col: ${MCX_ZINC_COL || 'NOT FOUND'}` };
+  return { ok: true, msg: `metals ${rows.length}` };
 }
 
 function parseLiveCSV(text) {
@@ -357,7 +387,7 @@ async function loadAll() {
         const r = await fetch(METALS_URL + '?t=' + Date.now(), { cache: 'no-store' });
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return parseMetalsCSV(await r.text());
-      } catch (e) { return { ok:false, msg:'metals.csv: ' + e.message }; }
+      } catch (e) { return { ok:false, msg:'metals: ' + e.message }; }
     })(),
     fetchLive(),
   ]);
@@ -365,7 +395,7 @@ async function loadAll() {
   const msgs = [];
   if (cspRes.ok) msgs.push('✓ ' + cspRes.msg); else msgs.push('✗ ' + cspRes.msg);
   if (metalsRes.ok) msgs.push('✓ ' + metalsRes.msg); else msgs.push('✗ ' + metalsRes.msg);
-  if (liveRes.ok && LIVE_NOW) msgs.push(`✓ Live: ZN1=${LIVE_NOW.zinc1 ?? '—'} ZN2=${LIVE_NOW.zinc2 ?? '—'}`);
+  if (liveRes.ok && LIVE_NOW) msgs.push('✓ Live');
   else msgs.push('✗ Live: ' + (liveRes.error || 'unknown'));
 
   status.className = (cspRes.ok && liveRes.ok) ? 'status ok' : 'status err';
@@ -385,19 +415,12 @@ function captureTodayZinc() {
   saveZincHistory();
 }
 
-/* LME: Roll = 3M − Cash */
 function lmeDefaults(metal) {
   if (!LATEST_CSP || !LATEST_CSP[metal]) return { avgBuy: null, current: null, roll: null, stock: null };
   const row = LATEST_CSP[metal];
-  return {
-    avgBuy:  row.threeM,
-    current: row.cash,
-    roll:    (row.cash != null && row.threeM != null) ? row.threeM - row.cash : null,
-    stock:   row.stock,
-  };
+  return { avgBuy: row.threeM, current: row.cash, roll: null, stock: row.stock };
 }
 
-/* MCX: Roll = Next − Front */
 function mcxDefaults(metal) {
   let front = null, next = null;
   if (LIVE_NOW) {
@@ -414,11 +437,7 @@ function rollInputHtml(editKey, value) {
   const cls = v == null ? '' : (v > 0 ? 'pos' : v < 0 ? 'neg' : '');
   const sign = v == null ? '' : (v >= 0 ? '+' : '');
   const display = v == null ? '' : (sign + v.toFixed(2));
-  return `<input type="number" step="0.01"
-                 class="roll-input ${cls}"
-                 data-roll-key="${editKey}"
-                 value="${display}"
-                 placeholder="—">`;
+  return `<input type="number" step="0.01" class="roll-input ${cls}" data-roll-key="${editKey}" value="${display}" placeholder="—">`;
 }
 
 function render() {
@@ -428,14 +447,12 @@ function render() {
   const headEl  = document.getElementById('headMeta');
 
   if (!LATEST_CSP) {
-    lmeBody.innerHTML = '<tr><td colspan="5" class="muted" style="text-align:center;">No CSP data.</td></tr>';
-    mcxBody.innerHTML = '<tr><td colspan="5" class="muted" style="text-align:center;">No CSP data.</td></tr>';
+    lmeBody.innerHTML = '<tr><td colspan="5" class="muted" style="text-align:center;">No CSP.</td></tr>';
+    mcxBody.innerHTML = '<tr><td colspan="5" class="muted" style="text-align:center;">No CSP.</td></tr>';
     return;
   }
-  snapEl.textContent = `LME ${LATEST_CSP.date} · MCX live`;
-  headEl.innerHTML = `LME: <strong>${LATEST_CSP.date}</strong>` +
-    (LIVE_NOW ? ` · Live: <strong>${new Date(LIVE_NOW.fetchedAt).toLocaleTimeString()}</strong>` : '') +
-    ` · CSP rows: <strong>${CSP_RAW.length}</strong>`;
+  snapEl.textContent = LATEST_CSP.date;
+  headEl.innerHTML = `Live: <strong>${LIVE_NOW ? new Date(LIVE_NOW.fetchedAt).toLocaleTimeString() : '—'}</strong>`;
 
   const metals = [
     { key:'Al', name:'Al', color: CSP_COLORS.Al },
@@ -449,10 +466,11 @@ function render() {
     const avgKey = 'LME_' + m.key;
     const rollKey = 'ROLL_LME_' + m.key;
     const isAvgEdited = AVG_EDITS[avgKey] !== undefined && AVG_EDITS[avgKey] !== null;
-    const avgValue = isAvgEdited ? AVG_EDITS[avgKey] : d.avgBuy;
+    const defaultAvg = DEFAULT_AVG_BUYING[avgKey] ?? d.avgBuy;
+    const avgValue = isAvgEdited ? AVG_EDITS[avgKey] : defaultAvg;
     lmeHtml += `<tr>
       <td class="metal-name" style="color:${m.color}">${m.name}</td>
-      <td><input type="number" step="0.01" class="avg-input ${isAvgEdited ? 'edited' : ''}" data-key="${avgKey}" value="${avgValue != null ? avgValue : ''}" placeholder="—"></td>
+      <td><input type="number" step="0.01" class="avg-input" data-key="${avgKey}" value="${avgValue != null ? avgValue : ''}" placeholder="—"></td>
       <td>${fmt2(d.current)}</td>
       <td>${rollInputHtml(rollKey, d.roll)}</td>
       <td>${fmt0(d.stock)}</td>
@@ -465,12 +483,13 @@ function render() {
     const d = mcxDefaults(m.key);
     const avgKey = 'MCX_' + m.key;
     const isAvgEdited = AVG_EDITS[avgKey] !== undefined && AVG_EDITS[avgKey] !== null;
-    const avgValue = isAvgEdited ? AVG_EDITS[avgKey] : d.avgBuy;
+    const defaultAvg = DEFAULT_AVG_BUYING[avgKey] ?? d.avgBuy;
+    const avgValue = isAvgEdited ? AVG_EDITS[avgKey] : defaultAvg;
     const rollCls = d.roll == null ? 'muted' : (d.roll > 0 ? 'pos' : d.roll < 0 ? 'neg' : 'muted');
     const rollSign = d.roll == null ? '' : (d.roll >= 0 ? '+' : '');
     mcxHtml += `<tr>
       <td class="metal-name" style="color:${m.color}">${m.name}</td>
-      <td><input type="number" step="0.01" class="avg-input ${isAvgEdited ? 'edited' : ''}" data-key="${avgKey}" value="${avgValue != null ? avgValue : ''}" placeholder="—"></td>
+      <td><input type="number" step="0.01" class="avg-input" data-key="${avgKey}" value="${avgValue != null ? avgValue : ''}" placeholder="—"></td>
       <td>${fmt2(d.current)}</td>
       <td>${fmt2(d.next)}</td>
       <td class="${rollCls}">${d.roll == null ? '—' : rollSign + fmt2(d.roll)}</td>
@@ -482,8 +501,8 @@ function render() {
     inp.addEventListener('input', () => {
       const key = inp.dataset.key;
       const val = inp.value === '' ? null : parseFloat(inp.value);
-      if (val == null || isNaN(val)) { delete AVG_EDITS[key]; inp.classList.remove('edited'); }
-      else { AVG_EDITS[key] = val; inp.classList.add('edited'); }
+      if (val == null || isNaN(val)) { delete AVG_EDITS[key]; }
+      else { AVG_EDITS[key] = val; }
       saveEdits();
       showSaveHint();
     });
@@ -508,7 +527,6 @@ function render() {
   });
 }
 
-/* ============ MCX ZINC CHART ============ */
 function zincCutoff(range) {
   const now = Date.now();
   const D = 24 * 3600 * 1000;
@@ -516,7 +534,6 @@ function zincCutoff(range) {
     case '7d': return now - 7 * D;
     case '1m': return now - 30 * D;
     case '3m': return now - 90 * D;
-    case '6m': return now - 180 * D;
     case '1y': return now - 365 * D;
     default:   return null;
   }
@@ -524,18 +541,15 @@ function zincCutoff(range) {
 
 function buildZincSeries() {
   const merged = new Map();
-
   if (MCX_ZINC_COL && METALS_RAW.length) {
     for (const r of METALS_RAW) {
       const v = r.series[MCX_ZINC_COL];
-      if (v != null) merged.set(r.date, { date: r.date, t: r.t, v, src: 'metals.csv' });
+      if (v != null) merged.set(r.date, { date: r.date, t: r.t, v });
     }
   }
-  for (const r of ZINC_HISTORY) {
-    if (!merged.has(r.date)) merged.set(r.date, { ...r, src: 'live' });
-  }
+  for (const r of ZINC_HISTORY) if (!merged.has(r.date)) merged.set(r.date, r);
   if (LIVE_NOW && LIVE_NOW.zinc1 != null) {
-    merged.set(LIVE_NOW.date, { date: LIVE_NOW.date, t: new Date(LIVE_NOW.date + 'T00:00:00Z').getTime(), v: LIVE_NOW.zinc1, src: 'live-now' });
+    merged.set(LIVE_NOW.date, { date: LIVE_NOW.date, t: new Date(LIVE_NOW.date + 'T00:00:00Z').getTime(), v: LIVE_NOW.zinc1 });
   }
   return [...merged.values()].sort((a,b) => a.t - b.t);
 }
@@ -548,29 +562,22 @@ function renderZincChart() {
   const all = buildZincSeries();
   const cutoff = zincCutoff(zincRange);
   const rows = cutoff ? all.filter(r => r.t >= cutoff) : all;
-
-  if (noteEl) {
-    if (!MCX_ZINC_COL) {
-      noteEl.innerHTML = `⚠️ No MCX Zinc column detected in <code>metals.csv</code>. Add one (header e.g. "MCX Zinc") and refresh. Currently showing only live/localstorage: ${rows.length} pts.`;
-    } else {
-      noteEl.innerHTML = `Source: <b>metals.csv</b> column "<b>${MCX_ZINC_COL}</b>" · ${rows.length} pts in range.`;
-    }
-  }
-
   const data = rows.map(r => ({ x: r.t, y: r.v }));
+
+  if (noteEl) noteEl.textContent = MCX_ZINC_COL ? `${rows.length} pts` : `⚠️ no MCX Zn col · ${rows.length} pts`;
 
   if (zincChart) zincChart.destroy();
   zincChart = new Chart(canvas, {
     type: 'line',
     data: {
       datasets: [{
-        label: 'MCX Zinc (₹/kg)',
+        label: 'MCX Zn',
         data,
         borderColor: '#5b8fc9',
         backgroundColor: 'rgba(91,143,201,0.15)',
-        borderWidth: 2,
+        borderWidth: 1.6,
         pointRadius: 0,
-        pointHoverRadius: 4,
+        pointHoverRadius: 3,
         tension: 0.15,
         fill: true,
       }]
@@ -580,18 +587,20 @@ function renderZincChart() {
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { labels: { color: '#a9b6cb', font: { size: 10 } } },
+        legend: { display: false },
         tooltip: {
           backgroundColor: 'rgba(14,20,32,0.95)',
           borderColor: '#232d42',
           borderWidth: 1,
           titleColor: '#e8a33d',
           bodyColor: '#e6ecf5',
-          padding: 10,
+          padding: 5,
+          titleFont: { size: 9 },
+          bodyFont: { size: 10 },
           callbacks: {
             label: ctx => {
               const v = ctx.parsed.y;
-              return v == null ? '—' : `MCX Zinc: ₹${v.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}/kg`;
+              return v == null ? '—' : `₹${v.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}/kg`;
             }
           }
         }
@@ -601,21 +610,20 @@ function renderZincChart() {
           type: 'time',
           time: { tooltipFormat: 'dd MMM yyyy' },
           grid: { color: '#1c2536' },
-          ticks: { color: '#7c8aa0', font: { size: 9 }, maxTicksLimit: 12 }
+          ticks: { color: '#7c8aa0', font: { size: 7 }, maxTicksLimit: 5 }
         },
         y: {
           grid: { color: '#1c2536' },
-          ticks: { color: '#7c8aa0', font: { size: 9 }, callback: v => '₹' + v }
+          ticks: { color: '#7c8aa0', font: { size: 7 }, callback: v => '₹' + v, maxTicksLimit: 4 }
         }
       }
     }
   });
 }
 
-/* ============ WIRE ============ */
 document.getElementById('reloadBtn').addEventListener('click', loadAll);
 document.getElementById('resetEditsBtn').addEventListener('click', () => {
-  if (!confirm('Reset all edits (Average Buying + Roll-Over)? This cannot be undone.')) return;
+  if (!confirm('Reset all edits?')) return;
   AVG_EDITS = {};
   ROLL_EDITS = {};
   STORE.removeItem(AVG_EDITS_KEY);
