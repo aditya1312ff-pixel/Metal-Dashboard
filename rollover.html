@@ -31,7 +31,6 @@
   .save-hint { font-size:0.55rem; color:var(--accent); margin-left:6px; opacity:0; transition:opacity 0.3s; text-transform:none; letter-spacing:0; font-weight:600; }
   .save-hint.show { opacity:1; }
 
-  /* ===== Table ===== */
   .roll-table { width:100%; border-collapse:collapse; font-size:0.7rem; table-layout:fixed; }
   .roll-table col.c1 { width:9%; }
   .roll-table col.c2 { width:26%; }
@@ -120,7 +119,7 @@
         <tr>
           <th class="metal-h">METAL</th>
           <th>AVG BUY</th>
-          <th>CURR</th>
+          <th>LME 3M</th>
           <th>1M ROLL</th>
           <th>STOCK</th>
         </tr>
@@ -182,6 +181,7 @@ let MCX_ZINC_COL = null;
 let ZINC_HISTORY = [];
 let LATEST_CSP = null;
 let LIVE_NOW = null;
+let LIVE_LATEST = {};     // ← NEW: full live symbol map
 let AVG_EDITS = {};
 let ROLL_EDITS = {};
 let zincChart = null;
@@ -354,6 +354,7 @@ async function fetchLive() {
     if (!rows.length) throw new Error('Empty parse');
     const bySym = {};
     for (const r of rows) bySym[r.symbol] = r;
+    LIVE_LATEST = bySym;    // ← save globally
     const pick = (a, b) => ({ front: bySym[a]?.price ?? null, next: bySym[b]?.price ?? null });
     const zinc      = pick('ZINC1!',      'ZINC2!');
     const copper    = pick('COPPER1!',    'COPPER2!');
@@ -377,14 +378,14 @@ async function loadAll() {
   const [cspRes, metalsRes, liveRes] = await Promise.all([
     (async () => {
       try {
-        const r = await fetch(CSP_URL + '?t=' + Date.now(), { cache: 'no-store' });
+        const r = await fetch(CSP_URL + '?_cb=' + Date.now(), { cache: 'no-store', redirect: 'follow' });
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return parseCSPCSV(await r.text());
       } catch (e) { return { ok:false, msg:'CSP: ' + e.message }; }
     })(),
     (async () => {
       try {
-        const r = await fetch(METALS_URL + '?t=' + Date.now(), { cache: 'no-store' });
+        const r = await fetch(METALS_URL + '?_cb=' + Date.now(), { cache: 'no-store', redirect: 'follow' });
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return parseMetalsCSV(await r.text());
       } catch (e) { return { ok:false, msg:'metals: ' + e.message }; }
@@ -415,10 +416,24 @@ function captureTodayZinc() {
   saveZincHistory();
 }
 
+/* Resolve LME 3M — prefer live symbols COPPER/ZINC/ALUMINIUM, fallback to CSP CSV */
+function lme3MSource(metal) {
+  const liveSym = metal === 'Cu' ? 'COPPER' : metal === 'Zn' ? 'ZINC' : 'ALUMINIUM';
+  if (LIVE_LATEST[liveSym] && LIVE_LATEST[liveSym].price != null) {
+    return LIVE_LATEST[liveSym].price;
+  }
+  if (LATEST_CSP && LATEST_CSP[metal] && LATEST_CSP[metal].threeM != null) {
+    return LATEST_CSP[metal].threeM;
+  }
+  return null;
+}
+
+/* LME: 3M comes from live COPPER / ZINC / ALUMINIUM */
 function lmeDefaults(metal) {
   if (!LATEST_CSP || !LATEST_CSP[metal]) return { avgBuy: null, current: null, roll: null, stock: null };
   const row = LATEST_CSP[metal];
-  return { avgBuy: row.threeM, current: row.cash, roll: null, stock: row.stock };
+  const lme3m = lme3MSource(metal);
+  return { avgBuy: lme3m, current: lme3m, roll: null, stock: row.stock };
 }
 
 function mcxDefaults(metal) {
