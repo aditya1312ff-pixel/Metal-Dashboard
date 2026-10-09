@@ -4,6 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Roll-Over Cost Monitor</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', system-ui, sans-serif; }
@@ -34,30 +36,31 @@
   .roll-table th.metal-h { text-align:left; min-width:90px; }
   .roll-table td { padding:8px 12px; border:1px solid var(--border); text-align:right; color:#c6d0de; font-variant-numeric:tabular-nums; font-weight:600; font-size:0.9rem; }
   .roll-table td.metal-name { text-align:left; font-weight:700; font-size:0.95rem; padding:12px; }
-  .roll-table td.pos { color:var(--red); }
-  .roll-table td.neg { color:var(--green); }
+
+  /* Positive → green · Negative → red */
+  .roll-table td.pos { color:var(--green); }
+  .roll-table td.neg { color:var(--red); }
   .roll-table td.muted { color:var(--muted); font-weight:400; }
 
-  .roll-table input.avg-input {
+  .roll-table input.avg-input,
+  .roll-table input.roll-input {
     width:100%; background:#0e1724; border:1px solid var(--border); color:#fff;
     padding:8px 10px; border-radius:6px; font-size:0.88rem; font-weight:600;
     font-variant-numeric:tabular-nums; text-align:right; font-family:inherit;
   }
-  .roll-table input.avg-input:focus { outline:none; border-color:var(--accent); background:rgba(232,163,61,0.05); }
-  .roll-table input.avg-input.edited { border-color:var(--accent); background:rgba(232,163,61,0.10); }
-  .roll-table input.avg-input::placeholder { color:var(--muted); }
-
-  .roll-table input.roll-input {
-    width:100%; background:#0e1724; border:1px solid var(--border); color:#c6d0de;
-    padding:8px 10px; border-radius:6px; font-size:0.88rem; font-weight:600;
-    font-variant-numeric:tabular-nums; text-align:right; font-family:inherit;
-  }
+  .roll-table input.avg-input:focus,
   .roll-table input.roll-input:focus { outline:none; border-color:var(--accent); background:rgba(232,163,61,0.05); }
-  .roll-table input.roll-input.edited { border-color:var(--accent); background:rgba(232,163,61,0.10); }
-  /* .pos → red  ·  .neg → green */
-  .roll-table input.roll-input.pos { color:var(--red); }
-  .roll-table input.roll-input.neg { color:var(--green); }
+
+  /* No highlight on edited cells — just the base style */
+  .roll-table input.avg-input.edited,
+  .roll-table input.roll-input.edited { border-color:var(--border); background:#0e1724; }
+
+  .roll-table input.avg-input::placeholder,
   .roll-table input.roll-input::placeholder { color:var(--muted); }
+
+  /* Roll input colors — value-driven */
+  .roll-table input.roll-input.pos { color:var(--green); }
+  .roll-table input.roll-input.neg { color:var(--red); }
 
   .status { padding:10px 14px; border-radius:10px; margin-bottom:16px; font-size:0.78rem; }
   .status.ok   { background:rgba(46,204,113,0.12); border:1px solid var(--green); color:#7ee8a7; }
@@ -66,6 +69,10 @@
   .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
   .btn { background:#0e1724; border:1px solid var(--border); color:var(--muted); padding:6px 12px; border-radius:8px; font-size:0.75rem; font-weight:500; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
   .btn:hover { color:var(--text); border-color:#33425e; }
+  .freq-group { display:inline-flex; background:#0e1724; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .freq-group button { background:transparent; border:none; color:var(--muted); padding:5px 12px; font-size:0.7rem; font-weight:600; cursor:pointer; font-family:inherit; }
+  .freq-group button.active { background:var(--accent); color:#0e1420; }
+  .chart-wrap { position:relative; width:100%; height:320px; }
 </style>
 </head>
 <body>
@@ -109,21 +116,46 @@
       <tbody id="mcxBody"><tr><td colspan="5" class="muted" style="text-align:center;">Loading…</td></tr></tbody>
     </table>
   </div>
+
+  <!-- ============ MCX ZINC CHART ============ -->
+  <div class="card">
+    <h3>
+      <span><i class="fas fa-chart-line"></i> MCX Zinc Price (₹/kg)</span>
+      <span class="freq-group" id="zincRangeGroup">
+        <button data-range="7d">1W</button>
+        <button data-range="1m" class="active">1M</button>
+        <button data-range="3m">3M</button>
+        <button data-range="6m">6M</button>
+        <button data-range="1y">1Y</button>
+        <button data-range="all">All</button>
+      </span>
+    </h3>
+    <div class="chart-wrap"><canvas id="zincChart"></canvas></div>
+    <div id="zincNote" style="font-size:0.68rem;color:var(--muted);margin-top:8px;"></div>
+  </div>
 </div>
 
 <script>
 const CSP_URL = 'https://raw.githubusercontent.com/aditya1312ff-pixel/Metal-Dashboard/main/lme_csp.csv';
+const METALS_URL = 'https://raw.githubusercontent.com/aditya1312ff-pixel/Metal-Dashboard/main/metals.csv';
 const LIVE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vROr3cjVUMAqL9qXYAp6rxcekcbiacZmQ4JfSMOjgoEKKAxhLLDCsMddPf6G3ZgnN0b4dWl7RrghaZ9/pub?gid=0&single=true&output=csv';
 const LIVE_PROXY = 'https://round-cake-56f6.aditya1312ff.workers.dev/?url=';
 const CSP_COLORS = { Cu:'#d68b4d', Zn:'#5b8fc9', Al:'#93a2b5' };
 const AVG_EDITS_KEY = 'rollover_avg_edits_v1';
 const ROLL_EDITS_KEY = 'rollover_roll_edits_v1';
+const ZINC_HISTORY_KEY = 'rollover_mcx_zinc_history_v1';
 
 let CSP_RAW = [];
+let METALS_RAW = [];
+let METALS_COLS = [];
+let MCX_ZINC_COL = null;
+let ZINC_HISTORY = [];
 let LATEST_CSP = null;
 let LIVE_NOW = null;
 let AVG_EDITS = {};
 let ROLL_EDITS = {};
+let zincChart = null;
+let zincRange = '1m';
 
 const STORE = (() => {
   const mem = {};
@@ -139,6 +171,8 @@ function loadEdits() { try { const r = STORE.getItem(AVG_EDITS_KEY); return r ? 
 function saveEdits() { try { STORE.setItem(AVG_EDITS_KEY, JSON.stringify(AVG_EDITS)); } catch(e) {} }
 function loadRollEdits() { try { const r = STORE.getItem(ROLL_EDITS_KEY); return r ? JSON.parse(r) : {}; } catch(e) { return {}; } }
 function saveRollEdits() { try { STORE.setItem(ROLL_EDITS_KEY, JSON.stringify(ROLL_EDITS)); } catch(e) {} }
+function loadZincHistory() { try { const r = STORE.getItem(ZINC_HISTORY_KEY); return r ? JSON.parse(r) : []; } catch(e) { return []; } }
+function saveZincHistory() { try { STORE.setItem(ZINC_HISTORY_KEY, JSON.stringify(ZINC_HISTORY)); } catch(e) {} }
 
 function parseCSVLine(line) {
   const delim = line.indexOf('\t') >= 0 ? '\t' : ',';
@@ -176,8 +210,8 @@ function parseDateLoose(s) {
   }
   return null;
 }
-function fmt0(v) { return v == null ? '—' : Math.round(v).toLocaleString(); }
 function fmt2(v) { return v == null ? '—' : v.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function fmt0(v) { return v == null ? '—' : Math.round(v).toLocaleString(); }
 
 function parseCSPCSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
@@ -202,10 +236,6 @@ function parseCSPCSV(text) {
     if (!map[metal]) map[metal] = {};
     map[metal][field] = idx;
   });
-  if (!Object.keys(map).length) {
-    const rest = header.map((h, i) => ({h, i})).filter(x => x.i !== dateCol);
-    if (rest.length >= 9) ['Cu','Zn','Al'].forEach((metal, mi) => { map[metal] = { cash: rest[mi*3+0].i, three: rest[mi*3+1].i, stock: rest[mi*3+2].i }; });
-  }
   if (!Object.keys(map).length) return { ok:false, msg:'no cols' };
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
@@ -227,6 +257,44 @@ function parseCSPCSV(text) {
   return { ok: true, msg: `CSP ${rows.length} rows (latest ${LATEST_CSP?.date || '—'})` };
 }
 
+function parseMetalsCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (!lines.length) return { ok:false, msg:'empty' };
+  const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim());
+  if (header.length < 2) return { ok:false, msg:'needs 2 cols' };
+  METALS_COLS = header.slice(1);
+
+  MCX_ZINC_COL = null;
+  for (const name of METALS_COLS) {
+    const n = name.toLowerCase();
+    if (/\bmcx\b/.test(n) && /\bzinc|zn\b/.test(n)) { MCX_ZINC_COL = name; break; }
+  }
+  if (!MCX_ZINC_COL) {
+    for (const name of METALS_COLS) {
+      const n = name.toLowerCase();
+      if (/zinc/.test(n) && /mcx/.test(n)) { MCX_ZINC_COL = name; break; }
+    }
+  }
+
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const parts = parseCSVLine(lines[i]);
+    if (parts.length < 2) continue;
+    const d = parseDateLoose(parts[0]);
+    if (!d) continue;
+    const t = new Date(d + 'T00:00:00Z').getTime();
+    const series = {};
+    for (let j = 0; j < METALS_COLS.length; j++) {
+      const v = parseNumber(parts[j + 1]);
+      if (v != null) series[METALS_COLS[j]] = v;
+    }
+    rows.push({ date: d, t, series });
+  }
+  rows.sort((a,b) => a.t - b.t);
+  METALS_RAW = rows;
+  return { ok: true, msg: `metals.csv ${rows.length} rows · MCX Zn col: ${MCX_ZINC_COL || 'NOT FOUND'}` };
+}
+
 function parseLiveCSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
   if (lines.length < 2) return [];
@@ -245,6 +313,7 @@ function parseLiveCSV(text) {
   }
   return rows;
 }
+
 async function fetchLive() {
   try {
     const bustedUrl = LIVE_URL + (LIVE_URL.includes('?') ? '&' : '?') + '_cb=' + Date.now();
@@ -274,7 +343,8 @@ async function loadAll() {
   const status = document.getElementById('status');
   status.className = 'status info';
   status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading…';
-  const [cspRes, liveRes] = await Promise.all([
+
+  const [cspRes, metalsRes, liveRes] = await Promise.all([
     (async () => {
       try {
         const r = await fetch(CSP_URL + '?t=' + Date.now(), { cache: 'no-store' });
@@ -282,46 +352,52 @@ async function loadAll() {
         return parseCSPCSV(await r.text());
       } catch (e) { return { ok:false, msg:'CSP: ' + e.message }; }
     })(),
+    (async () => {
+      try {
+        const r = await fetch(METALS_URL + '?t=' + Date.now(), { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return parseMetalsCSV(await r.text());
+      } catch (e) { return { ok:false, msg:'metals.csv: ' + e.message }; }
+    })(),
     fetchLive(),
   ]);
+
   const msgs = [];
   if (cspRes.ok) msgs.push('✓ ' + cspRes.msg); else msgs.push('✗ ' + cspRes.msg);
-  if (liveRes.ok && LIVE_NOW) msgs.push(`✓ Live: CU1=${LIVE_NOW.cu1 ?? '—'} CU2=${LIVE_NOW.cu2 ?? '—'} ZN1=${LIVE_NOW.zinc1 ?? '—'} ZN2=${LIVE_NOW.zinc2 ?? '—'}`);
+  if (metalsRes.ok) msgs.push('✓ ' + metalsRes.msg); else msgs.push('✗ ' + metalsRes.msg);
+  if (liveRes.ok && LIVE_NOW) msgs.push(`✓ Live: ZN1=${LIVE_NOW.zinc1 ?? '—'} ZN2=${LIVE_NOW.zinc2 ?? '—'}`);
   else msgs.push('✗ Live: ' + (liveRes.error || 'unknown'));
+
   status.className = (cspRes.ok && liveRes.ok) ? 'status ok' : 'status err';
   status.innerHTML = msgs.join(' · ');
+
+  captureTodayZinc();
   render();
+  renderZincChart();
 }
 
-/* LME defaults — Roll = 3M (next) − Cash (front) · walks back to previous day */
+function captureTodayZinc() {
+  if (!LIVE_NOW || LIVE_NOW.zinc1 == null) return;
+  const today = LIVE_NOW.date;
+  ZINC_HISTORY = ZINC_HISTORY.filter(x => x.date !== today);
+  ZINC_HISTORY.push({ date: today, t: new Date(today + 'T00:00:00Z').getTime(), v: LIVE_NOW.zinc1 });
+  ZINC_HISTORY.sort((a,b) => a.t - b.t);
+  saveZincHistory();
+}
+
+/* LME: Roll = 3M − Cash */
 function lmeDefaults(metal) {
-  if (!LATEST_CSP || !LATEST_CSP[metal]) {
-    return { avgBuy: null, current: null, roll: null, stock: null };
-  }
-  const curRow = LATEST_CSP[metal];
-
-  let prevRow = null;
-  for (let i = CSP_RAW.length - 2; i >= 0; i--) {
-    const row = CSP_RAW[i];
-    const mRow = row && row[metal];
-    if (mRow && mRow.cash != null && mRow.threeM != null) {
-      prevRow = mRow;
-      break;
-    }
-  }
-  const rollSource = prevRow || curRow;
-
+  if (!LATEST_CSP || !LATEST_CSP[metal]) return { avgBuy: null, current: null, roll: null, stock: null };
+  const row = LATEST_CSP[metal];
   return {
-    avgBuy:  curRow.threeM,
-    current: curRow.cash,
-    // 3M (next) − Cash (front)
-    roll:    (rollSource.cash != null && rollSource.threeM != null)
-             ? rollSource.threeM - rollSource.cash
-             : null,
-    stock:   curRow.stock,
+    avgBuy:  row.threeM,
+    current: row.cash,
+    roll:    (row.cash != null && row.threeM != null) ? row.threeM - row.cash : null,
+    stock:   row.stock,
   };
 }
 
+/* MCX: Roll = Next − Front */
 function mcxDefaults(metal) {
   let front = null, next = null;
   if (LIVE_NOW) {
@@ -329,21 +405,17 @@ function mcxDefaults(metal) {
     else if (metal === 'Cu') { front = LIVE_NOW.cu1; next = LIVE_NOW.cu2; }
     else if (metal === 'Al') { front = LIVE_NOW.al1; next = LIVE_NOW.al2; }
   }
-  // Roll = Next Month − Front Month
   return { avgBuy: next, current: front, next: next, roll: (front != null && next != null) ? next - front : null };
 }
 
-/* Roll input renderer
-   Positive → "neg" class (CSS: green)
-   Negative → "pos" class (CSS: red) */
 function rollInputHtml(editKey, value) {
   const isEdited = ROLL_EDITS[editKey] !== undefined && ROLL_EDITS[editKey] !== null;
   const v = isEdited ? ROLL_EDITS[editKey] : value;
-  const cls = v == null ? '' : (v > 0 ? 'neg' : v < 0 ? 'pos' : '');
+  const cls = v == null ? '' : (v > 0 ? 'pos' : v < 0 ? 'neg' : '');
   const sign = v == null ? '' : (v >= 0 ? '+' : '');
   const display = v == null ? '' : (sign + v.toFixed(2));
   return `<input type="number" step="0.01"
-                 class="roll-input ${isEdited ? 'edited' : ''} ${cls}"
+                 class="roll-input ${cls}"
                  data-roll-key="${editKey}"
                  value="${display}"
                  placeholder="—">`;
@@ -371,7 +443,6 @@ function render() {
     { key:'Zn', name:'Zn', color: CSP_COLORS.Zn },
   ];
 
-  /* LME section */
   let lmeHtml = '';
   for (const m of metals) {
     const d = lmeDefaults(m.key);
@@ -389,14 +460,13 @@ function render() {
   }
   lmeBody.innerHTML = lmeHtml;
 
-  /* MCX section — Positive → green (class "neg") · Negative → red (class "pos") */
   let mcxHtml = '';
   for (const m of metals) {
     const d = mcxDefaults(m.key);
     const avgKey = 'MCX_' + m.key;
     const isAvgEdited = AVG_EDITS[avgKey] !== undefined && AVG_EDITS[avgKey] !== null;
     const avgValue = isAvgEdited ? AVG_EDITS[avgKey] : d.avgBuy;
-    const rollCls = d.roll == null ? 'muted' : (d.roll > 0 ? 'neg' : d.roll < 0 ? 'pos' : 'muted');
+    const rollCls = d.roll == null ? 'muted' : (d.roll > 0 ? 'pos' : d.roll < 0 ? 'neg' : 'muted');
     const rollSign = d.roll == null ? '' : (d.roll >= 0 ? '+' : '');
     mcxHtml += `<tr>
       <td class="metal-name" style="color:${m.color}">${m.name}</td>
@@ -408,7 +478,6 @@ function render() {
   }
   mcxBody.innerHTML = mcxHtml;
 
-  /* Wire Average Buying inputs */
   document.querySelectorAll('.avg-input').forEach(inp => {
     inp.addEventListener('input', () => {
       const key = inp.dataset.key;
@@ -420,7 +489,6 @@ function render() {
     });
   });
 
-  /* Wire Roll-Over inputs */
   document.querySelectorAll('.roll-input').forEach(inp => {
     inp.addEventListener('input', () => {
       const key = inp.dataset.rollKey;
@@ -428,13 +496,11 @@ function render() {
       const val = raw === '' ? null : parseFloat(raw);
       if (val == null || isNaN(val)) {
         delete ROLL_EDITS[key];
-        inp.classList.remove('edited', 'pos', 'neg');
+        inp.classList.remove('pos', 'neg');
       } else {
         ROLL_EDITS[key] = val;
-        inp.classList.add('edited');
-        // Positive → "neg" (green via CSS), Negative → "pos" (red via CSS)
-        inp.classList.toggle('neg', val > 0);
-        inp.classList.toggle('pos', val < 0);
+        inp.classList.toggle('pos', val > 0);
+        inp.classList.toggle('neg', val < 0);
       }
       saveRollEdits();
       showSaveHint();
@@ -442,15 +508,111 @@ function render() {
   });
 }
 
-let saveHintTimer = null;
-function showSaveHint() {
-  const el = document.getElementById('saveHint');
-  if (!el) return;
-  el.classList.add('show');
-  clearTimeout(saveHintTimer);
-  saveHintTimer = setTimeout(() => el.classList.remove('show'), 1500);
+/* ============ MCX ZINC CHART ============ */
+function zincCutoff(range) {
+  const now = Date.now();
+  const D = 24 * 3600 * 1000;
+  switch (range) {
+    case '7d': return now - 7 * D;
+    case '1m': return now - 30 * D;
+    case '3m': return now - 90 * D;
+    case '6m': return now - 180 * D;
+    case '1y': return now - 365 * D;
+    default:   return null;
+  }
 }
 
+function buildZincSeries() {
+  const merged = new Map();
+
+  if (MCX_ZINC_COL && METALS_RAW.length) {
+    for (const r of METALS_RAW) {
+      const v = r.series[MCX_ZINC_COL];
+      if (v != null) merged.set(r.date, { date: r.date, t: r.t, v, src: 'metals.csv' });
+    }
+  }
+  for (const r of ZINC_HISTORY) {
+    if (!merged.has(r.date)) merged.set(r.date, { ...r, src: 'live' });
+  }
+  if (LIVE_NOW && LIVE_NOW.zinc1 != null) {
+    merged.set(LIVE_NOW.date, { date: LIVE_NOW.date, t: new Date(LIVE_NOW.date + 'T00:00:00Z').getTime(), v: LIVE_NOW.zinc1, src: 'live-now' });
+  }
+  return [...merged.values()].sort((a,b) => a.t - b.t);
+}
+
+function renderZincChart() {
+  const canvas = document.getElementById('zincChart');
+  const noteEl = document.getElementById('zincNote');
+  if (!canvas) return;
+
+  const all = buildZincSeries();
+  const cutoff = zincCutoff(zincRange);
+  const rows = cutoff ? all.filter(r => r.t >= cutoff) : all;
+
+  if (noteEl) {
+    if (!MCX_ZINC_COL) {
+      noteEl.innerHTML = `⚠️ No MCX Zinc column detected in <code>metals.csv</code>. Add one (header e.g. "MCX Zinc") and refresh. Currently showing only live/localstorage: ${rows.length} pts.`;
+    } else {
+      noteEl.innerHTML = `Source: <b>metals.csv</b> column "<b>${MCX_ZINC_COL}</b>" · ${rows.length} pts in range.`;
+    }
+  }
+
+  const data = rows.map(r => ({ x: r.t, y: r.v }));
+
+  if (zincChart) zincChart.destroy();
+  zincChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      datasets: [{
+        label: 'MCX Zinc (₹/kg)',
+        data,
+        borderColor: '#5b8fc9',
+        backgroundColor: 'rgba(91,143,201,0.15)',
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        tension: 0.15,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#a9b6cb', font: { size: 10 } } },
+        tooltip: {
+          backgroundColor: 'rgba(14,20,32,0.95)',
+          borderColor: '#232d42',
+          borderWidth: 1,
+          titleColor: '#e8a33d',
+          bodyColor: '#e6ecf5',
+          padding: 10,
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y;
+              return v == null ? '—' : `MCX Zinc: ₹${v.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}/kg`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'time',
+          time: { tooltipFormat: 'dd MMM yyyy' },
+          grid: { color: '#1c2536' },
+          ticks: { color: '#7c8aa0', font: { size: 9 }, maxTicksLimit: 12 }
+        },
+        y: {
+          grid: { color: '#1c2536' },
+          ticks: { color: '#7c8aa0', font: { size: 9 }, callback: v => '₹' + v }
+        }
+      }
+    }
+  });
+}
+
+/* ============ WIRE ============ */
 document.getElementById('reloadBtn').addEventListener('click', loadAll);
 document.getElementById('resetEditsBtn').addEventListener('click', () => {
   if (!confirm('Reset all edits (Average Buying + Roll-Over)? This cannot be undone.')) return;
@@ -461,8 +623,25 @@ document.getElementById('resetEditsBtn').addEventListener('click', () => {
   render();
 });
 
+document.querySelectorAll('#zincRangeGroup button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#zincRangeGroup button').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  zincRange = b.dataset.range;
+  renderZincChart();
+}));
+
+let saveHintTimer = null;
+function showSaveHint() {
+  const el = document.getElementById('saveHint');
+  if (!el) return;
+  el.classList.add('show');
+  clearTimeout(saveHintTimer);
+  saveHintTimer = setTimeout(() => el.classList.remove('show'), 1500);
+}
+
 AVG_EDITS = loadEdits();
 ROLL_EDITS = loadRollEdits();
+ZINC_HISTORY = loadZincHistory();
 loadAll();
 setInterval(loadAll, 60000);
 </script>
