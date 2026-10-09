@@ -14,13 +14,11 @@
   }
   body { background:var(--bg); color:var(--text); padding:24px; min-height:100vh; }
   .wrap { max-width:1100px; margin:0 auto; }
-
   .head { display:flex; justify-content:space-between; align-items:center; padding:6px 4px 20px; flex-wrap:wrap; gap:14px; }
   .head h1 { font-size:1.4rem; font-weight:700; display:flex; align-items:center; gap:10px; }
   .head h1 i { color:var(--accent); }
   .head .meta { color:var(--muted); font-size:0.8rem; display:flex; gap:18px; flex-wrap:wrap; }
   .head .meta strong { color:var(--text); font-weight:600; }
-
   .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:16px; }
   .card h3 {
     font-size:0.82rem; font-weight:600; text-transform:uppercase; letter-spacing:0.8px;
@@ -28,74 +26,41 @@
     margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border);
   }
   .card h3 i { color:var(--accent); margin-right:6px; }
-  .save-hint {
-    font-size:0.66rem; color:var(--accent); margin-left:8px; opacity:0; transition:opacity 0.3s;
-    text-transform:none; letter-spacing:0; font-weight:600;
-  }
+  .save-hint { font-size:0.66rem; color:var(--accent); margin-left:8px; opacity:0; transition:opacity 0.3s; text-transform:none; letter-spacing:0; font-weight:600; }
   .save-hint.show { opacity:1; }
-
   .roll-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
-  .roll-table th {
-    text-align:center; color:var(--muted); font-weight:600;
-    padding:10px 12px; border:1px solid var(--border);
-    font-size:0.68rem; text-transform:uppercase; letter-spacing:0.5px; background:#0e1724;
-  }
-  .roll-table th.section-h {
-    background:#1a2334; color:var(--accent); text-align:left;
-    font-size:0.75rem; letter-spacing:1px;
-  }
+  .roll-table th { text-align:center; color:var(--muted); font-weight:600; padding:10px 12px; border:1px solid var(--border); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.5px; background:#0e1724; }
+  .roll-table th.section-h { background:#1a2334; color:var(--accent); text-align:left; font-size:0.75rem; letter-spacing:1px; }
   .roll-table th.metal-h { text-align:left; min-width:90px; }
-  .roll-table td {
-    padding:8px 12px; border:1px solid var(--border); text-align:right;
-    color:#c6d0de; font-variant-numeric:tabular-nums; font-weight:600; font-size:0.9rem;
-  }
+  .roll-table td { padding:8px 12px; border:1px solid var(--border); text-align:right; color:#c6d0de; font-variant-numeric:tabular-nums; font-weight:600; font-size:0.9rem; }
   .roll-table td.metal-name { text-align:left; font-weight:700; font-size:0.95rem; padding:12px; }
   .roll-table td.pos { color:var(--red); }
   .roll-table td.neg { color:var(--green); }
   .roll-table td.muted { color:var(--muted); font-weight:400; }
-
-  .roll-table input.avg-input {
-    width:100%; background:#0e1724; border:1px solid var(--border); color:#fff;
-    padding:8px 10px; border-radius:6px; font-size:0.88rem; font-weight:600;
-    font-variant-numeric:tabular-nums; text-align:right; font-family:inherit;
-  }
-  .roll-table input.avg-input:focus {
-    outline:none; border-color:var(--accent); background:rgba(232,163,61,0.05);
-  }
-  .roll-table input.avg-input.edited {
-    border-color:var(--accent); background:rgba(232,163,61,0.10);
-  }
+  .roll-table input.avg-input { width:100%; background:#0e1724; border:1px solid var(--border); color:#fff; padding:8px 10px; border-radius:6px; font-size:0.88rem; font-weight:600; font-variant-numeric:tabular-nums; text-align:right; font-family:inherit; }
+  .roll-table input.avg-input:focus { outline:none; border-color:var(--accent); background:rgba(232,163,61,0.05); }
+  .roll-table input.avg-input.edited { border-color:var(--accent); background:rgba(232,163,61,0.10); }
   .roll-table input.avg-input::placeholder { color:var(--muted); }
-
   .status { padding:10px 14px; border-radius:10px; margin-bottom:16px; font-size:0.78rem; }
   .status.ok   { background:rgba(46,204,113,0.12); border:1px solid var(--green); color:#7ee8a7; }
   .status.err  { background:rgba(231,76,60,0.12);  border:1px solid var(--red);   color:#f5a3a3; }
   .status.info { background:rgba(232,163,61,0.10); border:1px solid var(--accent); color:var(--accent); }
-
   .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
-  .btn {
-    background:#0e1724; border:1px solid var(--border); color:var(--muted);
-    padding:6px 12px; border-radius:8px; font-size:0.75rem; font-weight:500;
-    cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:6px;
-  }
+  .btn { background:#0e1724; border:1px solid var(--border); color:var(--muted); padding:6px 12px; border-radius:8px; font-size:0.75rem; font-weight:500; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
   .btn:hover { color:var(--text); border-color:#33425e; }
 </style>
 </head>
 <body>
 <div class="wrap">
-
   <div class="head">
     <h1><i class="fas fa-exchange-alt"></i> Roll-Over Cost Monitor</h1>
     <div class="meta" id="headMeta"></div>
   </div>
-
   <div id="status" class="status info"><i class="fas fa-spinner fa-spin"></i> Loading…</div>
-
   <div class="toolbar">
     <button class="btn" id="reloadBtn"><i class="fas fa-sync-alt"></i> Reload</button>
     <button class="btn" id="resetEditsBtn"><i class="fas fa-undo"></i> Reset Edits</button>
   </div>
-
   <div class="card">
     <h3>
       <span><i class="fas fa-balance-scale"></i> Roll-Over Summary <span id="saveHint" class="save-hint">Saved ✓</span></span>
@@ -112,11 +77,9 @@
           <th>LME Stock</th>
         </tr>
       </thead>
-      <tbody id="lmeBody">
-        <tr><td colspan="5" class="muted" style="text-align:center;">Loading…</td></tr>
-      </tbody>
+      <tbody id="lmeBody"><tr><td colspan="5" class="muted" style="text-align:center;">Loading…</td></tr></tbody>
       <thead>
-        <tr><th class="section-h" colspan="6">MCX</th></tr>
+        <tr><th class="section-h" colspan="5">MCX</th></tr>
         <tr>
           <th class="metal-h">Metal</th>
           <th>Average Buying</th>
@@ -125,12 +88,9 @@
           <th>Roll-Over Cost (±/ton)</th>
         </tr>
       </thead>
-      <tbody id="mcxBody">
-        <tr><td colspan="5" class="muted" style="text-align:center;">Loading…</td></tr>
-      </tbody>
+      <tbody id="mcxBody"><tr><td colspan="5" class="muted" style="text-align:center;">Loading…</td></tr></tbody>
     </table>
   </div>
-
 </div>
 
 <script>
@@ -145,7 +105,6 @@ let LATEST_CSP = null;
 let LIVE_NOW = null;
 let AVG_EDITS = {};
 
-/* ---------- Storage ---------- */
 const STORE = (() => {
   const mem = {};
   let ok = false;
@@ -159,7 +118,6 @@ const STORE = (() => {
 function loadEdits() { try { const r = STORE.getItem(EDITS_KEY); return r ? JSON.parse(r) : {}; } catch(e) { return {}; } }
 function saveEdits() { try { STORE.setItem(EDITS_KEY, JSON.stringify(AVG_EDITS)); } catch(e) {} }
 
-/* ---------- CSV helpers ---------- */
 function parseCSVLine(line) {
   const delim = line.indexOf('\t') >= 0 ? '\t' : ',';
   const out = []; let cur = ''; let inQuotes = false;
@@ -199,7 +157,6 @@ function parseDateLoose(s) {
 function fmt2(v) { return v == null ? '—' : v.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}); }
 function fmt0(v) { return v == null ? '—' : Math.round(v).toLocaleString(); }
 
-/* ---------- CSP parser ---------- */
 function parseCSPCSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
   if (!lines.length) return { ok:false, msg:'empty' };
@@ -223,10 +180,6 @@ function parseCSPCSV(text) {
     if (!map[metal]) map[metal] = {};
     map[metal][field] = idx;
   });
-  if (!Object.keys(map).length) {
-    const rest = header.map((h, i) => ({h, i})).filter(x => x.i !== dateCol);
-    if (rest.length >= 9) ['Cu','Zn','Al'].forEach((metal, mi) => { map[metal] = { cash: rest[mi*3+0].i, three: rest[mi*3+1].i, stock: rest[mi*3+2].i }; });
-  }
   if (!Object.keys(map).length) return { ok:false, msg:'no cols' };
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
@@ -248,7 +201,6 @@ function parseCSPCSV(text) {
   return { ok: true, msg: `CSP ${rows.length} rows (latest ${LATEST_CSP?.date || '—'})` };
 }
 
-/* ---------- Live parser ---------- */
 function parseLiveCSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
   if (lines.length < 2) return [];
@@ -267,6 +219,7 @@ function parseLiveCSV(text) {
   }
   return rows;
 }
+
 async function fetchLive() {
   try {
     const bustedUrl = LIVE_URL + (LIVE_URL.includes('?') ? '&' : '?') + '_cb=' + Date.now();
@@ -283,9 +236,9 @@ async function fetchLive() {
     const aluminium = pick('ALUMINIUM1!', 'ALUMINIUM2!');
     LIVE_NOW = {
       date: new Date().toISOString().slice(0,10),
-      zinc1: zinc.front,      zinc2: zinc.next,
-      cu1: copper.front,      cu2: copper.next,
-      al1: aluminium.front,   al2: aluminium.next,
+      zinc1: zinc.front, zinc2: zinc.next,
+      cu1: copper.front, cu2: copper.next,
+      al1: aluminium.front, al2: aluminium.next,
       fetchedAt: new Date().toISOString(),
     };
     return { ok: true };
@@ -294,7 +247,6 @@ async function fetchLive() {
   }
 }
 
-/* ---------- Load ---------- */
 async function loadAll() {
   const status = document.getElementById('status');
   status.className = 'status info';
@@ -322,7 +274,6 @@ async function loadAll() {
   render();
 }
 
-/* ---------- Defaults ---------- */
 function lmeDefaults(metal) {
   if (!LATEST_CSP || !LATEST_CSP[metal]) return { avgBuy: null, current: null, roll: null, stock: null };
   const row = LATEST_CSP[metal];
@@ -340,15 +291,9 @@ function mcxDefaults(metal) {
     else if (metal === 'Cu') { front = LIVE_NOW.cu1; next = LIVE_NOW.cu2; }
     else if (metal === 'Al') { front = LIVE_NOW.al1; next = LIVE_NOW.al2; }
   }
-  return {
-    avgBuy:  next,
-    current: front,
-    next:    next,
-    roll:    (front != null && next != null) ? front - next : null,
-  };
+  return { avgBuy: next, current: front, next: next, roll: (front != null && next != null) ? front - next : null };
 }
 
-/* ---------- Render ---------- */
 function render() {
   const lmeBody = document.getElementById('lmeBody');
   const mcxBody = document.getElementById('mcxBody');
@@ -360,7 +305,6 @@ function render() {
     mcxBody.innerHTML = '<tr><td colspan="5" class="muted" style="text-align:center;">No CSP data.</td></tr>';
     return;
   }
-
   snapEl.textContent = `LME ${LATEST_CSP.date} · MCX live`;
   headEl.innerHTML = `LME: <strong>${LATEST_CSP.date}</strong>` +
     (LIVE_NOW ? ` · Live: <strong>${new Date(LIVE_NOW.fetchedAt).toLocaleTimeString()}</strong>` : '') +
@@ -372,7 +316,6 @@ function render() {
     { key:'Zn', name:'Zn', color: CSP_COLORS.Zn },
   ];
 
-  /* LME section */
   let lmeHtml = '';
   for (const m of metals) {
     const d = lmeDefaults(m.key);
@@ -383,13 +326,7 @@ function render() {
     const rollSign = d.roll == null ? '' : (d.roll >= 0 ? '+' : '');
     lmeHtml += `<tr>
       <td class="metal-name" style="color:${m.color}">${m.name}</td>
-      <td>
-        <input type="number" step="0.01"
-               class="avg-input ${isEdited ? 'edited' : ''}"
-               data-key="${editKey}"
-               value="${avgValue != null ? avgValue : ''}"
-               placeholder="—">
-      </td>
+      <td><input type="number" step="0.01" class="avg-input ${isEdited ? 'edited' : ''}" data-key="${editKey}" value="${avgValue != null ? avgValue : ''}" placeholder="—"></td>
       <td>${fmt2(d.current)}</td>
       <td class="${rollCls}">${d.roll == null ? '—' : rollSign + fmt2(d.roll)}</td>
       <td>${fmt0(d.stock)}</td>
@@ -397,7 +334,6 @@ function render() {
   }
   lmeBody.innerHTML = lmeHtml;
 
-  /* MCX section */
   let mcxHtml = '';
   for (const m of metals) {
     const d = mcxDefaults(m.key);
@@ -408,13 +344,7 @@ function render() {
     const rollSign = d.roll == null ? '' : (d.roll >= 0 ? '+' : '');
     mcxHtml += `<tr>
       <td class="metal-name" style="color:${m.color}">${m.name}</td>
-      <td>
-        <input type="number" step="0.01"
-               class="avg-input ${isEdited ? 'edited' : ''}"
-               data-key="${editKey}"
-               value="${avgValue != null ? avgValue : ''}"
-               placeholder="—">
-      </td>
+      <td><input type="number" step="0.01" class="avg-input ${isEdited ? 'edited' : ''}" data-key="${editKey}" value="${avgValue != null ? avgValue : ''}" placeholder="—"></td>
       <td>${fmt2(d.current)}</td>
       <td>${fmt2(d.next)}</td>
       <td class="${rollCls}">${d.roll == null ? '—' : rollSign + fmt2(d.roll)}</td>
@@ -422,7 +352,6 @@ function render() {
   }
   mcxBody.innerHTML = mcxHtml;
 
-  /* Wire the editable inputs */
   document.querySelectorAll('.avg-input').forEach(inp => {
     inp.addEventListener('input', () => {
       const key = inp.dataset.key;
@@ -444,7 +373,6 @@ function showSaveHint() {
   saveHintTimer = setTimeout(() => el.classList.remove('show'), 1500);
 }
 
-/* ---------- Wire ---------- */
 document.getElementById('reloadBtn').addEventListener('click', loadAll);
 document.getElementById('resetEditsBtn').addEventListener('click', () => {
   if (!confirm('Reset all Average Buying edits? This cannot be undone.')) return;
@@ -453,8 +381,9 @@ document.getElementById('resetEditsBtn').addEventListener('click', () => {
   render();
 });
 
-/* ---------- Boot ---------- */
 AVG_EDITS = loadEdits();
 loadAll();
-setInterval(loadAll, 60000);   // auto-refresh every 60s
- 
+setInterval(loadAll, 60000);
+</script>
+</body>
+</html>
