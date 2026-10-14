@@ -360,7 +360,6 @@
   .roll-table td.pos { color:var(--green); }
   .roll-table td.neg { color:var(--red); }
   .roll-table td.muted { color:var(--muted); font-weight:400; }
-  /* Pill stacked below input */
   .roll-cell-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; }
   .roll-table input.roll-input { width:110px; background:#0e1724; border:1px solid var(--border); color:#fff; padding:5px 6px; border-radius:5px; font-size:0.78rem; font-weight:600; font-variant-numeric:tabular-nums; text-align:center; font-family:inherit; }
   .roll-table input.roll-input:focus { outline:none; border-color:var(--accent); }
@@ -430,7 +429,6 @@
     </div>
   </div>
 
-  <!-- ==================== MAIN ==================== -->
   <div id="tab-main" class="tab-panel">
     <div class="upload-bar">
       <span class="title"><i class="fas fa-folder-open"></i> Data</span>
@@ -702,7 +700,6 @@
       <div class="foot">Live: Google Sheet (LMEMCX) | CSP: lme_csp.csv | SBI TT: sbi.bank.in PDF + sahilgupta CSV | News: Google News + CNBC | NALCO: mudira.nalcoindia.co.in</div>
     </div>
   </div>
-  <!-- ============ END MAIN TAB ============ -->
 
   <div id="tab-lme" class="tab-panel" style="display:none;">
     <div class="head" style="padding-bottom:16px;">
@@ -750,7 +747,6 @@
       <div class="lme-chart-box"><div class="ct">Daily Change</div><div class="cw"><canvas id="lmeChChange"></canvas></div></div>
     </div>
   </div>
-  <!-- ============ END LME TAB ============ -->
 
   <div id="tab-shfe" class="tab-panel" style="display:none;">
     <div class="upload-bar" style="border-color:#e8a33d;">
@@ -784,7 +780,6 @@
       <div id="shfeGrid" class="shfe-grid"><div class="loading"><div class="spinner"></div> Loading SHFE data...</div></div>
     </div>
   </div>
-  <!-- ============ END SHFE TAB ============ -->
 
   <div id="tab-positioning" class="tab-panel" style="display:none;">
     <div class="head" style="padding-bottom:16px;">
@@ -872,9 +867,7 @@
     </div>
     <div class="grid"><div class="card span-12"><h3><i class="fas fa-table"></i> CFTC Last 12 Weeks</h3><div id="cftcTable" style="overflow-x:auto;margin-top:8px;"></div></div></div>
   </div>
-  <!-- ============ END COT REPORT TAB ============ -->
 
-  <!-- ============ ROLL-OVER TAB ============ -->
   <div id="tab-rollover" class="tab-panel" style="display:none;">
     <div class="head" style="padding-bottom:16px;">
       <h1><i class="fas fa-exchange-alt"></i> Roll-Over Cost Monitor</h1>
@@ -984,7 +977,6 @@
       </div>
     </div>
   </div>
-  <!-- ============ END ROLL-OVER TAB ============ -->
 
 </div>
 
@@ -3793,13 +3785,12 @@ function rolloverLmeStructureInfo(spread) {
   if (spread < 0) return { cls: 'bwd', txt: 'CONTANGO' };       // green — gain for short
   return { cls: 'flat', txt: 'FLAT' };
 }
+/* MCX LONG SPEC: Backwardation (roll < 0) = LOSS (red), Contango (roll > 0) = GAIN (green) */
 function rolloverMcxStructureInfo(roll) {
   if (roll == null || !isFinite(roll)) return { cls: 'flat', txt: '—' };
-  // MCX long spec view: Backwardation (roll < 0) = LOSS (red), Contango (roll > 0) = GAIN (green)
   if (roll > 0) return { cls: 'bwd', txt: 'CONTANGO' };        // green — gain
-  if (roll < 0) return { cls: 'ctg', txt: 'BACKWARDATION' };  // red — loss
+  if (roll < 0) return { cls: 'ctg', txt: 'BACKWARDATION' };   // red — loss
   return { cls: 'flat', txt: 'FLAT' };
-}
 }
 function rolloverLmeDefaults(metal) {
   if (!ROLL_LATEST_CSP || !ROLL_LATEST_CSP[metal]) return { lme3m: null, stock: null };
@@ -4017,7 +4008,7 @@ function rolloverRenderCalendar() {
   `;
 }
 
-/* ROLL-OVER P&L TRACKER (HEDGER SHORT — LME sign flipped) */
+/* ROLL-OVER P&L TRACKER (HEDGER SHORT — LME sign flipped, MCX sign spec) */
 function rolloverRenderPlTracker() {
   const grid = document.getElementById('rollPlGrid');
   if (!grid) return;
@@ -4038,13 +4029,18 @@ function rolloverRenderPlTracker() {
     const mcxPl = (mcxQtyMt != null && mcxRoll != null) ? mcxRoll * mcxQtyMt * 1000 : null;
 
     const lmeQtyT = numOrNull(inputs.lmeQtyT);
-    /* HEDGER SHORT → invert sign */
+    /* HEDGER SHORT → invert LME sign */
     const lmePlUsd = (lmeQtyT != null && rollUsd != null) ? -rollUsd * lmeQtyT : null;
     const lmePlInr = lmePlUsd != null && ROLL_SPOT_USDINR != null ? lmePlUsd * ROLL_SPOT_USDINR : null;
 
     const total = (mcxPl != null || lmePlInr != null) ? (mcxPl || 0) + (lmePlInr || 0) : null;
     const totalCls = total == null ? 'neu' : (total > 0 ? 'pos' : total < 0 ? 'neg' : 'neu');
     const totalLbl = total == null ? '—' : (total > 0 ? 'GAIN' : total < 0 ? 'COST' : 'FLAT');
+
+    /* MCX roll number colour flipped: positive = gain (green), negative = loss (red) */
+    const mcxRollCls = mcxRoll == null ? '' : (mcxRoll > 0 ? 'pos' : mcxRoll < 0 ? 'neg' : '');
+    /* LME roll number colour flipped for hedger */
+    const lmeRollCls = rollUsd == null ? '' : (rollUsd > 0 ? 'neg' : rollUsd < 0 ? 'pos' : '');
 
     html += `<div class="roll-pl-card ${m.cls}" data-pl-metal="${m.key}">
       <div class="roll-pl-header">
@@ -4057,7 +4053,7 @@ function rolloverRenderPlTracker() {
       </div>
       <div class="roll-pl-row">
         <label>MCX roll (₹/kg)</label>
-        <span class="val ${mcxRoll == null ? '' : (mcxRoll >= 0 ? 'neg' : 'pos')}">${mcxRoll == null ? '—' : (mcxRoll >= 0 ? '+' : '') + mcxRoll.toFixed(2)}</span>
+        <span class="val ${mcxRollCls}">${mcxRoll == null ? '—' : (mcxRoll >= 0 ? '+' : '') + mcxRoll.toFixed(2)}</span>
       </div>
       <div class="roll-pl-row">
         <label>MCX roll P&amp;L</label>
@@ -4069,7 +4065,7 @@ function rolloverRenderPlTracker() {
       </div>
       <div class="roll-pl-row">
         <label>LME roll ($/t)</label>
-        <span class="val ${rollUsd == null ? '' : (rollUsd >= 0 ? 'neg' : 'pos')}">${rollUsd == null ? '—' : (rollUsd >= 0 ? '+' : '') + rollUsd.toFixed(2)}</span>
+        <span class="val ${lmeRollCls}">${rollUsd == null ? '—' : (rollUsd >= 0 ? '+' : '') + rollUsd.toFixed(2)}</span>
       </div>
       <div class="roll-pl-row">
         <label>LME roll P&amp;L</label>
@@ -4121,7 +4117,7 @@ function rolloverUpdatePlValuesOnly() {
       if (v) {
         v.textContent = mcxRoll == null ? '—' : (mcxRoll >= 0 ? '+' : '') + mcxRoll.toFixed(2);
         v.classList.remove('pos', 'neg');
-        if (mcxRoll != null) v.classList.add(mcxRoll >= 0 ? 'neg' : 'pos');
+        if (mcxRoll != null) v.classList.add(mcxRoll > 0 ? 'pos' : mcxRoll < 0 ? 'neg' : '');
       }
     }
     if (rows[2]) {
@@ -4137,7 +4133,7 @@ function rolloverUpdatePlValuesOnly() {
       if (v) {
         v.textContent = rollUsd == null ? '—' : (rollUsd >= 0 ? '+' : '') + rollUsd.toFixed(2);
         v.classList.remove('pos', 'neg');
-        if (rollUsd != null) v.classList.add(rollUsd >= 0 ? 'neg' : 'pos');
+        if (rollUsd != null) v.classList.add(rollUsd > 0 ? 'neg' : rollUsd < 0 ? 'pos' : '');
       }
     }
     if (rows[5]) {
