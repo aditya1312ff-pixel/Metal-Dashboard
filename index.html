@@ -360,7 +360,8 @@
   .roll-table td.pos { color:var(--green); }
   .roll-table td.neg { color:var(--red); }
   .roll-table td.muted { color:var(--muted); font-weight:400; }
-  .roll-cell-wrap { display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; }
+  /* Pill stacked below input */
+  .roll-cell-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; }
   .roll-table input.roll-input { width:110px; background:#0e1724; border:1px solid var(--border); color:#fff; padding:5px 6px; border-radius:5px; font-size:0.78rem; font-weight:600; font-variant-numeric:tabular-nums; text-align:center; font-family:inherit; }
   .roll-table input.roll-input:focus { outline:none; border-color:var(--accent); }
   .roll-table input.roll-input.pos { color:var(--green); border-color:rgba(46,204,113,0.45); }
@@ -429,6 +430,7 @@
     </div>
   </div>
 
+  <!-- ==================== MAIN ==================== -->
   <div id="tab-main" class="tab-panel">
     <div class="upload-bar">
       <span class="title"><i class="fas fa-folder-open"></i> Data</span>
@@ -1266,7 +1268,6 @@ const LME_RATIOMODE_KEY = 'lme_ratio_mode';
 const SHFE_LAST_KEY = 'shfe_last_updated';
 const SHFE_HISTORY_KEY = 'shfe_history';
 
-/* Rollover-specific state */
 const ROLL_EDITS_KEY = 'rollover_lme_roll_v1';
 const ROLL_PL_INPUTS_KEY = 'rollover_pl_inputs_v1';
 const ROLL_SPOT_USDINR_KEY = 'rollover_spot_usdinr_v1';
@@ -1373,7 +1374,6 @@ async function fetchLive() {
     if (updatedEl) updatedEl.textContent = 'Updated ' + liveLastFetch.toLocaleTimeString();
     renderPriceGrid();
     renderParity();
-    // Sync all raw symbols into rollover state (including 2! contracts)
     const bySym = {};
     for (const r of rows) bySym[r.symbol] = r;
     ROLL_LIVE_LATEST = bySym;
@@ -1426,6 +1426,7 @@ function renderPriceGrid() {
   }
   el.innerHTML = html || '<div style="color:var(--muted);padding:20px;">Waiting for live data…</div>';
 }
+
 /* ========================================================================
    METALS.CSV
    ======================================================================== */
@@ -2038,20 +2039,16 @@ async function deleteCspRow() {
   const btn = document.getElementById('cspDeleteBtn');
   const token = getGithubToken();
   if (!token) { statusEl.textContent = 'No token — aborted.'; return; }
-
   const date = document.getElementById('cspNewDate').value;
   if (!date) { statusEl.textContent = 'Pick a date.'; return; }
   if (!confirm(`Delete CSP row for ${date}? This commits to GitHub.`)) return;
-
   btn.disabled = true;
   statusEl.textContent = 'Deleting…';
   statusEl.style.color = 'var(--muted)';
-
   try {
     const currentText = await getFileText(token);
     const sha = await getFileSha(token);
     const lines = currentText.split(/\r?\n/);
-
     let removed = false;
     const outLines = lines.filter((l, i) => {
       if (i === 0) return true;
@@ -2061,14 +2058,12 @@ async function deleteCspRow() {
       if (d === date) { removed = true; return false; }
       return true;
     });
-
     if (!removed) {
       statusEl.textContent = `No row found for ${date}.`;
       statusEl.style.color = 'var(--amber)';
       btn.disabled = false;
       return;
     }
-
     const finalText = outLines.join('\n') + '\n';
     const putRes = await fetch(
       `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${CSP_FILE_PATH}`,
@@ -2084,10 +2079,8 @@ async function deleteCspRow() {
       }
     );
     if (!putRes.ok) throw new Error('Commit failed: ' + putRes.status);
-
     statusEl.textContent = `Deleted ${date} ✓`;
     statusEl.style.color = 'var(--green)';
-
     setTimeout(async () => {
       try {
         const txt = await fetchText(CSP_URL + '?t=' + Date.now());
@@ -2929,6 +2922,7 @@ function wireControls() {
   document.getElementById('corrWindow').addEventListener('change', renderCorrChart);
   document.getElementById('parityResetBtn')?.addEventListener('click', () => { for (const k of Object.keys(parityEdits)) delete parityEdits[k]; parityEdits.__usdinr = null; parityEdited.clear(); initParityEdits(); scheduleSaveParityOverrides(); renderParity(); });
 }
+
 /* ========================================================================
    LME WAREHOUSE
    ======================================================================== */
@@ -3589,7 +3583,7 @@ function wirePositioningTab() {
 }
 
 /* ========================================================================
-   ROLL-OVER TAB LOGIC (FIXED & IMPROVED)
+   ROLL-OVER TAB LOGIC (HEDGER SIGN CONVENTION)
    ======================================================================== */
 function rolloverLoadEdits() { try { const r = SAFE_STORE.getItem(ROLL_EDITS_KEY); return r ? JSON.parse(r) : {}; } catch(e) { return {}; } }
 function rolloverSaveEdits() { try { SAFE_STORE.setItem(ROLL_EDITS_KEY, JSON.stringify(ROLL_EDITS)); } catch(e) {} }
@@ -3638,7 +3632,6 @@ function rolloverParseCSPCSV(text) {
   }
   rows.sort((a,b) => a.t - b.t);
   ROLL_CSP_RAW = rows;
-  // Find latest row that has valid Cash & 3M data
   let latestValid = rows.length ? rows[rows.length - 1] : null;
   for (let i = rows.length - 1; i >= 0; i--) {
     const r = rows[i];
@@ -3793,19 +3786,20 @@ function rolloverGetEffectiveLmeRoll(metal) {
   }
   return rolloverGetDefaultLmeRoll(metal);
 }
+/* HEDGER SHORT: Backwardation (spread > 0) = LOSS (red), Contango (spread < 0) = GAIN (green) */
 function rolloverLmeStructureInfo(spread) {
-  // LME Spread = Cash - 3M: > 0 is Backwardation, < 0 is Contango
   if (spread == null || !isFinite(spread)) return { cls: 'flat', txt: '—' };
-  if (spread > 0) return { cls: 'bwd', txt: 'BACKWARDATION' };
-  if (spread < 0) return { cls: 'ctg', txt: 'CONTANGO' };
+  if (spread > 0) return { cls: 'ctg', txt: 'BACKWARDATION' };  // red — loss for short
+  if (spread < 0) return { cls: 'bwd', txt: 'CONTANGO' };       // green — gain for short
   return { cls: 'flat', txt: 'FLAT' };
 }
 function rolloverMcxStructureInfo(roll) {
-  // MCX Roll = Next - Front: > 0 is Contango, < 0 is Backwardation
   if (roll == null || !isFinite(roll)) return { cls: 'flat', txt: '—' };
-  if (roll > 0) return { cls: 'ctg', txt: 'CONTANGO' };
-  if (roll < 0) return { cls: 'bwd', txt: 'BACKWARDATION' };
+  // MCX long spec view: Backwardation (roll < 0) = LOSS (red), Contango (roll > 0) = GAIN (green)
+  if (roll > 0) return { cls: 'bwd', txt: 'CONTANGO' };        // green — gain
+  if (roll < 0) return { cls: 'ctg', txt: 'BACKWARDATION' };  // red — loss
   return { cls: 'flat', txt: 'FLAT' };
+}
 }
 function rolloverLmeDefaults(metal) {
   if (!ROLL_LATEST_CSP || !ROLL_LATEST_CSP[metal]) return { lme3m: null, stock: null };
@@ -3838,8 +3832,8 @@ function rolloverMcxDefaults(metal) {
 function rolloverRollInputHtml(metal, editKey, defaultValue) {
   const isEdited = ROLL_EDITS[editKey] !== undefined && ROLL_EDITS[editKey] !== null && isFinite(ROLL_EDITS[editKey]);
   const v = isEdited ? ROLL_EDITS[editKey] : defaultValue;
-  const cls = v == null ? '' : (v > 0 ? 'pos' : v < 0 ? 'neg' : '');
-  // Important: <input type="number"> must NOT have a leading '+' or browser clears the field!
+  /* HEDGER SHORT: positive spread = red (loss), negative = green (gain) */
+  const cls = v == null ? '' : (v > 0 ? 'neg' : v < 0 ? 'pos' : '');
   const display = v == null ? '' : v.toFixed(2);
   const st = rolloverLmeStructureInfo(v);
   return `<div class="roll-cell-wrap">
@@ -3914,8 +3908,8 @@ function rolloverRender() {
       }
       const effVal = rolloverGetEffectiveLmeRoll(metal);
       inp.classList.remove('pos', 'neg');
-      if (effVal != null && effVal > 0) inp.classList.add('pos');
-      else if (effVal != null && effVal < 0) inp.classList.add('neg');
+      if (effVal != null && effVal > 0) inp.classList.add('neg');
+      else if (effVal != null && effVal < 0) inp.classList.add('pos');
 
       const pill = document.querySelector(`[data-lme-struct="${metal}"]`);
       if (pill) {
@@ -4023,7 +4017,7 @@ function rolloverRenderCalendar() {
   `;
 }
 
-/* ROLL-OVER P&L TRACKER */
+/* ROLL-OVER P&L TRACKER (HEDGER SHORT — LME sign flipped) */
 function rolloverRenderPlTracker() {
   const grid = document.getElementById('rollPlGrid');
   if (!grid) return;
@@ -4044,12 +4038,13 @@ function rolloverRenderPlTracker() {
     const mcxPl = (mcxQtyMt != null && mcxRoll != null) ? mcxRoll * mcxQtyMt * 1000 : null;
 
     const lmeQtyT = numOrNull(inputs.lmeQtyT);
-    const lmePlUsd = (lmeQtyT != null && rollUsd != null) ? rollUsd * lmeQtyT : null;
+    /* HEDGER SHORT → invert sign */
+    const lmePlUsd = (lmeQtyT != null && rollUsd != null) ? -rollUsd * lmeQtyT : null;
     const lmePlInr = lmePlUsd != null && ROLL_SPOT_USDINR != null ? lmePlUsd * ROLL_SPOT_USDINR : null;
 
     const total = (mcxPl != null || lmePlInr != null) ? (mcxPl || 0) + (lmePlInr || 0) : null;
     const totalCls = total == null ? 'neu' : (total > 0 ? 'pos' : total < 0 ? 'neg' : 'neu');
-    const totalLbl = total == null ? '—' : (total > 0 ? 'COST' : total < 0 ? 'GAIN' : 'FLAT');
+    const totalLbl = total == null ? '—' : (total > 0 ? 'GAIN' : total < 0 ? 'COST' : 'FLAT');
 
     html += `<div class="roll-pl-card ${m.cls}" data-pl-metal="${m.key}">
       <div class="roll-pl-header">
@@ -4062,7 +4057,7 @@ function rolloverRenderPlTracker() {
       </div>
       <div class="roll-pl-row">
         <label>MCX roll (₹/kg)</label>
-        <span class="val ${mcxRoll == null ? '' : (mcxRoll >= 0 ? 'pos' : 'neg')}">${mcxRoll == null ? '—' : (mcxRoll >= 0 ? '+' : '') + mcxRoll.toFixed(2)}</span>
+        <span class="val ${mcxRoll == null ? '' : (mcxRoll >= 0 ? 'neg' : 'pos')}">${mcxRoll == null ? '—' : (mcxRoll >= 0 ? '+' : '') + mcxRoll.toFixed(2)}</span>
       </div>
       <div class="roll-pl-row">
         <label>MCX roll P&amp;L</label>
@@ -4074,7 +4069,7 @@ function rolloverRenderPlTracker() {
       </div>
       <div class="roll-pl-row">
         <label>LME roll ($/t)</label>
-        <span class="val ${rollUsd == null ? '' : (rollUsd >= 0 ? 'pos' : 'neg')}">${rollUsd == null ? '—' : (rollUsd >= 0 ? '+' : '') + rollUsd.toFixed(2)}</span>
+        <span class="val ${rollUsd == null ? '' : (rollUsd >= 0 ? 'neg' : 'pos')}">${rollUsd == null ? '—' : (rollUsd >= 0 ? '+' : '') + rollUsd.toFixed(2)}</span>
       </div>
       <div class="roll-pl-row">
         <label>LME roll P&amp;L</label>
@@ -4116,11 +4111,19 @@ function rolloverUpdatePlValuesOnly() {
     const mcxRoll = d.roll;
     const mcxPl = (mcxQtyMt != null && mcxRoll != null) ? mcxRoll * mcxQtyMt * 1000 : null;
     const lmeQtyT = numOrNull(inputs.lmeQtyT);
-    const lmePlUsd = (lmeQtyT != null && rollUsd != null) ? rollUsd * lmeQtyT : null;
+    const lmePlUsd = (lmeQtyT != null && rollUsd != null) ? -rollUsd * lmeQtyT : null;
     const lmePlInr = lmePlUsd != null && ROLL_SPOT_USDINR != null ? lmePlUsd * ROLL_SPOT_USDINR : null;
     const total = (mcxPl != null || lmePlInr != null) ? (mcxPl || 0) + (lmePlInr || 0) : null;
 
     const rows = card.querySelectorAll('.roll-pl-row');
+    if (rows[1]) {
+      const v = rows[1].querySelector('.val');
+      if (v) {
+        v.textContent = mcxRoll == null ? '—' : (mcxRoll >= 0 ? '+' : '') + mcxRoll.toFixed(2);
+        v.classList.remove('pos', 'neg');
+        if (mcxRoll != null) v.classList.add(mcxRoll >= 0 ? 'neg' : 'pos');
+      }
+    }
     if (rows[2]) {
       const v = rows[2].querySelector('.val');
       if (v) {
@@ -4134,7 +4137,7 @@ function rolloverUpdatePlValuesOnly() {
       if (v) {
         v.textContent = rollUsd == null ? '—' : (rollUsd >= 0 ? '+' : '') + rollUsd.toFixed(2);
         v.classList.remove('pos', 'neg');
-        if (rollUsd != null) v.classList.add(rollUsd >= 0 ? 'pos' : 'neg');
+        if (rollUsd != null) v.classList.add(rollUsd >= 0 ? 'neg' : 'pos');
       }
     }
     if (rows[5]) {
@@ -4156,7 +4159,7 @@ function rolloverUpdatePlValuesOnly() {
     const badge = card.querySelector('.roll-pl-header .badge');
     if (badge) {
       const totalCls = total == null ? 'neu' : (total > 0 ? 'pos' : total < 0 ? 'neg' : 'neu');
-      const totalLbl = total == null ? '—' : (total > 0 ? 'COST' : total < 0 ? 'GAIN' : 'FLAT');
+      const totalLbl = total == null ? '—' : (total > 0 ? 'GAIN' : total < 0 ? 'COST' : 'FLAT');
       badge.className = 'badge ' + totalCls;
       badge.textContent = totalLbl;
     }
