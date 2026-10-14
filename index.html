@@ -335,6 +335,85 @@
   .cotr-parse-log .ok { color:var(--green); }
   .cotr-parse-log .err { color:var(--red); }
   .cotr-parse-log .warn { color:var(--amber); }
+
+  /* Roll-Over Tab Styles */
+  .status { padding:10px 14px; border-radius:10px; margin-bottom:14px; font-size:0.78rem; display:block; }
+  .status.info { background:rgba(232,163,61,0.10); border:1px solid var(--accent); color:var(--accent); }
+  .status.ok { background:rgba(46,204,113,0.12); border:1px solid var(--green); color:#7ee8a7; }
+  .status.err { background:rgba(231,76,60,0.12); border:1px solid var(--red); color:#f5a3a3; }
+  .toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+  .save-hint { font-size:0.65rem; color:var(--green); background:rgba(46,204,113,0.15); padding:2px 8px; border-radius:10px; margin-left:8px; opacity:0; transition:opacity 0.25s; pointer-events:none; text-transform:none; letter-spacing:0; }
+  .save-hint.show { opacity:1; }
+  #tab-rollover > .card { margin-bottom:14px; }
+  .charts-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-bottom:14px; }
+  @media(max-width:1100px) { .charts-grid { grid-template-columns:1fr; } }
+
+  .roll-table { width:100%; border-collapse:collapse; font-size:0.85rem; table-layout:fixed; }
+  .roll-table col.c1 { width:14%; } .roll-table col.c2 { width:22%; }
+  .roll-table col.c3 { width:26%; } .roll-table col.c4 { width:19%; }
+  .roll-table col.c5 { width:19%; }
+  .roll-table th { text-align:center; color:var(--muted); font-weight:600; padding:8px 6px; border:1px solid var(--border); font-size:0.62rem; text-transform:uppercase; letter-spacing:0.4px; background:#0e1724; }
+  .roll-table th.section-h { background:#1a2334; color:var(--accent); text-align:left; font-size:0.72rem; letter-spacing:0.8px; padding:6px 8px; }
+  .roll-table th.metal-h { text-align:left; padding-left:10px; }
+  .roll-table td { padding:8px 6px; border:1px solid var(--border); text-align:center; color:#c6d0de; font-variant-numeric:tabular-nums; font-weight:600; font-size:0.82rem; }
+  .roll-table td.metal-name { text-align:left; font-weight:700; font-size:0.85rem; padding:8px 10px; }
+  .roll-table td.pos { color:var(--green); }
+  .roll-table td.neg { color:var(--red); }
+  .roll-table td.muted { color:var(--muted); font-weight:400; }
+  .roll-cell-wrap { display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; }
+  .roll-table input.roll-input { width:110px; background:#0e1724; border:1px solid var(--border); color:#fff; padding:5px 6px; border-radius:5px; font-size:0.78rem; font-weight:600; font-variant-numeric:tabular-nums; text-align:center; font-family:inherit; }
+  .roll-table input.roll-input:focus { outline:none; border-color:var(--accent); }
+  .roll-table input.roll-input.pos { color:var(--green); border-color:rgba(46,204,113,0.45); }
+  .roll-table input.roll-input.neg { color:var(--red); border-color:rgba(231,76,60,0.45); }
+  .roll-struct-pill { display:inline-block; padding:2px 7px; border-radius:8px; font-size:0.58rem; font-weight:700; letter-spacing:0.4px; text-transform:uppercase; white-space:nowrap; }
+  .roll-struct-pill.bwd { background:rgba(46,204,113,0.18); color:var(--green); }
+  .roll-struct-pill.ctg { background:rgba(231,76,60,0.18); color:var(--red); }
+  .roll-struct-pill.flat { background:rgba(124,138,160,0.18); color:var(--muted); }
+
+  .roll-calendar-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:12px; }
+  .roll-cal-item { background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:12px; }
+  .roll-cal-item .lbl { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+  .roll-cal-item .val { font-size:1.05rem; font-weight:700; color:#fff; }
+  .roll-cal-item .sub { font-size:0.68rem; color:var(--muted); margin-top:4px; }
+  .roll-cal-item .days { font-size:0.72rem; margin-top:6px; }
+  .roll-cal-item .days.soon { color:var(--amber); font-weight:700; }
+  .roll-cal-item .days.urgent { color:var(--red); font-weight:700; }
+  .roll-pl-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:14px; }
+  .roll-pl-card { background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:14px; position:relative; overflow:hidden; }
+  .roll-pl-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); }
+  .roll-pl-card.Cu::before { background:#d68b4d; }
+  .roll-pl-card.Zn::before { background:#5b8fc9; }
+  .roll-pl-card.Al::before { background:#93a2b5; }
+  .roll-pl-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  .roll-pl-header .name { font-size:0.85rem; font-weight:700; }
+  .roll-pl-header .badge { font-size:0.6rem; font-weight:700; padding:2px 8px; border-radius:10px; }
+  .roll-pl-header .badge.pos { background:rgba(46,204,113,0.18); color:var(--green); }
+  .roll-pl-header .badge.neg { background:rgba(231,76,60,0.18); color:var(--red); }
+  .roll-pl-header .badge.neu { background:rgba(124,138,160,0.18); color:var(--muted); }
+  .roll-pl-row { display:grid; grid-template-columns:1fr 130px; gap:8px; align-items:center; padding:5px 0; border-bottom:1px dashed #1a2334; font-size:0.72rem; }
+  .roll-pl-row:last-child { border-bottom:none; }
+  .roll-pl-row label { color:var(--muted); }
+  .roll-pl-row input { background:#0e1724; border:1px solid var(--border); color:#fff; padding:4px 6px; border-radius:5px; font-size:0.72rem; text-align:right; font-family:inherit; font-variant-numeric:tabular-nums; width:100%; }
+  .roll-pl-row input:focus { outline:none; border-color:var(--accent); }
+  .roll-pl-row .val { text-align:right; font-weight:700; color:#fff; font-variant-numeric:tabular-nums; }
+  .roll-pl-row .val.pos { color:var(--green); }
+  .roll-pl-row .val.neg { color:var(--red); }
+  .roll-pl-row.pr-result { background:rgba(232,163,61,0.06); border-radius:6px; padding:8px; margin-top:4px; border-bottom:none; }
+  .roll-pl-row.pr-result label { color:var(--accent); font-weight:600; }
+  .roll-pl-row.pr-result .val { font-size:0.9rem; }
+  .roll-spark-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  @media(max-width:900px) { .roll-spark-grid { grid-template-columns:1fr; } }
+  .roll-spark-card { background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:12px; position:relative; overflow:hidden; }
+  .roll-spark-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; }
+  .roll-spark-card.Cu::before { background:#d68b4d; }
+  .roll-spark-card.Zn::before { background:#5b8fc9; }
+  .roll-spark-card.Al::before { background:#93a2b5; }
+  .roll-spark-title { font-size:0.78rem; font-weight:700; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
+  .roll-spark-title .chg { font-size:0.68rem; font-weight:600; }
+  .roll-spark-title .chg.pos { color:var(--green); }
+  .roll-spark-title .chg.neg { color:var(--red); }
+  .roll-spark-title .chg.muted { color:var(--muted); }
+  .roll-spark-chart { position:relative; width:100%; height:80px; }
 </style>
 </head>
 <body>
@@ -346,6 +425,7 @@
       <button class="tab-btn" data-tab="lme"><i class="fas fa-globe"></i> LME</button>
       <button class="tab-btn" data-tab="shfe"><i class="fas fa-landmark"></i> SHFE</button>
       <button class="tab-btn" data-tab="positioning"><i class="fas fa-users"></i> COT Report</button>
+      <button class="tab-btn" data-tab="rollover"><i class="fas fa-exchange-alt"></i> Roll-Over</button>
     </div>
   </div>
 
@@ -473,8 +553,8 @@
           </div>
           <div class="controls" style="margin-top:10px;justify-content:flex-end;">
             <button class="btn" id="cspDeleteBtn" style="border-color:#e74c3c;color:#e74c3c;">
-  <i class="fas fa-trash"></i> Delete this date
-</button>
+              <i class="fas fa-trash"></i> Delete this date
+            </button>
             <button class="btn" id="cspClearBtn" style="margin-right:8px;">Clear</button>
             <button class="btn-refresh" id="cspSaveBtn"><i class="fas fa-cloud-upload-alt"></i> Save to GitHub</button>
           </div>
@@ -792,6 +872,118 @@
   </div>
   <!-- ============ END COT REPORT TAB ============ -->
 
+  <!-- ============ ROLL-OVER TAB ============ -->
+  <div id="tab-rollover" class="tab-panel" style="display:none;">
+    <div class="head" style="padding-bottom:16px;">
+      <h1><i class="fas fa-exchange-alt"></i> Roll-Over Cost Monitor</h1>
+      <div class="meta" id="rollHeadMeta"></div>
+    </div>
+    <div id="rollStatus" class="status info"><i class="fas fa-spinner fa-spin"></i> Loading…</div>
+    <div class="toolbar">
+      <button class="btn-refresh" id="reloadBtn"><i class="fas fa-sync-alt"></i> Reload</button>
+      <button class="btn" id="resetEditsBtn"><i class="fas fa-undo"></i> Reset Edits</button>
+    </div>
+
+    <div class="card">
+      <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:8px;">
+        <span><i class="fas fa-balance-scale"></i> Roll-Over Summary <span id="rollSaveHint" class="save-hint">Saved ✓</span></span>
+        <span id="rollSnapshotDate" style="font-size:0.7rem;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;"></span>
+      </h3>
+      <table class="roll-table">
+        <colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"></colgroup>
+        <thead>
+          <tr><th class="section-h" colspan="5">LME</th></tr>
+          <tr>
+            <th class="metal-h">METAL</th>
+            <th>LME 3M ($/t)</th>
+            <th>CASH–3M ROLL ($/t)</th>
+            <th>STOCK</th>
+            <th>USD/INR</th>
+          </tr>
+        </thead>
+        <tbody id="rollLmeBody"><tr><td colspan="5" class="muted" style="text-align:center;">Loading…</td></tr></tbody>
+        <thead>
+          <tr><th class="section-h" colspan="5">MCX</th></tr>
+          <tr>
+            <th class="metal-h">METAL</th>
+            <th>FRONT (₹/kg)</th>
+            <th>NEXT (₹/kg)</th>
+            <th>1M ROLL (₹/kg)</th>
+            <th>STRUCTURE</th>
+          </tr>
+        </thead>
+        <tbody id="rollMcxBody"><tr><td colspan="5" class="muted" style="text-align:center;">Loading…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3><span><i class="fas fa-calendar-alt"></i> Roll Calendar</span></h3>
+      <div class="roll-calendar-grid" id="rollCalendarGrid"><div class="loading" style="grid-column:1/-1;color:var(--muted);">Loading…</div></div>
+    </div>
+
+    <div class="card">
+      <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:8px;">
+        <span><i class="fas fa-calculator"></i> Rollover P&amp;L Tracker <span class="sub">— enter your position</span></span>
+        <span class="controls"><button class="btn" id="rollPlResetBtn"><i class="fas fa-undo"></i> Reset P&amp;L Inputs</button></span>
+      </h3>
+      <div class="roll-pl-grid" id="rollPlGrid"></div>
+    </div>
+
+    <div class="card">
+      <h3><span><i class="fas fa-wave-square"></i> Metal Price Sparklines <span class="sub">— last 30 days (MCX Front)</span></span></h3>
+      <div class="roll-spark-grid" id="rollSparkGrid"></div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="card">
+        <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:8px;">
+          <span><i class="fas fa-globe"></i> LME Roll Spread History <span class="sub">— Cash − 3M</span></span>
+          <span class="chart-controls" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span class="freq-group" id="rollLmeMetalGroup">
+              <button data-metal="Cu" class="active">Cu</button>
+              <button data-metal="Zn">Zn</button>
+              <button data-metal="Al">Al</button>
+            </span>
+            <span class="freq-group" id="rollLmeRangeGroup">
+              <button data-range="1m">1M</button>
+              <button data-range="3m">3M</button>
+              <button data-range="6m" class="active">6M</button>
+              <button data-range="1y">1Y</button>
+              <button data-range="3y">3Y</button>
+              <button data-range="all">All</button>
+            </span>
+          </span>
+        </h3>
+        <div class="chart-wrap"><canvas id="rollLmeRollChart"></canvas></div>
+        <div id="rollLmeRollNote" style="font-size:0.65rem;color:var(--muted);margin-top:8px;"></div>
+      </div>
+
+      <div class="card">
+        <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:8px;">
+          <span><i class="fas fa-chart-line"></i> MCX Roll Spread History <span class="sub">— Next − Front</span></span>
+          <span class="chart-controls" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span class="freq-group" id="rollMcxMetalGroup">
+              <button data-metal="Cu" class="active">Cu</button>
+              <button data-metal="Zn">Zn</button>
+              <button data-metal="Al">Al</button>
+            </span>
+            <span class="freq-group" id="rollMcxRangeGroup">
+              <button data-range="1m">1M</button>
+              <button data-range="3m">3M</button>
+              <button data-range="6m" class="active">6M</button>
+              <button data-range="1y">1Y</button>
+              <button data-range="3y">3Y</button>
+              <button data-range="all">All</button>
+            </span>
+          </span>
+        </h3>
+        <div class="chart-wrap"><canvas id="rollMcxRollChart"></canvas></div>
+        <div id="rollMcxRollNote" style="font-size:0.65rem;color:var(--muted);margin-top:8px;"></div>
+      </div>
+    </div>
+  </div>
+  <!-- ============ END ROLL-OVER TAB ============ -->
+
 </div>
 
 <script>
@@ -812,6 +1004,9 @@ const SHFE_HISTORY_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO
 const LME_COTR_FILE = 'lme_cotr_history.json';
 const LME_COTR_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/${LME_COTR_FILE}`;
 const CFTC_WORKER_URL = 'https://square-wood-6d0b.aditya1312ff.workers.dev/cftc/comex-copper';
+
+const ROLL_CSP_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/lme_csp.csv`;
+const ROLL_METALS_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/metals.csv`;
 
 const LIVE_REAL_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vROr3cjVUMAqL9qXYAp6rxcekcbiacZmQ4JfSMOjgoEKKAxhLLDCsMddPf6G3ZgnN0b4dWl7RrghaZ9/pub?gid=0&single=true&output=csv';
 const LIVE_REFRESH_MS = 120000;
@@ -1002,6 +1197,20 @@ function filterByMonths(series, range) {
     return d >= cutoff;
   });
 }
+function fmtIndian(v, dp = 0) {
+  if (v == null || !isFinite(v)) return '—';
+  const neg = v < 0;
+  const abs = Math.abs(v);
+  const fixed = abs.toFixed(dp);
+  const parts = fixed.split('.');
+  const intPart = parts[0];
+  const decPart = parts[1] || '';
+  let lastThree = intPart.slice(-3);
+  const rest = intPart.slice(0, -3);
+  if (rest) lastThree = ',' + lastThree;
+  const formatted = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
+  return '₹' + (neg ? '-' : '') + formatted + (decPart ? '.' + decPart : '');
+}
 
 /* ========================================================================
    STATE
@@ -1057,6 +1266,31 @@ const LME_RATIOMODE_KEY = 'lme_ratio_mode';
 const SHFE_LAST_KEY = 'shfe_last_updated';
 const SHFE_HISTORY_KEY = 'shfe_history';
 
+/* Rollover-specific state */
+const ROLL_EDITS_KEY = 'rollover_lme_roll_v1';
+const ROLL_PL_INPUTS_KEY = 'rollover_pl_inputs_v1';
+const ROLL_SPOT_USDINR_KEY = 'rollover_spot_usdinr_v1';
+const ROLL_MCX_COLS = {
+  Cu: { front: 'MCX Copper',    next: 'MCX Copper 2' },
+  Al: { front: 'MCX Aluminium', next: 'MCX Aluminium 2' },
+  Zn: { front: 'MCX Zinc',      next: 'MCX Zinc 2' },
+};
+let ROLL_CSP_RAW = [];
+let ROLL_METALS_RAW = [];
+let ROLL_LATEST_CSP = null;
+let ROLL_LIVE_NOW = null;
+let ROLL_LIVE_LATEST = {};
+let ROLL_EDITS = {};
+let ROLL_PL_INPUTS = {};
+let ROLL_SPOT_USDINR = null;
+let rollLmeRollChart = null;
+let rollMcxRollChart = null;
+let rollSparkCharts = { Cu: null, Zn: null, Al: null };
+let rollLmeRollMetal = 'Cu';
+let rollLmeRollRange = '6m';
+let rollMcxRollMetal = 'Cu';
+let rollMcxRollRange = '6m';
+
 let CFTC_COT = [];
 let cftcNetChart;
 const cftcSettings = { range: '1y', mode: 'net' };
@@ -1070,11 +1304,12 @@ let lmeCotrQueue = [];
    ======================================================================== */
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-  ['main','lme','shfe','positioning'].forEach(k => {
+  ['main','lme','shfe','positioning','rollover'].forEach(k => {
     const el = document.getElementById('tab-' + k);
     if (el) el.style.display = (k === name) ? 'block' : 'none';
   });
   if (name === 'lme' && !lmeLoadedOnce) { lmeLoadedOnce = true; lmeLoadHistory(); }
+  if (name === 'rollover') { rolloverLoadAll(); }
 }
 
 /* ========================================================================
@@ -1138,6 +1373,24 @@ async function fetchLive() {
     if (updatedEl) updatedEl.textContent = 'Updated ' + liveLastFetch.toLocaleTimeString();
     renderPriceGrid();
     renderParity();
+    // Sync all raw symbols into rollover state (including 2! contracts)
+    const bySym = {};
+    for (const r of rows) bySym[r.symbol] = r;
+    ROLL_LIVE_LATEST = bySym;
+    ROLL_LIVE_NOW = {
+      date: new Date().toISOString().slice(0,10),
+      zinc1: bySym['ZINC1!']?.price ?? null,
+      zinc2: bySym['ZINC2!']?.price ?? null,
+      cu1: bySym['COPPER1!']?.price ?? null,
+      cu2: bySym['COPPER2!']?.price ?? null,
+      al1: bySym['ALUMINIUM1!']?.price ?? null,
+      al2: bySym['ALUMINIUM2!']?.price ?? null,
+      fetchedAt: new Date().toISOString(),
+    };
+    if (bySym['USDINR'] && bySym['USDINR'].price != null) {
+      ROLL_SPOT_USDINR = bySym['USDINR'].price;
+      rolloverSaveSpotFx(ROLL_SPOT_USDINR);
+    }
   } catch (e) {
     console.error('Live fetch failed:', e);
     liveLastError = true;
@@ -1173,7 +1426,6 @@ function renderPriceGrid() {
   }
   el.innerHTML = html || '<div style="color:var(--muted);padding:20px;">Waiting for live data…</div>';
 }
-
 /* ========================================================================
    METALS.CSV
    ======================================================================== */
@@ -1781,7 +2033,7 @@ async function saveCspToGitHub() {
     if (/401|403/.test(e.message)) { SAFE_STORE.removeItem(GITHUB_TOKEN_KEY); statusEl.textContent = 'Token invalid — cleared.'; }
   } finally { btn.disabled = false; }
 }
-  async function deleteCspRow() {
+async function deleteCspRow() {
   const statusEl = document.getElementById('cspUpdateStatus');
   const btn = document.getElementById('cspDeleteBtn');
   const token = getGithubToken();
@@ -1802,7 +2054,7 @@ async function saveCspToGitHub() {
 
     let removed = false;
     const outLines = lines.filter((l, i) => {
-      if (i === 0) return true;                    // keep header
+      if (i === 0) return true;
       if (!l.trim()) return false;
       const firstCell = parseCSVLine(l)[0];
       const d = parseDateLoose(firstCell);
@@ -1870,7 +2122,7 @@ function wireCspUpdater() {
   const dateInput = document.getElementById('cspNewDate');
   if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
   document.getElementById('cspSaveBtn')?.addEventListener('click', saveCspToGitHub);
-    document.getElementById('cspDeleteBtn')?.addEventListener('click', deleteCspRow);
+  document.getElementById('cspDeleteBtn')?.addEventListener('click', deleteCspRow);
   document.getElementById('cspClearBtn')?.addEventListener('click', () => { ['newCuCash','newCuThree','newCuStock','newZnCash','newZnThree','newZnStock','newAlCash','newAlThree','newAlStock'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; }); });
   document.getElementById('cspCloseBtn')?.addEventListener('click', closeCspUpdater);
   refreshTokenUI();
@@ -2564,7 +2816,7 @@ function wireNewsControls() {
 }
 
 /* ========================================================================
-   GITHUB CSV LOAD
+   GITHUB CSV LOAD & FILE OVERRIDE
    ======================================================================== */
 async function fetchText(url, timeoutMs = 20000) {
   const controller = new AbortController();
@@ -2605,10 +2857,6 @@ async function autoLoadFromGitHub(silent = false) {
   if (metalsOk || cspOk) { if (!silent) showStatus('ok', 'Loaded from GitHub' + (metalsOk ? ' · metals.csv ✓' : '') + (cspOk ? ' · lme_csp.csv ✓' : ''), errs.length ? errs : null); maybeRender(); }
   else if (!silent) showStatus('err', 'Could not load GitHub CSVs', errs);
 }
-
-/* ========================================================================
-   FILE OVERRIDE
-   ======================================================================== */
 function showContent() { document.getElementById('placeholder').style.display = 'none'; document.getElementById('content').style.display = 'block'; }
 function loadMetalsFile(text) {
   const res = parseMetalsCSV(text);
@@ -2681,7 +2929,6 @@ function wireControls() {
   document.getElementById('corrWindow').addEventListener('change', renderCorrChart);
   document.getElementById('parityResetBtn')?.addEventListener('click', () => { for (const k of Object.keys(parityEdits)) delete parityEdits[k]; parityEdits.__usdinr = null; parityEdited.clear(); initParityEdits(); scheduleSaveParityOverrides(); renderParity(); });
 }
-
 /* ========================================================================
    LME WAREHOUSE
    ======================================================================== */
@@ -3022,7 +3269,7 @@ async function shfeWire() {
 }
 
 /* ========================================================================
-   CFTC COT
+   CFTC COT & LME COTR
    ======================================================================== */
 async function fetchCftcCot() {
   const statusEl = document.getElementById('cftcStatus');
@@ -3114,10 +3361,6 @@ function renderCftcTable() {
   html += '</tbody></table>';
   el.innerHTML = html;
 }
-
-/* ========================================================================
-   LME COTR
-   ======================================================================== */
 function parseLmeCotrXlsx(arrayBuffer, fileName) {
   const wb = XLSX.read(arrayBuffer, { type: 'array' });
   const results = [];
@@ -3346,6 +3589,763 @@ function wirePositioningTab() {
 }
 
 /* ========================================================================
+   ROLL-OVER TAB LOGIC (FIXED & IMPROVED)
+   ======================================================================== */
+function rolloverLoadEdits() { try { const r = SAFE_STORE.getItem(ROLL_EDITS_KEY); return r ? JSON.parse(r) : {}; } catch(e) { return {}; } }
+function rolloverSaveEdits() { try { SAFE_STORE.setItem(ROLL_EDITS_KEY, JSON.stringify(ROLL_EDITS)); } catch(e) {} }
+function rolloverLoadPlInputs() { try { const r = SAFE_STORE.getItem(ROLL_PL_INPUTS_KEY); return r ? JSON.parse(r) : {}; } catch(e) { return {}; } }
+function rolloverSavePlInputs() { try { SAFE_STORE.setItem(ROLL_PL_INPUTS_KEY, JSON.stringify(ROLL_PL_INPUTS)); } catch(e) {} }
+function rolloverLoadSpotFx() { try { const r = SAFE_STORE.getItem(ROLL_SPOT_USDINR_KEY); return r ? parseFloat(r) : null; } catch(e) { return null; } }
+function rolloverSaveSpotFx(v) { try { SAFE_STORE.setItem(ROLL_SPOT_USDINR_KEY, String(v)); } catch(e) {} }
+
+function rolloverParseCSPCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (!lines.length) return { ok:false, msg:'empty' };
+  const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim());
+  let dateCol = header.findIndex(h => /date|time|day|timestamp/i.test(h));
+  if (dateCol < 0) dateCol = 0;
+  const map = {};
+  header.forEach((name, idx) => {
+    if (idx === dateCol) return;
+    const n = name.toLowerCase();
+    let metal = null;
+    if (/\b(copper|cu)\b/.test(n)) metal = 'Cu';
+    else if (/\b(zinc|zn)\b/.test(n)) metal = 'Zn';
+    else if (/\b(aluminium|aluminum|alu|al)\b/.test(n)) metal = 'Al';
+    if (!metal) return;
+    let field = null;
+    if (/cash|spot/.test(n)) field = 'cash';
+    else if (/(3[\s-]?m(onth)?|three[\s-]?month)/.test(n)) field = 'three';
+    else if (/stock|invent|warehouse|lme.?stock/.test(n)) field = 'stock';
+    if (!field) return;
+    if (!map[metal]) map[metal] = {};
+    map[metal][field] = idx;
+  });
+  if (!Object.keys(map).length) return { ok:false, msg:'no cols' };
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const parts = parseCSVLine(lines[i]);
+    if (parts.length <= dateCol) continue;
+    const d = parseDateLoose(parts[dateCol]);
+    if (!d) continue;
+    const t = new Date(d + 'T00:00:00Z').getTime();
+    const entry = { date: d, t };
+    for (const [metal, idx] of Object.entries(map)) {
+      const get = (i) => (i != null && parts[i] != null) ? parseNumber(parts[i]) : null;
+      entry[metal] = { cash: get(idx.cash), threeM: get(idx.three), stock: get(idx.stock) };
+    }
+    rows.push(entry);
+  }
+  rows.sort((a,b) => a.t - b.t);
+  ROLL_CSP_RAW = rows;
+  // Find latest row that has valid Cash & 3M data
+  let latestValid = rows.length ? rows[rows.length - 1] : null;
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const r = rows[i];
+    if ((r.Cu && r.Cu.cash != null && r.Cu.threeM != null) ||
+        (r.Al && r.Al.cash != null && r.Al.threeM != null) ||
+        (r.Zn && r.Zn.cash != null && r.Zn.threeM != null)) {
+      latestValid = r;
+      break;
+    }
+  }
+  ROLL_LATEST_CSP = latestValid;
+  return { ok: true, msg: `CSP ${rows.length} rows` };
+}
+
+function rolloverParseMetalsCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (!lines.length) return { ok:false, msg:'empty' };
+  const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim());
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const parts = parseCSVLine(lines[i]);
+    if (parts.length < 2) continue;
+    const d = parseDateLoose(parts[0]);
+    if (!d) continue;
+    const t = new Date(d + 'T00:00:00Z').getTime();
+    const series = {};
+    for (let j = 0; j < header.length - 1; j++) {
+      const v = parseNumber(parts[j + 1]);
+      if (v != null) series[header[j + 1]] = v;
+    }
+    rows.push({ date: d, t, series });
+  }
+  rows.sort((a,b) => a.t - b.t);
+  ROLL_METALS_RAW = rows;
+  return { ok: true, msg: `metals ${rows.length} rows` };
+}
+
+function rolloverParseLiveCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (lines.length < 2) return [];
+  const header = parseCSVLine(lines[0]).map(h => h.toLowerCase());
+  const idxSym = header.findIndex(h => /symbol|ticker/.test(h));
+  const idxPr = header.findIndex(h => /price|close|value/.test(h));
+  if (idxSym < 0 || idxPr < 0) return [];
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const parts = parseCSVLine(lines[i]);
+    if (parts.length <= Math.max(idxSym, idxPr)) continue;
+    const symbol = parts[idxSym].trim().toUpperCase();
+    const price = parseNumber(parts[idxPr]);
+    if (!symbol || price == null) continue;
+    rows.push({ symbol, price });
+  }
+  return rows;
+}
+
+async function rolloverFetchLive() {
+  try {
+    const bustedUrl = LIVE_REAL_URL + (LIVE_REAL_URL.includes('?') ? '&' : '?') + '_cb=' + Date.now();
+    const res = await fetch(LIVE_PROXIES[0].wrap(bustedUrl), { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const txt = await res.text();
+    const rows = rolloverParseLiveCSV(txt);
+    if (!rows.length) throw new Error('Empty parse');
+    const bySym = {}; for (const r of rows) bySym[r.symbol] = r;
+    ROLL_LIVE_LATEST = bySym;
+    const pick = (a, b) => ({ front: bySym[a]?.price ?? null, next: bySym[b]?.price ?? null });
+    const zinc      = pick('ZINC1!',      'ZINC2!');
+    const copper    = pick('COPPER1!',    'COPPER2!');
+    const aluminium = pick('ALUMINIUM1!', 'ALUMINIUM2!');
+    ROLL_LIVE_NOW = {
+      date: new Date().toISOString().slice(0,10),
+      zinc1: zinc.front, zinc2: zinc.next,
+      cu1: copper.front, cu2: copper.next,
+      al1: aluminium.front, al2: aluminium.next,
+      fetchedAt: new Date().toISOString(),
+    };
+    if (bySym['USDINR'] && bySym['USDINR'].price != null) {
+      ROLL_SPOT_USDINR = bySym['USDINR'].price;
+      rolloverSaveSpotFx(ROLL_SPOT_USDINR);
+    }
+    return { ok: true };
+  } catch (e) { return { ok: false, error: e.message }; }
+}
+
+async function rolloverLoadAll() {
+  const status = document.getElementById('rollStatus');
+  if (status) {
+    status.className = 'status info';
+    status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading…';
+  }
+
+  const [cspRes, metalsRes, liveRes] = await Promise.all([
+    (async () => {
+      try {
+        const r = await fetch(ROLL_CSP_URL + '?_cb=' + Date.now(), { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return rolloverParseCSPCSV(await r.text());
+      } catch (e) { return { ok:false, msg:'CSP: ' + e.message }; }
+    })(),
+    (async () => {
+      try {
+        const r = await fetch(ROLL_METALS_URL + '?_cb=' + Date.now(), { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return rolloverParseMetalsCSV(await r.text());
+      } catch (e) { return { ok:false, msg:'metals: ' + e.message }; }
+    })(),
+    rolloverFetchLive(),
+  ]);
+
+  if (!ROLL_SPOT_USDINR) ROLL_SPOT_USDINR = rolloverLoadSpotFx();
+
+  const msgs = [];
+  if (cspRes.ok) msgs.push('✓ ' + cspRes.msg); else msgs.push('✗ ' + cspRes.msg);
+  if (metalsRes.ok) msgs.push('✓ ' + metalsRes.msg); else msgs.push('✗ ' + metalsRes.msg);
+  if (liveRes.ok && ROLL_LIVE_NOW) msgs.push('✓ Live' + (ROLL_SPOT_USDINR ? ` · USDINR ${ROLL_SPOT_USDINR.toFixed(2)}` : ''));
+  else msgs.push('✗ Live: ' + (liveRes.error || 'unknown'));
+
+  if (status) {
+    status.className = (cspRes.ok && liveRes.ok) ? 'status ok' : 'status err';
+    status.innerHTML = msgs.join(' · ');
+  }
+
+  rolloverRender();
+  rolloverRenderCalendar();
+  rolloverRenderPlTracker();
+  rolloverRenderSparklines();
+  rolloverRenderLmeRollChart();
+  rolloverRenderMcxRollChart();
+}
+
+function rolloverLme3MSource(metal) {
+  const sym = metal === 'Cu' ? 'COPPER' : metal === 'Zn' ? 'ZINC' : 'ALUMINIUM';
+  if (ROLL_LIVE_LATEST[sym] && ROLL_LIVE_LATEST[sym].price != null) return ROLL_LIVE_LATEST[sym].price;
+  if (ROLL_LATEST_CSP && ROLL_LATEST_CSP[metal] && ROLL_LATEST_CSP[metal].threeM != null) return ROLL_LATEST_CSP[metal].threeM;
+  return null;
+}
+function rolloverGetDefaultLmeRoll(metal) {
+  if (!ROLL_CSP_RAW.length) return null;
+  for (let i = ROLL_CSP_RAW.length - 1; i >= 0; i--) {
+    const m = ROLL_CSP_RAW[i][metal];
+    if (m && m.cash != null && m.threeM != null) {
+      return m.cash - m.threeM;
+    }
+  }
+  return null;
+}
+function rolloverGetEffectiveLmeRoll(metal) {
+  const rollKey = 'ROLL_LME_' + metal;
+  if (ROLL_EDITS[rollKey] !== undefined && ROLL_EDITS[rollKey] !== null && isFinite(ROLL_EDITS[rollKey])) {
+    return ROLL_EDITS[rollKey];
+  }
+  return rolloverGetDefaultLmeRoll(metal);
+}
+function rolloverLmeStructureInfo(spread) {
+  // LME Spread = Cash - 3M: > 0 is Backwardation, < 0 is Contango
+  if (spread == null || !isFinite(spread)) return { cls: 'flat', txt: '—' };
+  if (spread > 0) return { cls: 'bwd', txt: 'BACKWARDATION' };
+  if (spread < 0) return { cls: 'ctg', txt: 'CONTANGO' };
+  return { cls: 'flat', txt: 'FLAT' };
+}
+function rolloverMcxStructureInfo(roll) {
+  // MCX Roll = Next - Front: > 0 is Contango, < 0 is Backwardation
+  if (roll == null || !isFinite(roll)) return { cls: 'flat', txt: '—' };
+  if (roll > 0) return { cls: 'ctg', txt: 'CONTANGO' };
+  if (roll < 0) return { cls: 'bwd', txt: 'BACKWARDATION' };
+  return { cls: 'flat', txt: 'FLAT' };
+}
+function rolloverLmeDefaults(metal) {
+  if (!ROLL_LATEST_CSP || !ROLL_LATEST_CSP[metal]) return { lme3m: null, stock: null };
+  let stock = ROLL_LATEST_CSP[metal].stock;
+  if (stock == null && ROLL_CSP_RAW.length) {
+    for (let i = ROLL_CSP_RAW.length - 1; i >= 0; i--) {
+      if (ROLL_CSP_RAW[i][metal]?.stock != null) { stock = ROLL_CSP_RAW[i][metal].stock; break; }
+    }
+  }
+  return { lme3m: rolloverLme3MSource(metal), stock };
+}
+function rolloverMcxDefaults(metal) {
+  let front = null, next = null;
+  if (ROLL_LIVE_NOW) {
+    if (metal === 'Zn') { front = ROLL_LIVE_NOW.zinc1; next = ROLL_LIVE_NOW.zinc2; }
+    else if (metal === 'Cu') { front = ROLL_LIVE_NOW.cu1; next = ROLL_LIVE_NOW.cu2; }
+    else if (metal === 'Al') { front = ROLL_LIVE_NOW.al1; next = ROLL_LIVE_NOW.al2; }
+  }
+  if ((front == null || next == null) && ROLL_METALS_RAW.length) {
+    const cols = ROLL_MCX_COLS[metal];
+    for (let i = ROLL_METALS_RAW.length - 1; i >= 0; i--) {
+      const s = ROLL_METALS_RAW[i].series;
+      if (front == null && s[cols.front] != null) front = s[cols.front];
+      if (next == null && s[cols.next] != null) next = s[cols.next];
+      if (front != null && next != null) break;
+    }
+  }
+  return { front, next, roll: (front != null && next != null) ? next - front : null };
+}
+function rolloverRollInputHtml(metal, editKey, defaultValue) {
+  const isEdited = ROLL_EDITS[editKey] !== undefined && ROLL_EDITS[editKey] !== null && isFinite(ROLL_EDITS[editKey]);
+  const v = isEdited ? ROLL_EDITS[editKey] : defaultValue;
+  const cls = v == null ? '' : (v > 0 ? 'pos' : v < 0 ? 'neg' : '');
+  // Important: <input type="number"> must NOT have a leading '+' or browser clears the field!
+  const display = v == null ? '' : v.toFixed(2);
+  const st = rolloverLmeStructureInfo(v);
+  return `<div class="roll-cell-wrap">
+    <input type="number" step="0.01" class="roll-input ${cls}" data-roll-key="${editKey}" data-roll-metal="${metal}" value="${display}" placeholder="—">
+    <span class="roll-struct-pill ${st.cls}" data-lme-struct="${metal}">${st.txt}</span>
+  </div>`;
+}
+
+function rolloverRender() {
+  const lmeBody = document.getElementById('rollLmeBody');
+  const mcxBody = document.getElementById('rollMcxBody');
+  const snapEl  = document.getElementById('rollSnapshotDate');
+  const headEl  = document.getElementById('rollHeadMeta');
+
+  if (!ROLL_LATEST_CSP) {
+    if (lmeBody) lmeBody.innerHTML = '<tr><td colspan="5" class="muted" style="text-align:center;">No CSP.</td></tr>';
+    if (mcxBody) mcxBody.innerHTML = '<tr><td colspan="5" class="muted" style="text-align:center;">No CSP.</td></tr>';
+    return;
+  }
+  if (snapEl) snapEl.textContent = 'CSP As of ' + ROLL_LATEST_CSP.date;
+  if (headEl) headEl.innerHTML = `LME CSP: <strong>${ROLL_LATEST_CSP.date}</strong>` +
+    (ROLL_LIVE_NOW ? ` · Live: <strong>${new Date(ROLL_LIVE_NOW.fetchedAt).toLocaleTimeString()}</strong>` : '') +
+    (ROLL_SPOT_USDINR ? ` · USD/INR: <strong>${ROLL_SPOT_USDINR.toFixed(2)}</strong>` : '');
+
+  const metals = [
+    { key:'Al', name:'Al', color: CSP_COLORS.Al },
+    { key:'Cu', name:'Cu', color: CSP_COLORS.Cu },
+    { key:'Zn', name:'Zn', color: CSP_COLORS.Zn },
+  ];
+
+  let lmeHtml = '';
+  for (const m of metals) {
+    const d = rolloverLmeDefaults(m.key);
+    const rollKey = 'ROLL_LME_' + m.key;
+    const defaultRoll = rolloverGetDefaultLmeRoll(m.key);
+    lmeHtml += `<tr>
+      <td class="metal-name" style="color:${m.color}">${m.name}</td>
+      <td>${fmt(d.lme3m)}</td>
+      <td>${rolloverRollInputHtml(m.key, rollKey, defaultRoll)}</td>
+      <td>${fmt(d.stock, 0)}</td>
+      <td>${ROLL_SPOT_USDINR ? ROLL_SPOT_USDINR.toFixed(2) : '—'}</td>
+    </tr>`;
+  }
+  if (lmeBody) lmeBody.innerHTML = lmeHtml;
+
+  let mcxHtml = '';
+  for (const m of metals) {
+    const d = rolloverMcxDefaults(m.key);
+    const rollCls = d.roll == null ? 'muted' : (d.roll > 0 ? 'pos' : d.roll < 0 ? 'neg' : 'muted');
+    const rollSign = d.roll == null ? '' : (d.roll >= 0 ? '+' : '');
+    const st = rolloverMcxStructureInfo(d.roll);
+    mcxHtml += `<tr>
+      <td class="metal-name" style="color:${m.color}">${m.name}</td>
+      <td>${fmt(d.front)}</td>
+      <td>${fmt(d.next)}</td>
+      <td class="${rollCls}">${d.roll == null ? '—' : rollSign + fmt(d.roll)}</td>
+      <td><span class="roll-struct-pill ${st.cls}">${st.txt}</span></td>
+    </tr>`;
+  }
+  if (mcxBody) mcxBody.innerHTML = mcxHtml;
+
+  document.querySelectorAll('.roll-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const key = inp.dataset.rollKey;
+      const metal = inp.dataset.rollMetal;
+      const raw = inp.value.trim();
+      const val = raw === '' ? null : parseFloat(raw);
+      if (val == null || isNaN(val)) {
+        delete ROLL_EDITS[key];
+      } else {
+        ROLL_EDITS[key] = val;
+      }
+      const effVal = rolloverGetEffectiveLmeRoll(metal);
+      inp.classList.remove('pos', 'neg');
+      if (effVal != null && effVal > 0) inp.classList.add('pos');
+      else if (effVal != null && effVal < 0) inp.classList.add('neg');
+
+      const pill = document.querySelector(`[data-lme-struct="${metal}"]`);
+      if (pill) {
+        const st = rolloverLmeStructureInfo(effVal);
+        pill.className = 'roll-struct-pill ' + st.cls;
+        pill.textContent = st.txt;
+      }
+
+      rolloverSaveEdits();
+      rolloverShowSaveHint();
+      rolloverUpdatePlValuesOnly();
+    });
+  });
+}
+
+let rolloverSaveHintTimer = null;
+function rolloverShowSaveHint() {
+  const el = document.getElementById('rollSaveHint');
+  if (!el) return;
+  el.classList.add('show');
+  clearTimeout(rolloverSaveHintTimer);
+  rolloverSaveHintTimer = setTimeout(() => el.classList.remove('show'), 1500);
+}
+
+/* ROLL-OVER CALENDAR */
+function rolloverNextWeekdayOfMonth(year, month, weekday) {
+  const first = new Date(Date.UTC(year, month, 1));
+  const firstDow = first.getUTCDay();
+  let offset = (weekday - firstDow + 7) % 7;
+  const day = 1 + offset + 14;
+  return new Date(Date.UTC(year, month, day));
+}
+function rolloverLastBusinessDayOfMonth(year, month) {
+  const d = new Date(Date.UTC(year, month + 1, 0));
+  while (d.getUTCDay() === 0 || d.getUTCDay() === 6) {
+    d.setUTCDate(d.getUTCDate() - 1);
+  }
+  return d;
+}
+function rolloverNextLme3MExpiry() {
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  let year = now.getUTCFullYear();
+  let month = now.getUTCMonth();
+  for (let i = 0; i < 3; i++) {
+    const d = rolloverNextWeekdayOfMonth(year, month, 3);
+    if (d.getTime() >= todayUtc) return d;
+    month++;
+    if (month > 11) { month = 0; year++; }
+  }
+  return null;
+}
+function rolloverNextMcxExpiry() {
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  let year = now.getUTCFullYear();
+  let month = now.getUTCMonth();
+  let lastDay = rolloverLastBusinessDayOfMonth(year, month);
+  if (lastDay.getTime() < todayUtc) {
+    month++;
+    if (month > 11) { month = 0; year++; }
+    lastDay = rolloverLastBusinessDayOfMonth(year, month);
+  }
+  return lastDay;
+}
+function rolloverFmtDate(d) { return d ? d.toISOString().slice(0,10) : '—'; }
+function rolloverDaysUntil(d) {
+  if (!d) return null;
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Math.round((d.getTime() - todayUtc) / 86400000);
+}
+
+function rolloverRenderCalendar() {
+  const grid = document.getElementById('rollCalendarGrid');
+  if (!grid) return;
+  const lme = rolloverNextLme3MExpiry();
+  const mcx = rolloverNextMcxExpiry();
+  const lmeDays = rolloverDaysUntil(lme);
+  const mcxDays = rolloverDaysUntil(mcx);
+  const cl = d => d == null ? 'muted' : d < 5 ? 'urgent' : d < 12 ? 'soon' : '';
+  grid.innerHTML = `
+    <div class="roll-cal-item">
+      <div class="lbl">LME 3M Expiry</div>
+      <div class="val">${rolloverFmtDate(lme)}</div>
+      <div class="sub">3rd Wednesday of month</div>
+      <div class="days ${cl(lmeDays)}">${lmeDays == null ? '' : lmeDays + ' days away'}</div>
+    </div>
+    <div class="roll-cal-item">
+      <div class="lbl">MCX Expiry (near month)</div>
+      <div class="val">${rolloverFmtDate(mcx)}</div>
+      <div class="sub">Last business day of month</div>
+      <div class="days ${cl(mcxDays)}">${mcxDays == null ? '' : mcxDays + ' days away'}</div>
+    </div>
+    <div class="roll-cal-item">
+      <div class="lbl">Days to LME Roll</div>
+      <div class="val">${lmeDays == null ? '—' : lmeDays}</div>
+      <div class="sub">Plan rollover before expiry</div>
+    </div>
+    <div class="roll-cal-item">
+      <div class="lbl">Days to MCX Roll</div>
+      <div class="val">${mcxDays == null ? '—' : mcxDays}</div>
+      <div class="sub">Plan rollover before expiry</div>
+    </div>
+  `;
+}
+
+/* ROLL-OVER P&L TRACKER */
+function rolloverRenderPlTracker() {
+  const grid = document.getElementById('rollPlGrid');
+  if (!grid) return;
+  const metals = [
+    { key:'Cu', name:'Copper',    color:'#d68b4d', cls:'Cu' },
+    { key:'Zn', name:'Zinc',      color:'#5b8fc9', cls:'Zn' },
+    { key:'Al', name:'Aluminium', color:'#93a2b5', cls:'Al' },
+  ];
+
+  let html = '';
+  for (const m of metals) {
+    const d = rolloverMcxDefaults(m.key);
+    const rollUsd = rolloverGetEffectiveLmeRoll(m.key);
+    const inputs = ROLL_PL_INPUTS[m.key] || {};
+
+    const mcxQtyMt = numOrNull(inputs.mcxQty);
+    const mcxRoll = d.roll;
+    const mcxPl = (mcxQtyMt != null && mcxRoll != null) ? mcxRoll * mcxQtyMt * 1000 : null;
+
+    const lmeQtyT = numOrNull(inputs.lmeQtyT);
+    const lmePlUsd = (lmeQtyT != null && rollUsd != null) ? rollUsd * lmeQtyT : null;
+    const lmePlInr = lmePlUsd != null && ROLL_SPOT_USDINR != null ? lmePlUsd * ROLL_SPOT_USDINR : null;
+
+    const total = (mcxPl != null || lmePlInr != null) ? (mcxPl || 0) + (lmePlInr || 0) : null;
+    const totalCls = total == null ? 'neu' : (total > 0 ? 'pos' : total < 0 ? 'neg' : 'neu');
+    const totalLbl = total == null ? '—' : (total > 0 ? 'COST' : total < 0 ? 'GAIN' : 'FLAT');
+
+    html += `<div class="roll-pl-card ${m.cls}" data-pl-metal="${m.key}">
+      <div class="roll-pl-header">
+        <span class="name" style="color:${m.color}">${m.name}</span>
+        <span class="badge ${totalCls}">${totalLbl}</span>
+      </div>
+      <div class="roll-pl-row">
+        <label>MCX qty (MT)</label>
+        <input type="number" step="0.01" data-pl-key="${m.key}.mcxQty" value="${inputs.mcxQty ?? ''}" placeholder="0">
+      </div>
+      <div class="roll-pl-row">
+        <label>MCX roll (₹/kg)</label>
+        <span class="val ${mcxRoll == null ? '' : (mcxRoll >= 0 ? 'pos' : 'neg')}">${mcxRoll == null ? '—' : (mcxRoll >= 0 ? '+' : '') + mcxRoll.toFixed(2)}</span>
+      </div>
+      <div class="roll-pl-row">
+        <label>MCX roll P&amp;L</label>
+        <span class="val ${mcxPl == null ? '' : (mcxPl >= 0 ? 'pos' : 'neg')}">${mcxPl == null ? '—' : fmtIndian(mcxPl, 0)}</span>
+      </div>
+      <div class="roll-pl-row">
+        <label>LME qty (t)</label>
+        <input type="number" step="1" data-pl-key="${m.key}.lmeQtyT" value="${inputs.lmeQtyT ?? ''}" placeholder="0">
+      </div>
+      <div class="roll-pl-row">
+        <label>LME roll ($/t)</label>
+        <span class="val ${rollUsd == null ? '' : (rollUsd >= 0 ? 'pos' : 'neg')}">${rollUsd == null ? '—' : (rollUsd >= 0 ? '+' : '') + rollUsd.toFixed(2)}</span>
+      </div>
+      <div class="roll-pl-row">
+        <label>LME roll P&amp;L</label>
+        <span class="val ${lmePlInr == null ? '' : (lmePlInr >= 0 ? 'pos' : 'neg')}">${lmePlInr == null ? '—' : fmtIndian(lmePlInr, 0)}</span>
+      </div>
+      <div class="roll-pl-row pr-result">
+        <label>Total Roll P&amp;L</label>
+        <span class="val ${total == null ? '' : (total >= 0 ? 'pos' : 'neg')}">${total == null ? '—' : fmtIndian(total, 0)}</span>
+      </div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+
+  grid.querySelectorAll('input[data-pl-key]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const key = inp.dataset.plKey;
+      const [metal, field] = key.split('.');
+      if (!ROLL_PL_INPUTS[metal]) ROLL_PL_INPUTS[metal] = {};
+      const val = inp.value === '' ? null : parseFloat(inp.value);
+      if (val == null || isNaN(val)) delete ROLL_PL_INPUTS[metal][field];
+      else ROLL_PL_INPUTS[metal][field] = val;
+      rolloverSavePlInputs();
+      clearTimeout(inp._updateTimer);
+      inp._updateTimer = setTimeout(rolloverUpdatePlValuesOnly, 250);
+    });
+  });
+}
+
+function rolloverUpdatePlValuesOnly() {
+  const grid = document.getElementById('rollPlGrid');
+  if (!grid) return;
+  for (const metal of ['Cu','Zn','Al']) {
+    const card = grid.querySelector(`.roll-pl-card[data-pl-metal="${metal}"]`);
+    if (!card) continue;
+    const d = rolloverMcxDefaults(metal);
+    const rollUsd = rolloverGetEffectiveLmeRoll(metal);
+    const inputs = ROLL_PL_INPUTS[metal] || {};
+    const mcxQtyMt = numOrNull(inputs.mcxQty);
+    const mcxRoll = d.roll;
+    const mcxPl = (mcxQtyMt != null && mcxRoll != null) ? mcxRoll * mcxQtyMt * 1000 : null;
+    const lmeQtyT = numOrNull(inputs.lmeQtyT);
+    const lmePlUsd = (lmeQtyT != null && rollUsd != null) ? rollUsd * lmeQtyT : null;
+    const lmePlInr = lmePlUsd != null && ROLL_SPOT_USDINR != null ? lmePlUsd * ROLL_SPOT_USDINR : null;
+    const total = (mcxPl != null || lmePlInr != null) ? (mcxPl || 0) + (lmePlInr || 0) : null;
+
+    const rows = card.querySelectorAll('.roll-pl-row');
+    if (rows[2]) {
+      const v = rows[2].querySelector('.val');
+      if (v) {
+        v.textContent = mcxPl == null ? '—' : fmtIndian(mcxPl, 0);
+        v.classList.remove('pos', 'neg');
+        if (mcxPl != null) v.classList.add(mcxPl >= 0 ? 'pos' : 'neg');
+      }
+    }
+    if (rows[4]) {
+      const v = rows[4].querySelector('.val');
+      if (v) {
+        v.textContent = rollUsd == null ? '—' : (rollUsd >= 0 ? '+' : '') + rollUsd.toFixed(2);
+        v.classList.remove('pos', 'neg');
+        if (rollUsd != null) v.classList.add(rollUsd >= 0 ? 'pos' : 'neg');
+      }
+    }
+    if (rows[5]) {
+      const v = rows[5].querySelector('.val');
+      if (v) {
+        v.textContent = lmePlInr == null ? '—' : fmtIndian(lmePlInr, 0);
+        v.classList.remove('pos', 'neg');
+        if (lmePlInr != null) v.classList.add(lmePlInr >= 0 ? 'pos' : 'neg');
+      }
+    }
+    if (rows[6]) {
+      const v = rows[6].querySelector('.val');
+      if (v) {
+        v.textContent = total == null ? '—' : fmtIndian(total, 0);
+        v.classList.remove('pos', 'neg');
+        if (total != null) v.classList.add(total >= 0 ? 'pos' : 'neg');
+      }
+    }
+    const badge = card.querySelector('.roll-pl-header .badge');
+    if (badge) {
+      const totalCls = total == null ? 'neu' : (total > 0 ? 'pos' : total < 0 ? 'neg' : 'neu');
+      const totalLbl = total == null ? '—' : (total > 0 ? 'COST' : total < 0 ? 'GAIN' : 'FLAT');
+      badge.className = 'badge ' + totalCls;
+      badge.textContent = totalLbl;
+    }
+  }
+}
+
+/* ROLL-OVER SPARKLINES */
+function rolloverBuildSparkSeries(metal, days) {
+  const cols = ROLL_MCX_COLS[metal];
+  if (!cols || !ROLL_METALS_RAW.length) return [];
+  const cutoff = Date.now() - days * 86400000;
+  const out = [];
+  for (const r of ROLL_METALS_RAW) {
+    if (r.t < cutoff) continue;
+    const v = r.series[cols.front];
+    if (v == null) continue;
+    out.push({ x: r.t, y: v });
+  }
+  return out;
+}
+function rolloverRenderSparklines() {
+  const grid = document.getElementById('rollSparkGrid');
+  if (!grid) return;
+  const metals = [
+    { key:'Cu', name:'Copper',    color:'#d68b4d', cls:'Cu' },
+    { key:'Zn', name:'Zinc',      color:'#5b8fc9', cls:'Zn' },
+    { key:'Al', name:'Aluminium', color:'#93a2b5', cls:'Al' },
+  ];
+  let html = '';
+  for (const m of metals) {
+    const data = rolloverBuildSparkSeries(m.key, 30);
+    const first = data[0]?.y ?? null;
+    const last  = data[data.length-1]?.y ?? null;
+    const chg = (first != null && last != null && first !== 0) ? ((last - first) / first) * 100 : null;
+    const chgCls = chg == null ? 'muted' : (chg > 0 ? 'pos' : chg < 0 ? 'neg' : 'muted');
+    const chgTxt = chg == null ? '—' : `${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%`;
+    html += `<div class="roll-spark-card ${m.cls}">
+      <div class="roll-spark-title" style="color:${m.color}">
+        <span>${m.name} <span style="color:var(--muted);font-weight:400;font-size:0.68rem;">(MCX Front)</span></span>
+        <span class="chg ${chgCls}">${chgTxt}</span>
+      </div>
+      <div class="roll-spark-chart"><canvas id="roll-spark-${m.key}"></canvas></div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+  for (const m of metals) {
+    const canvas = document.getElementById('roll-spark-' + m.key);
+    if (!canvas) continue;
+    if (rollSparkCharts[m.key]) rollSparkCharts[m.key].destroy();
+    const data = rolloverBuildSparkSeries(m.key, 30);
+    rollSparkCharts[m.key] = new Chart(canvas, {
+      type: 'line',
+      data: { datasets: [{ data, borderColor: m.color, backgroundColor: m.color + '20', borderWidth: 1.5, pointRadius: 0, tension: 0.15, fill: true }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        scales: { x: { type: 'time', display: false }, y: { display: false } }
+      }
+    });
+  }
+}
+
+/* ROLL-OVER CHART UTILS */
+function rolloverRollCutoff(range) {
+  const now = Date.now();
+  const D = 24 * 3600 * 1000;
+  switch (range) {
+    case '1m': return now - 30 * D;
+    case '3m': return now - 90 * D;
+    case '6m': return now - 180 * D;
+    case '1y': return now - 365 * D;
+    case '3y': return now - 3 * 365 * D;
+    default:   return null;
+  }
+}
+function rolloverRollChartOptions() {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'rgba(14,20,32,0.95)', borderColor: '#232d42', borderWidth: 1,
+        titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10,
+        callbacks: { label: ctx => { const v = ctx.parsed.y; return v == null ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(2)}`; } }
+      }
+    },
+    scales: {
+      x: { type: 'time', time: { tooltipFormat: 'dd MMM yyyy' }, grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 }, maxTicksLimit: 10 } },
+      y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 }, callback: v => (v >= 0 ? '+' : '') + v } }
+    }
+  };
+}
+
+function rolloverBuildLmeRollSeries(metal) {
+  const out = [];
+  for (const r of ROLL_CSP_RAW) {
+    const m = r[metal];
+    if (!m || m.cash == null || m.threeM == null) continue;
+    out.push({ t: r.t, date: r.date, roll: m.cash - m.threeM });
+  }
+  return out;
+}
+function rolloverRenderLmeRollChart() {
+  const canvas = document.getElementById('rollLmeRollChart');
+  const noteEl = document.getElementById('rollLmeRollNote');
+  if (!canvas) return;
+  const all = rolloverBuildLmeRollSeries(rollLmeRollMetal);
+  const cutoff = rolloverRollCutoff(rollLmeRollRange);
+  const rows = cutoff ? all.filter(r => r.t >= cutoff) : all;
+  if (noteEl) noteEl.textContent = `${rows.length} pts · LME ${rollLmeRollMetal} (Cash − 3M)`;
+  const data = rows.map(r => ({ x: r.t, y: r.roll }));
+  const color = CSP_COLORS[rollLmeRollMetal] || '#e8a33d';
+  if (rollLmeRollChart) rollLmeRollChart.destroy();
+  rollLmeRollChart = new Chart(canvas, {
+    type: 'line',
+    data: { datasets: [{ data, borderColor: color, backgroundColor: color + '20', borderWidth: 1.8, pointRadius: 0, pointHoverRadius: 3, tension: 0.15, fill: true }]},
+    options: rolloverRollChartOptions()
+  });
+}
+
+function rolloverBuildMcxRollSeries(metal) {
+  const cols = ROLL_MCX_COLS[metal];
+  if (!cols) return [];
+  const out = [];
+  for (const r of ROLL_METALS_RAW) {
+    const front = r.series[cols.front];
+    const next = r.series[cols.next];
+    if (front == null || next == null) continue;
+    out.push({ t: r.t, date: r.date, roll: next - front });
+  }
+  return out;
+}
+function rolloverRenderMcxRollChart() {
+  const canvas = document.getElementById('rollMcxRollChart');
+  const noteEl = document.getElementById('rollMcxRollNote');
+  if (!canvas) return;
+  const all = rolloverBuildMcxRollSeries(rollMcxRollMetal);
+  const cutoff = rolloverRollCutoff(rollMcxRollRange);
+  const rows = cutoff ? all.filter(r => r.t >= cutoff) : all;
+  if (noteEl) noteEl.textContent = `${rows.length} pts · MCX ${rollMcxRollMetal} (Next − Front)`;
+  const data = rows.map(r => ({ x: r.t, y: r.roll }));
+  const color = CSP_COLORS[rollMcxRollMetal] || '#e8a33d';
+  if (rollMcxRollChart) rollMcxRollChart.destroy();
+  rollMcxRollChart = new Chart(canvas, {
+    type: 'line',
+    data: { datasets: [{ data, borderColor: color, backgroundColor: color + '20', borderWidth: 1.8, pointRadius: 0, pointHoverRadius: 3, tension: 0.15, fill: true }]},
+    options: rolloverRollChartOptions()
+  });
+}
+
+function rolloverWire() {
+  document.getElementById('reloadBtn')?.addEventListener('click', rolloverLoadAll);
+  document.getElementById('resetEditsBtn')?.addEventListener('click', () => {
+    if (!confirm('Reset LME Roll edits back to latest CSP values?')) return;
+    ROLL_EDITS = {};
+    SAFE_STORE.removeItem(ROLL_EDITS_KEY);
+    rolloverRender();
+    rolloverRenderPlTracker();
+  });
+  document.getElementById('rollPlResetBtn')?.addEventListener('click', () => {
+    if (!confirm('Reset P&L tracker inputs?')) return;
+    ROLL_PL_INPUTS = {};
+    SAFE_STORE.removeItem(ROLL_PL_INPUTS_KEY);
+    rolloverRenderPlTracker();
+  });
+
+  document.querySelectorAll('#rollLmeMetalGroup button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#rollLmeMetalGroup button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); rollLmeRollMetal = b.dataset.metal; rolloverRenderLmeRollChart();
+  }));
+  document.querySelectorAll('#rollLmeRangeGroup button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#rollLmeRangeGroup button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); rollLmeRollRange = b.dataset.range; rolloverRenderLmeRollChart();
+  }));
+  document.querySelectorAll('#rollMcxMetalGroup button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#rollMcxMetalGroup button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); rollMcxRollMetal = b.dataset.metal; rolloverRenderMcxRollChart();
+  }));
+  document.querySelectorAll('#rollMcxRangeGroup button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#rollMcxRangeGroup button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); rollMcxRollRange = b.dataset.range; rolloverRenderMcxRollChart();
+  }));
+
+  ROLL_EDITS = rolloverLoadEdits();
+  ROLL_PL_INPUTS = rolloverLoadPlInputs();
+}
+
+/* ========================================================================
    INIT
    ======================================================================== */
 function init() {
@@ -3370,6 +4370,7 @@ function init() {
   shfeWire().then(() => { setTimeout(() => shfeFetch(), 500); });
   wirePositioningTab();
   setInterval(fetchCftcCot, 6 * 60 * 60 * 1000);
+  rolloverWire();
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
 else init();
