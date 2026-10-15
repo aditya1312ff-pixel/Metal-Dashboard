@@ -2650,22 +2650,8 @@ function renderSentiment() {
   }
   panel.innerHTML = html || '<div style="color:var(--muted);">No data</div>';
 }
-
 /* ========================================================================
-   FRESHNESS
-   ======================================================================== */
-function renderFreshness() {
-  const el = document.getElementById('freshnessLine');
-  if (!RAW.length) { el.innerHTML = '<span class="fresh-dot warn"></span>Waiting…'; return; }
-  const last = RAW[RAW.length-1].date;
-  const daysOld = (Date.now() - new Date(last + 'T00:00:00Z').getTime()) / 86400000;
-  const cls = daysOld < 2 ? '' : daysOld < 7 ? 'warn' : 'stale';
-  const txt = daysOld < 2 ? 'fresh' : daysOld < 7 ? 'aging' : 'stale';
-  el.innerHTML = `<span class="fresh-dot ${cls}"></span>${last} (${daysOld.toFixed(1)}d · ${txt})`;
-}
-
-/* ========================================================================
-   NEWS (REAL-TIME VIA CLOUDFLARE WORKER XML PARSER + CPI/MACRO PRIORITY)
+   NEWS (MULTI-SOURCE DIRECT RSS + BING NEWS RSS + STRICT TOPIC ROUTER)
    ======================================================================== */
 function timeAgo(iso) {
   if (!iso) return '';
@@ -2679,18 +2665,23 @@ function timeAgo(iso) {
   return new Date(iso).toISOString().slice(0, 10);
 }
 
-const NEWS_STOCK_BLOCK_STRICT = /dividend yield|IPO pricing|buyback program|price target|analyst upgrade|analyst downgrade|quarterly profit|revenue beat|guidance cut|shareholder vote/i;
-const NEWS_MACRO_PROTECT = /\b(cpi|inflation|pce|ppi|fed|fomc|powell|payroll|nfp|gdp|pmi|rbi|pboc|ecb|boj|rate cut|rate hike|treasury|yield|tariff|stimulus|copper|aluminium|zinc|lme|shfe|mcx)\b/i;
-
 const NEWS_PRODUCERS = {
   'bhp':'BHP','codelco':'Codelco','freeport':'Freeport','glencore':'Glencore',
   'rio tinto':'Rio Tinto','antofagasta':'Antofagasta','teck':'Teck',
-  'hindustan zinc':'Hindustan Zinc','vedanta':'Vedanta','nexa':'Nexa',
-  'alcoa':'Alcoa','rusal':'Rusal','chinalco':'Chinalco','hongqiao':'Hongqiao',
-  'zijin':'Zijin','mmg':'MMG','capstone':'Capstone','first quantum':'First Quantum',
+  'hindustan zinc':'Hindustan Zinc','vedanta':'Vedanta','hindalco':'Hindalco',
+  'nalco':'NALCO','national aluminium':'NALCO','sterlite':'Sterlite Copper',
+  'kutch copper':'Kutch Copper','adani copper':'Adani Copper','balco':'BALCO',
+  'novelis':'Novelis','nexa':'Nexa','alcoa':'Alcoa','rusal':'Rusal',
+  'chinalco':'Chinalco','chalco':'Chalco','hongqiao':'Hongqiao','zijin':'Zijin',
+  'mmg':'MMG','capstone':'Capstone','first quantum':'First Quantum',
   'anglo american':'Anglo American','vale':'Vale','south32':'South32',
-  'norilsk':'Norilsk','minsur':'Minsur','alphamin':'Alphamin','yunnan tin':'Yunnan Tin',
+  'norilsk':'Norilsk','nornickel':'Nornickel','minsur':'Minsur',
+  'alphamin':'Alphamin','yunnan tin':'Yunnan Tin','boliden':'Boliden',
+  'aurubis':'Aurubis','nyrstar':'Nyrstar','korea zinc':'Korea Zinc',
+  'jiangxi copper':'Jiangxi Copper','tongling':'Tongling','sumitomo':'Sumitomo',
+  'southern copper':'Southern Copper','grupo mexico':'Grupo Mexico','kghm':'KGHM'
 };
+
 const NEWS_MINES = {
   'escondida':'Escondida','grasberg':'Grasberg','las bambas':'Las Bambas',
   'centinela':'Centinela','mantoverde':'Mantoverde','rampura agucha':'Rampura Agucha',
@@ -2698,51 +2689,73 @@ const NEWS_MINES = {
   'weda bay':'Weda Bay','san rafael':'San Rafael','bisie':'Bisie',
   'huoshaoyun':'Huoshaoyun','ozernoe':'Ozernoe','tara':'Tara','antamina':'Antamina',
   'cerro verde':'Cerro Verde','morenci':'Morenci','cobre panama':'Cobre Panama',
-  'kamoa-kakula':'Kamoa-Kakula','tenke fungurume':'Tenke Fungurume','mutanda':'Mutanda',
-  'kamoto':'Kamoto','oyu tolgoi':'Oyu Tolgoi','kghm':'KGHM',
+  'kamoa-kakula':'Kamoa-Kakula','kamoa':'Kamoa-Kakula','tenke fungurume':'Tenke Fungurume',
+  'mutanda':'Mutanda','kamoto':'Kamoto','oyu tolgoi':'Oyu Tolgoi',
+  'chuquicamata':'Chuquicamata','el teniente':'El Teniente','collahuasi':'Collahuasi',
+  'los pelambres':'Los Pelambres','quellaveco':'Quellaveco','toquepala':'Toquepala',
+  'cuajone':'Cuajone','buenavista':'Buenavista','lumwana':'Lumwana','kansanshi':'Kansanshi',
+  'malanjkhand':'Malanjkhand','khetri':'Khetri','panchpatmali':'Panchpatmali','sindesar khurd':'Sindesar Khurd'
 };
+
 const NEWS_COUNTRIES = {
-  'chile':'Chile','peru':'Peru','china':'China','indonesia':'Indonesia',
+  'chile':'Chile','peru':'Peru','china':'China','chinese':'China','indonesia':'Indonesia',
   'australia':'Australia','russia':'Russia','congo':'DRC','democratic republic of congo':'DRC',
-  'drc':'DRC','zambia':'Zambia','mexico':'Mexico','usa':'USA','united states':'USA',
-  'canada':'Canada','india':'India','philippines':'Philippines','myanmar':'Myanmar',
+  'drc':'DRC','zambia':'Zambia','mexico':'Mexico','usa':'USA','united states':'USA','u.s.':'USA',
+  'canada':'Canada','india':'India','indian':'India','philippines':'Philippines','myanmar':'Myanmar',
   'bolivia':'Bolivia','kazakhstan':'Kazakhstan','brazil':'Brazil','south africa':'South Africa',
   'mongolia':'Mongolia','guinea':'Guinea','mozambique':'Mozambique','ireland':'Ireland','panama':'Panama',
+  'japan':'Japan','eurozone':'Eurozone','germany':'Germany','uk':'UK','britain':'UK'
 };
-const NEWS_CRITICAL = /strike|walkout|shutdown|curtailment|production cut|force majeure|smelter closure|mine halt|power crisis|energy crisis|export ban|tariff|sanction|nationalis|expropriat|fire|flood|earthquake|disruption|cpi|core inflation|fomc|rate cut|rate hike|nonfarm payroll/i;
+
+const NEWS_CRITICAL = /strike|walkout|blockade|protest|shutdown|curtailment|production cut|force majeure|smelter closure|mine halt|power crisis|energy crisis|export ban|tariff|sanction|nationalis|expropriat|fire|flood|earthquake|disruption|deficit|shortage|squeeze|cpi|core inflation|fomc|rate cut|rate hike|nonfarm payroll/i;
 
 function detectNewsTags(title, desc) {
   const text = (title + ' ' + desc).toLowerCase();
   const out = { producers: [], mines: [], countries: [], critical: false };
-  for (const [kw, label] of Object.entries(NEWS_PRODUCERS)) if (text.includes(kw)) out.producers.push(label);
-  for (const [kw, label] of Object.entries(NEWS_MINES))     if (text.includes(kw)) out.mines.push(label);
-  for (const [kw, label] of Object.entries(NEWS_COUNTRIES)) if (text.includes(kw)) out.countries.push(label);
+  for (const [kw, label] of Object.entries(NEWS_PRODUCERS)) {
+    if (text.includes(kw) && !out.producers.includes(label)) out.producers.push(label);
+  }
+  for (const [kw, label] of Object.entries(NEWS_MINES)) {
+    if (text.includes(kw) && !out.mines.includes(label)) out.mines.push(label);
+  }
+  for (const [kw, label] of Object.entries(NEWS_COUNTRIES)) {
+    if (text.includes(kw) && !out.countries.includes(label)) out.countries.push(label);
+  }
   out.critical = NEWS_CRITICAL.test(text);
   return out;
 }
+
+// 22 Multi-Source Feeds: Bing News RSS (No Cookie Wall!) + Mining.com + Investing.com + FXStreet + Yahoo + CNBC + MarketWatch
 const NEWS_FEEDS = [
-  // 1. BASE METALS (Google News + Direct Commodity RSS)
-  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=copper+OR+aluminium+OR+zinc+LME+price+when:3d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=copper+OR+aluminium+OR+zinc+smelter+OR+mine+OR+inventory+when:7d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=Codelco+OR+Glencore+OR+Freeport+OR+Vedanta+OR+Hindalco+OR+NALCO+when:7d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'base', source:'CNBC Commodities', url:'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=19836768' },
+  // ================= 1. BASE METALS (Mines, Strikes, Major Producers, Suppliers, Countries, Demand/Supply) =================
+  { category:'base', source:'Bing Metals', url:'https://www.bing.com/news/search?q=copper+OR+aluminium+OR+zinc+LME+SHFE+inventory+price&format=rss' },
+  { category:'base', source:'Bing Mine Supply', url:'https://www.bing.com/news/search?q=copper+OR+aluminium+OR+zinc+mine+strike+OR+smelter+OR+shortage+OR+deficit&format=rss' },
+  { category:'base', source:'Bing Global Producers', url:'https://www.bing.com/news/search?q=Codelco+OR+Freeport+OR+Glencore+OR+BHP+OR+"Rio+Tinto"+OR+Antofagasta+OR+Zijin+OR+Alcoa+OR+Rusal+copper+aluminium&format=rss' },
+  { category:'base', source:'Bing India Metals', url:'https://www.bing.com/news/search?q=Hindalco+OR+NALCO+OR+Vedanta+OR+"Hindustan+Zinc"+OR+"Kutch+Copper"+aluminium+copper+zinc&format=rss' },
+  { category:'base', source:'Bing Mining Countries', url:'https://www.bing.com/news/search?q=(Chile+OR+Peru+OR+Congo+OR+DRC+OR+Indonesia+OR+China)+(copper+OR+aluminium+OR+zinc+OR+bauxite+OR+smelter)&format=rss' },
+  { category:'base', source:'Mining.com', url:'https://www.mining.com/feed/' },
+  { category:'base', source:'Mining.com Copper', url:'https://www.mining.com/commodity/copper/feed/' },
+  { category:'base', source:'Investing Commodities', url:'https://www.investing.com/rss/news_11.rss' },
 
-  // 2. YIELDS & BONDS (Google News + Direct CNBC Bonds/Fed RSS)
-  { category:'yield', source:'Google News', url:'https://news.google.com/rss/search?q=Treasury+yield+OR+10-year+yield+OR+bond+yields+when:2d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'yield', source:'Google News', url:'https://news.google.com/rss/search?q=Federal+Reserve+OR+FOMC+OR+Powell+interest+rates+when:2d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'yield', source:'CNBC Bonds', url:'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258' },
-  { category:'yield', source:'CNBC Fed', url:'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664' },
+  // ================= 2. YIELDS & BONDS (Treasuries, Sovereign Yields, Fed, Central Bank Rates) =================
+  { category:'yield', source:'Bing Treasury Yields', url:'https://www.bing.com/news/search?q="Treasury+yield"+OR+"10-year+yield"+OR+"2-year+yield"+OR+"bond+yields"+OR+"yield+curve"&format=rss' },
+  { category:'yield', source:'Bing Fed & Rates', url:'https://www.bing.com/news/search?q="Federal+Reserve"+OR+FOMC+OR+Powell+"interest+rates"+OR+"rate+cut"+OR+"bond+market"&format=rss' },
+  { category:'yield', source:'Bing Global Bonds', url:'https://www.bing.com/news/search?q="gilt+yields"+OR+"bund+yields"+OR+"JGB+yield"+OR+"India+bond+yield"+OR+"sovereign+bonds"&format=rss' },
+  { category:'yield', source:'Investing Bonds', url:'https://www.investing.com/rss/news_95.rss' },
 
-  // 3. MACRO (CPI, Inflation, US/China GDP & PMI)
-  { category:'macro', source:'Google News', url:'https://news.google.com/rss/search?q=CPI+OR+inflation+OR+PCE+OR+nonfarm+payrolls+when:2d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'macro', source:'Google News', url:'https://news.google.com/rss/search?q=China+economy+OR+China+stimulus+OR+PBOC+OR+China+PMI+when:3d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'macro', source:'CNBC Economy', url:'https://www.cnbc.com/id/100003114/device/rss/rss.html' },
-  { category:'macro', source:'MarketWatch Macro', url:'https://feeds.content.dowjones.io/public/rss/mw_topstories' },
+  // ================= 3. MACRO (US CPI, Inflation, NFP, GDP, PMI, China Stimulus, Global Economy) =================
+  { category:'macro', source:'Bing CPI & Inflation', url:'https://www.bing.com/news/search?q="US+CPI"+OR+"consumer+price+index"+OR+"core+inflation"+OR+"PCE+inflation"+OR+"PPI+data"&format=rss' },
+  { category:'macro', source:'Bing Jobs, GDP & PMI', url:'https://www.bing.com/news/search?q="nonfarm+payrolls"+OR+"ISM+PMI"+OR+"US+GDP"+OR+"jobless+claims"+OR+"industrial+production"&format=rss' },
+  { category:'macro', source:'Bing China & Global Macro', url:'https://www.bing.com/news/search?q="China+stimulus"+OR+"PBOC"+OR+"China+PMI"+OR+"China+GDP"+OR+"India+CPI"+OR+"Eurozone+inflation"&format=rss' },
+  { category:'macro', source:'Investing Economic Indicators', url:'https://www.investing.com/rss/news_14.rss' },
+  { category:'macro', source:'CNBC Economy', url:'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258' },
 
-  // 4. CURRENCY / FX (USD/INR, DXY, Yuan)
-  { category:'fx', source:'Google News', url:'https://news.google.com/rss/search?q=USD+INR+OR+Indian+rupee+OR+RBI+forex+when:3d&hl=en-IN&gl=IN&ceid=IN:en' },
-  { category:'fx', source:'Google News', url:'https://news.google.com/rss/search?q=dollar+index+OR+DXY+OR+US+dollar+OR+yuan+when:2d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'fx', source:'CNBC Markets', url:'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=15839069' },
+  // ================= 4. CURRENCY / FX (World Currencies: USD/DXY, INR/RBI, EUR, JPY, GBP, CNY, AUD, EM FX) =================
+  { category:'fx', source:'Bing USD & DXY', url:'https://www.bing.com/news/search?q="dollar+index"+OR+DXY+OR+"US+dollar"+forex+currencies&format=rss' },
+  { category:'fx', source:'Bing INR & RBI FX', url:'https://www.bing.com/news/search?q="Indian+rupee"+OR+"USD/INR"+OR+USDINR+OR+"RBI+intervention"+OR+"forex+reserves"&format=rss' },
+  { category:'fx', source:'Bing World Currencies', url:'https://www.bing.com/news/search?q="Japanese+yen"+OR+"USD/JPY"+OR+"EUR/USD"+OR+"British+pound"+OR+"Chinese+yuan"+OR+"USD/CNY"+forex&format=rss' },
+  { category:'fx', source:'FXStreet News', url:'https://www.fxstreet.com/rss/news' },
+  { category:'fx', source:'Investing Forex', url:'https://www.investing.com/rss/news_1.rss' }
 ];
 
 const NEWS_CATEGORIES = ['base','yield','macro','fx'];
@@ -2750,30 +2763,76 @@ const NEWS_TAG_LABEL = { base:'Base', yield:'Yield', macro:'Macro', fx:'FX' };
 const NEWS_TAG_CLASS = { base:'metal', yield:'yield', macro:'macro', fx:'fx' };
 let NEWS_ITEMS = [];
 
-function isStockNews(title, desc) {
-  const text = (title + ' ' + desc).toLowerCase();
-  if (NEWS_MACRO_PROTECT.test(text)) return false;
-  return NEWS_STOCK_BLOCK_STRICT.test(text);
+// Strict Topic Regexes
+const BASE_METAL_REGEX = /\b(copper|aluminium|aluminum|zinc|nickel|lead|tin|bauxite|alumina|cathode|concentrate|smelter|refinery|tc\/rc|lme|shfe|mcx|base metal|non-ferrous|codelco|freeport|glencore|bhp|rio tinto|antofagasta|teck|zijin|mmg|first quantum|alcoa|rusal|chinalco|chalco|hongqiao|hindalco|nalco|national aluminium|vedanta|hindustan zinc|kutch copper|adani copper|sterlite|balco|novelis|boliden|aurubis|nyrstar|korea zinc|jiangxi copper|sumitomo|southern copper|kghm|escondida|grasberg|las bambas|kamoa|oyu tolgoi|cobre panama|antamina|cerro verde|chuquicamata|el teniente|collahuasi|quellaveco|rampura agucha|red dog)\b/i;
+
+const FX_REGEX = /\b(currency|currencies|forex|fx|exchange rate|dollar index|dxy|greenback|rupee|usdinr|usd\/inr|eur\/usd|usd\/jpy|gbp\/usd|usd\/cny|usd\/cnh|aud\/usd|usd\/cad|usd\/chf|japanese yen|british pound|sterling|chinese yuan|renminbi|rmb|swiss franc|australian dollar|canadian dollar|mexican peso|brazilian real|korean won|turkish lira|south african rand|devaluation|rbi intervention|fx reserves|forex reserves)\b/i;
+
+const YIELD_REGEX = /\b(yield|yields|treasury|treasuries|10-year|2-year|30-year|5-year|bond market|sovereign bond|sovereign debt|gilt|gilts|bund|bunds|jgb|yield curve|fomc|fed funds|rate cut|rate hike|basis points|bps|central bank rate)\b/i;
+
+const MACRO_REGEX = /\b(cpi|inflation|pce|ppi|gdp|pmi|nonfarm|payrolls|unemployment|jobless claims|retail sales|industrial production|trade deficit|trade surplus|tariff|tariffs|sanctions|stimulus|recession|central bank|federal reserve|powell|ecb|pboc|rbi|boj|boe|imf|world bank|manufacturing|economy|economic growth|factory output|consumer confidence)\b/i;
+
+// Noise Blockers (Blocks AI stocks, Nvidia, Musk, Crypto, Sports, Oil-only, Retail chains)
+const GLOBAL_NOISE_BLOCK = /\b(nvidia|amd|micron|intel|apple|microsoft|google|meta|netflix|tesla|starlink|starshield|spacex|ipo|buyback|dividend yield|price target|analyst upgrade|analyst downgrade|box office|nfl|nba|premier league|cricket|ipl|bitcoin|ethereum|dogecoin|solana|nft|crypto|dollar tree|dollar general|family dollar)\b/i;
+const BASE_EXCLUDE_NOISE = /\b(crude oil|brent crude|wti|natural gas|opec|wheat|corn|soybean|coffee|cocoa|sugar|cattle|hogs|gold price|silver price|platinum|palladium)\b/i;
+
+function classifyItemCategory(defaultCat, title, desc) {
+  const titleLower = title.toLowerCase();
+  const fullText = (title + ' ' + desc).toLowerCase();
+
+  // Block pure stock/tech/crypto/celebrity noise unless it explicitly mentions a base metal
+  if (GLOBAL_NOISE_BLOCK.test(titleLower) && !BASE_METAL_REGEX.test(titleLower)) {
+    return null;
+  }
+
+  // 1. Check Base Metals (Title must contain a base metal, mine, producer, or LME/SHFE)
+  if (BASE_METAL_REGEX.test(titleLower) && !BASE_EXCLUDE_NOISE.test(titleLower)) {
+    return 'base';
+  }
+  // If feed was 'base', also allow if title has metal/mining terms and description has the specific metal
+  if (defaultCat === 'base' && BASE_METAL_REGEX.test(fullText) && !BASE_EXCLUDE_NOISE.test(titleLower)) {
+    return 'base';
+  }
+
+  // 2. Check FX / World Currency
+  if (defaultCat === 'fx' && FX_REGEX.test(fullText)) return 'fx';
+  if (FX_REGEX.test(titleLower)) return 'fx';
+
+  // 3. Check Yields & Bonds
+  if (defaultCat === 'yield' && YIELD_REGEX.test(fullText)) return 'yield';
+  if (YIELD_REGEX.test(titleLower)) return 'yield';
+
+  // 4. Check Macro (Must match genuine macroeconomic/CPI/GDP/PMI/Central Bank keywords)
+  if (defaultCat === 'macro' && MACRO_REGEX.test(fullText)) return 'macro';
+  if (MACRO_REGEX.test(titleLower)) return 'macro';
+
+  return null;
 }
 
 function parseRssXmlText(xmlText, feedInfo) {
   const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
   const nodes = [...doc.querySelectorAll('item, entry')];
   const items = [];
-  for (const node of nodes.slice(0, 15)) {
-    const title = (node.querySelector('title')?.textContent || '').trim();
+  for (const node of nodes.slice(0, 20)) {
+    let title = (node.querySelector('title')?.textContent || '').trim();
+    // Clean CDATA or HTML entities in titles
+    title = title.replace(/<!\[CDATA\[\vert{}\]\]>/g, '').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"').trim();
     const link = (node.querySelector('link')?.textContent || node.querySelector('link')?.getAttribute('href') || '').trim();
-    const pubDate = (node.querySelector('pubDate, published, updated')?.textContent || '').trim();
-    const desc = (node.querySelector('description, summary')?.textContent || '').replace(/<[^>]+>/g, '').trim();
-    const srcNode = node.querySelector('source')?.textContent?.trim();
-    if (!title || isStockNews(title, desc)) continue;
+    const pubDate = (node.querySelector('pubDate, published, updated, dc\\:date')?.textContent || '').trim();
+    const desc = (node.querySelector('description, summary, content')?.textContent || '').replace(/<[^>]+>/g, '').trim();
+    const srcNode = (node.querySelector('source')?.textContent || node.getElementsByTagName('News:Source')[0]?.textContent || '').trim();
+
+    if (!title) continue;
+    const finalCat = classifyItemCategory(feedInfo.category, title, desc);
+    if (!finalCat) continue;
+
     const tags = detectNewsTags(title, desc);
     items.push({
       title,
       link,
       pubDate: pubDate || new Date().toISOString(),
       source: srcNode || feedInfo.source,
-      category: feedInfo.category,
+      category: finalCat,
       producers: tags.producers,
       mines: tags.mines,
       countries: tags.countries,
@@ -2784,20 +2843,18 @@ function parseRssXmlText(xmlText, feedInfo) {
 }
 
 async function fetchNewsFeed(feedInfo) {
-  // IMPORTANT: Do NOT append _cb to Google News URLs (breaks Google RSS validation).
-  // Instead, pass clean URL to multiple CORS proxies with cache: 'no-store'.
   const cleanUrl = feedInfo.url;
   const proxies = [
+    u => `${WORKER_BASE}${encodeURIComponent(u)}`,
     u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}&_cb=${Date.now()}`,
     u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-    u => `${WORKER_BASE}${encodeURIComponent(u)}`,
     u => `https://corsproxy.io/?${encodeURIComponent(u)}`
   ];
 
   for (const wrap of proxies) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 8000);
+      const timer = setTimeout(() => controller.abort(), 9000);
       const res = await fetch(wrap(cleanUrl), { signal: controller.signal, cache: 'no-store' });
       clearTimeout(timer);
       if (!res.ok) continue;
@@ -2809,19 +2866,26 @@ async function fetchNewsFeed(feedInfo) {
     } catch (e) {}
   }
 
-  // Final fallback: rss2json
-  const api = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(cleanUrl);
-  const res = await fetch(api, { cache: 'no-store' });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const data = await res.json();
-  if (data.status !== 'ok' || !data.items) throw new Error('Bad response');
-  return data.items.map(it => {
-    const title = (it.title || '').trim();
-    const desc = (it.description || '').replace(/<[^>]+>/g, '').trim();
-    if (!title || isStockNews(title, desc)) return null;
-    const tags = detectNewsTags(title, desc);
-    return { title, link: it.link, pubDate: it.pubDate, source: feedInfo.source, category: feedInfo.category, ...tags };
-  }).filter(Boolean);
+  // Fallback: rss2json
+  try {
+    const api = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(cleanUrl);
+    const res = await fetch(api, { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.status === 'ok' && data.items) {
+        return data.items.map(it => {
+          const title = (it.title || '').trim();
+          const desc = (it.description || '').replace(/<[^>]+>/g, '').trim();
+          const finalCat = classifyItemCategory(feedInfo.category, title, desc);
+          if (!title || !finalCat) return null;
+          const tags = detectNewsTags(title, desc);
+          return { title, link: it.link, pubDate: it.pubDate, source: feedInfo.source, category: finalCat, ...tags };
+        }).filter(Boolean);
+      }
+    }
+  } catch (e) {}
+
+  return [];
 }
 
 async function loadNews() {
@@ -2830,19 +2894,19 @@ async function loadNews() {
   const results = await Promise.allSettled(NEWS_FEEDS.map(f => fetchNewsFeed(f)));
   const all = [];
   results.forEach((r, i) => {
-    if (r.status === 'fulfilled') all.push(...r.value);
+    if (r.status === 'fulfilled' && Array.isArray(r.value)) all.push(...r.value);
     else console.warn('Feed failed:', NEWS_FEEDS[i].url, r.reason?.message);
   });
   const seen = new Set();
   NEWS_ITEMS = all.filter(it => {
-    const key = it.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 55);
+    const key = it.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 50);
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
   NEWS_ITEMS.sort((a, b) => (new Date(b.pubDate).getTime() || 0) - (new Date(a.pubDate).getTime() || 0));
   renderNews();
-  if (stamp) stamp.textContent = 'live · ' + new Date().toLocaleTimeString();
+  if (stamp) stamp.textContent = `live · ${NEWS_ITEMS.length} items · ` + new Date().toLocaleTimeString();
 }
 
 function renderNews() {
@@ -2853,7 +2917,7 @@ function renderNews() {
     if (count) count.textContent = items.length;
     if (!feed) continue;
     if (!items.length) { feed.innerHTML = '<li class="empty">No items.</li>'; continue; }
-    feed.innerHTML = items.slice(0, 30).map(it => {
+    feed.innerHTML = items.slice(0, 35).map(it => {
       const tagCls = NEWS_TAG_CLASS[cat] || 'metal';
       const tagLbl = NEWS_TAG_LABEL[cat] || cat;
       const intel = [];
@@ -2863,7 +2927,7 @@ function renderNews() {
       for (const m of (it.mines || []).slice(0, 2)) intel.push(`<span class="tag mine">${m}</span>`);
       return `<li><div class="title"><a href="${it.link}" target="_blank" rel="noopener">${escapeNewsHtml(it.title)}</a></div><div class="meta"><span>${escapeNewsHtml(it.source)}</span><span>· ${timeAgo(it.pubDate)}</span><span class="tag ${tagCls}">${tagLbl}</span>${intel.join(' ')}</div></li>`;
     }).join('');
-}
+  }
 }
 function escapeNewsHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function wireNewsControls() {
@@ -2879,7 +2943,19 @@ function wireNewsControls() {
     });
   });
 }
-
+/* ========================================================================
+   FRESHNESS
+   ======================================================================== */
+function renderFreshness() {
+  const el = document.getElementById('freshnessLine');
+  if (!el) return;
+  if (!RAW.length) { el.innerHTML = '<span class="fresh-dot warn"></span>Waiting…'; return; }
+  const last = RAW[RAW.length-1].date;
+  const daysOld = (Date.now() - new Date(last + 'T00:00:00Z').getTime()) / 86400000;
+  const cls = daysOld < 2 ? '' : daysOld < 7 ? 'warn' : 'stale';
+  const txt = daysOld < 2 ? 'fresh' : daysOld < 7 ? 'aging' : 'stale';
+  el.innerHTML = `<span class="fresh-dot ${cls}"></span>${last} (${daysOld.toFixed(1)}d · ${txt})`;
+}
 /* ========================================================================
    GITHUB CSV LOAD & FILE OVERRIDE
    ======================================================================== */
