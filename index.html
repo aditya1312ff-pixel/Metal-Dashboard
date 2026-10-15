@@ -14,6 +14,8 @@
   }
 </script>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
@@ -433,6 +435,9 @@
     <div class="upload-bar">
       <span class="title"><i class="fas fa-folder-open"></i> Data</span>
       <button class="btn-refresh" id="btnRefreshAll"><i class="fas fa-sync-alt"></i> Refresh from GitHub</button>
+      <button class="btn-refresh" id="btnDownloadPdf" style="background:rgba(46,204,113,0.16); border-color:var(--green); color:var(--green);">
+        <i class="fas fa-file-pdf"></i> Desk Report + Charts (PDF)
+      </button>
       <button class="btn" id="btnOpenCspUpdater"><i class="fas fa-pen-to-square"></i> Update CSP</button>
       <label class="upload-btn" id="btnMetals">
         <i class="fas fa-file-csv"></i> Override metals.csv
@@ -674,6 +679,7 @@
               <button class="btn small" data-news-filter="yield">Yields</button>
               <button class="btn small" data-news-filter="macro">Macro</button>
               <button class="btn small" data-news-filter="fx">FX</button>
+              <button class="btn small" id="btnRefreshNews" title="Force live RSS fetch"><i class="fas fa-sync-alt"></i></button>
               <span id="newsUpdated" style="font-size:0.65rem;color:var(--muted);margin-left:8px;"></span>
             </span>
           </h3>
@@ -979,7 +985,6 @@
   </div>
 
 </div>
-
 <script>
 /* ========================================================================
    CONFIG
@@ -2113,7 +2118,6 @@ function wireCspUpdater() {
   refreshTokenUI();
   document.getElementById('forgetTokenBtn')?.addEventListener('click', () => { SAFE_STORE.removeItem(GITHUB_TOKEN_KEY); refreshTokenUI(); const st = document.getElementById('cspUpdateStatus'); if (st) { st.textContent = 'Token cleared.'; st.style.color = 'var(--muted)'; } });
 }
-
 /* ========================================================================
    CSP SNAPSHOT
    ======================================================================== */
@@ -2661,7 +2665,7 @@ function renderFreshness() {
 }
 
 /* ========================================================================
-   NEWS
+   NEWS (REAL-TIME VIA CLOUDFLARE WORKER XML PARSER + CPI/MACRO PRIORITY)
    ======================================================================== */
 function timeAgo(iso) {
   if (!iso) return '';
@@ -2669,13 +2673,15 @@ function timeAgo(iso) {
   if (!isFinite(t)) return '';
   const secs = Math.max(0, (Date.now() - t) / 1000);
   if (secs < 60) return 'just now';
-  if (secs < 3600) return Math.floor(secs/60) + ' min ago';
-  if (secs < 86400) return Math.floor(secs/3600) + ' h ago';
-  if (secs < 86400*7) return Math.floor(secs/86400) + ' d ago';
-  return new Date(iso).toISOString().slice(0,10);
+  if (secs < 3600) return Math.floor(secs / 60) + ' min ago';
+  if (secs < 86400) return Math.floor(secs / 3600) + ' h ago';
+  if (secs < 86400 * 7) return Math.floor(secs / 86400) + ' d ago';
+  return new Date(iso).toISOString().slice(0, 10);
 }
-const NEWS_STOCK_BLOCK_STRICT = /stock market|wall street|equities only|S&P 500|Dow Jones index|market cap|dividend yield|IPO pricing|buyback program|price target|analyst upgrade|analyst downgrade|quarterly profit|revenue beat|guidance cut|shareholder vote/i;
-const NEWS_STOCK_BLOCK_LOOSE  = /stock market|wall street|equities|S&P|Nasdaq|Dow/i;
+
+const NEWS_STOCK_BLOCK_STRICT = /dividend yield|IPO pricing|buyback program|price target|analyst upgrade|analyst downgrade|quarterly profit|revenue beat|guidance cut|shareholder vote/i;
+const NEWS_MACRO_PROTECT = /\b(cpi|inflation|pce|ppi|fed|fomc|powell|payroll|nfp|gdp|pmi|rbi|pboc|ecb|boj|rate cut|rate hike|treasury|yield|tariff|stimulus|copper|aluminium|zinc|lme|shfe|mcx)\b/i;
+
 const NEWS_PRODUCERS = {
   'bhp':'BHP','codelco':'Codelco','freeport':'Freeport','glencore':'Glencore',
   'rio tinto':'Rio Tinto','antofagasta':'Antofagasta','teck':'Teck',
@@ -2703,7 +2709,8 @@ const NEWS_COUNTRIES = {
   'bolivia':'Bolivia','kazakhstan':'Kazakhstan','brazil':'Brazil','south africa':'South Africa',
   'mongolia':'Mongolia','guinea':'Guinea','mozambique':'Mozambique','ireland':'Ireland','panama':'Panama',
 };
-const NEWS_CRITICAL = /strike|walkout|shutdown|curtailment|production cut|force majeure|smelter closure|mine halt|power crisis|energy crisis|export ban|tariff|sanction|nationalis|expropriat|fire|flood|earthquake|disruption/i;
+const NEWS_CRITICAL = /strike|walkout|shutdown|curtailment|production cut|force majeure|smelter closure|mine halt|power crisis|energy crisis|export ban|tariff|sanction|nationalis|expropriat|fire|flood|earthquake|disruption|cpi|core inflation|fomc|rate cut|rate hike|nonfarm payroll/i;
+
 function detectNewsTags(title, desc) {
   const text = (title + ' ' + desc).toLowerCase();
   const out = { producers: [], mines: [], countries: [], critical: false };
@@ -2714,58 +2721,130 @@ function detectNewsTags(title, desc) {
   return out;
 }
 const NEWS_FEEDS = [
-  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=(copper+OR+aluminium+OR+aluminum+OR+zinc+OR+nickel+OR+lead+OR+tin)+price+when:3d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=(copper+OR+aluminium+OR+zinc+OR+nickel+OR+tin)+AND+(strike+OR+walkout+OR+smelter+OR+mine+OR+shutdown+OR+curtailment+OR+"production+cut"+OR+"force+majeure"+OR+"power+cuts")+when:7d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=(BHP+OR+Codelco+OR+Glencore+OR+"Freeport-McMoRan"+OR+"Rio+Tinto"+OR+Antofagasta+OR+Teck+OR+Vedanta+OR+"Hindustan+Zinc")+(copper+OR+zinc+OR+aluminium)+when:7d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=(Escondida+OR+Grasberg+OR+"Las+Bambas"+OR+Centinela+OR+"Rampura+Agucha"+OR+"Red+Dog"+OR+"Weda+Bay"+OR+"Oyu+Tolgoi")+when:14d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=(LME+OR+SHFE+OR+"warehouse+stocks"+OR+inventory)+(copper+OR+aluminium+OR+zinc+OR+nickel)+when:5d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=(Chile+OR+Peru+OR+Indonesia+OR+DRC+OR+Zambia+OR+Guinea+OR+Myanmar)+(copper+OR+aluminium+OR+zinc+OR+nickel+OR+bauxite+OR+tin)+when:7d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'yield', source:'Google News', url:'https://news.google.com/rss/search?q=("treasury+yield"+OR+"bond+yield"+OR+"10-year+yield"+OR+"30-year+yield")+when:3d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'yield', source:'Google News', url:'https://news.google.com/rss/search?q=(Federal+Reserve+OR+"interest+rate"+OR+"rate+cut"+OR+"rate+hike"+OR+inflation)+bond+when:3d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'yield', source:'Google News', url:'https://news.google.com/rss/search?q=(US+Treasury+OR+yield+curve+OR+inverted+yield)+when:5d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'macro', source:'Google News', url:'https://news.google.com/rss/search?q=(macro+OR+GDP+OR+inflation+OR+"central+bank"+OR+CPI+OR+PMI)+when:3d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'macro', source:'Google News', url:'https://news.google.com/rss/search?q=(China+economy+OR+US+economy+OR+global+growth)+when:3d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'macro', source:'CNBC', url:'https://www.cnbc.com/id/100003114/device/rss/rss.html' },
-  { category:'fx', source:'Google News', url:'https://news.google.com/rss/search?q=(USD/INR+OR+rupee+OR+"Indian+rupee")+when:3d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'fx', source:'Google News', url:'https://news.google.com/rss/search?q=("dollar+index"+OR+DXY+OR+"US+dollar")+when:3d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'fx', source:'Google News', url:'https://news.google.com/rss/search?q=(EUR/USD+OR+"euro+dollar"+OR+USD/JPY+OR+yen)+when:3d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'fx', source:'Google News', url:'https://news.google.com/rss/search?q=("Chinese+yuan"+OR+USD/CNY+OR+renminbi+OR+offshore+yuan)+when:5d&hl=en-US&gl=US&ceid=US:en' },
-  { category:'fx', source:'Google News', url:'https://news.google.com/rss/search?q=("forex+market"+OR+"currency+market"+OR+"exchange+rate")+when:3d&hl=en-US&gl=US&ceid=US:en' },
+  // 1. BASE METALS (Google News + Direct Commodity RSS)
+  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=copper+OR+aluminium+OR+zinc+LME+price+when:3d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=copper+OR+aluminium+OR+zinc+smelter+OR+mine+OR+inventory+when:7d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'base', source:'Google News', url:'https://news.google.com/rss/search?q=Codelco+OR+Glencore+OR+Freeport+OR+Vedanta+OR+Hindalco+OR+NALCO+when:7d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'base', source:'CNBC Commodities', url:'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=19836768' },
+
+  // 2. YIELDS & BONDS (Google News + Direct CNBC Bonds/Fed RSS)
+  { category:'yield', source:'Google News', url:'https://news.google.com/rss/search?q=Treasury+yield+OR+10-year+yield+OR+bond+yields+when:2d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'yield', source:'Google News', url:'https://news.google.com/rss/search?q=Federal+Reserve+OR+FOMC+OR+Powell+interest+rates+when:2d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'yield', source:'CNBC Bonds', url:'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258' },
+  { category:'yield', source:'CNBC Fed', url:'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664' },
+
+  // 3. MACRO (CPI, Inflation, US/China GDP & PMI)
+  { category:'macro', source:'Google News', url:'https://news.google.com/rss/search?q=CPI+OR+inflation+OR+PCE+OR+nonfarm+payrolls+when:2d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'macro', source:'Google News', url:'https://news.google.com/rss/search?q=China+economy+OR+China+stimulus+OR+PBOC+OR+China+PMI+when:3d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'macro', source:'CNBC Economy', url:'https://www.cnbc.com/id/100003114/device/rss/rss.html' },
+  { category:'macro', source:'MarketWatch Macro', url:'https://feeds.content.dowjones.io/public/rss/mw_topstories' },
+
+  // 4. CURRENCY / FX (USD/INR, DXY, Yuan)
+  { category:'fx', source:'Google News', url:'https://news.google.com/rss/search?q=USD+INR+OR+Indian+rupee+OR+RBI+forex+when:3d&hl=en-IN&gl=IN&ceid=IN:en' },
+  { category:'fx', source:'Google News', url:'https://news.google.com/rss/search?q=dollar+index+OR+DXY+OR+US+dollar+OR+yuan+when:2d&hl=en-US&gl=US&ceid=US:en' },
+  { category:'fx', source:'CNBC Markets', url:'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=15839069' },
 ];
+
 const NEWS_CATEGORIES = ['base','yield','macro','fx'];
 const NEWS_TAG_LABEL = { base:'Base', yield:'Yield', macro:'Macro', fx:'FX' };
 const NEWS_TAG_CLASS = { base:'metal', yield:'yield', macro:'macro', fx:'fx' };
 let NEWS_ITEMS = [];
-let newsStrict = true;
-function isStockNews(title, desc) { const text = (title + ' ' + desc).toLowerCase(); return newsStrict ? NEWS_STOCK_BLOCK_STRICT.test(text) : NEWS_STOCK_BLOCK_LOOSE.test(text); }
-async function fetchNewsFeed(feedInfo) {
-  const api = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feedInfo.url) + '&count=10';
-  const res = await fetch(api);
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const data = await res.json();
-  if (data.status !== 'ok' || !data.items) throw new Error(data.message || 'Bad response');
+
+function isStockNews(title, desc) {
+  const text = (title + ' ' + desc).toLowerCase();
+  if (NEWS_MACRO_PROTECT.test(text)) return false;
+  return NEWS_STOCK_BLOCK_STRICT.test(text);
+}
+
+function parseRssXmlText(xmlText, feedInfo) {
+  const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+  const nodes = [...doc.querySelectorAll('item, entry')];
   const items = [];
-  for (const it of data.items) {
-    const title = (it.title || '').trim();
-    const desc = (it.description || '').replace(/<[^>]+>/g, '').trim();
-    if (!title) continue;
-    if (isStockNews(title, desc)) continue;
+  for (const node of nodes.slice(0, 15)) {
+    const title = (node.querySelector('title')?.textContent || '').trim();
+    const link = (node.querySelector('link')?.textContent || node.querySelector('link')?.getAttribute('href') || '').trim();
+    const pubDate = (node.querySelector('pubDate, published, updated')?.textContent || '').trim();
+    const desc = (node.querySelector('description, summary')?.textContent || '').replace(/<[^>]+>/g, '').trim();
+    const srcNode = node.querySelector('source')?.textContent?.trim();
+    if (!title || isStockNews(title, desc)) continue;
     const tags = detectNewsTags(title, desc);
-    items.push({ title, link: it.link, pubDate: it.pubDate, source: feedInfo.source, category: feedInfo.category, producers: tags.producers, mines: tags.mines, countries: tags.countries, critical: tags.critical });
+    items.push({
+      title,
+      link,
+      pubDate: pubDate || new Date().toISOString(),
+      source: srcNode || feedInfo.source,
+      category: feedInfo.category,
+      producers: tags.producers,
+      mines: tags.mines,
+      countries: tags.countries,
+      critical: tags.critical
+    });
   }
   return items;
 }
+
+async function fetchNewsFeed(feedInfo) {
+  // IMPORTANT: Do NOT append _cb to Google News URLs (breaks Google RSS validation).
+  // Instead, pass clean URL to multiple CORS proxies with cache: 'no-store'.
+  const cleanUrl = feedInfo.url;
+  const proxies = [
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}&_cb=${Date.now()}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    u => `${WORKER_BASE}${encodeURIComponent(u)}`,
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`
+  ];
+
+  for (const wrap of proxies) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(wrap(cleanUrl), { signal: controller.signal, cache: 'no-store' });
+      clearTimeout(timer);
+      if (!res.ok) continue;
+      const xmlText = await res.text();
+      if (xmlText && /<item|<entry/i.test(xmlText)) {
+        const parsed = parseRssXmlText(xmlText, feedInfo);
+        if (parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+  }
+
+  // Final fallback: rss2json
+  const api = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(cleanUrl);
+  const res = await fetch(api, { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  if (data.status !== 'ok' || !data.items) throw new Error('Bad response');
+  return data.items.map(it => {
+    const title = (it.title || '').trim();
+    const desc = (it.description || '').replace(/<[^>]+>/g, '').trim();
+    if (!title || isStockNews(title, desc)) return null;
+    const tags = detectNewsTags(title, desc);
+    return { title, link: it.link, pubDate: it.pubDate, source: feedInfo.source, category: feedInfo.category, ...tags };
+  }).filter(Boolean);
+}
+
 async function loadNews() {
   const stamp = document.getElementById('newsUpdated');
+  if (stamp) stamp.textContent = 'fetching live RSS…';
   const results = await Promise.allSettled(NEWS_FEEDS.map(f => fetchNewsFeed(f)));
   const all = [];
-  results.forEach((r, i) => { if (r.status === 'fulfilled') all.push(...r.value); else console.warn('Feed failed:', NEWS_FEEDS[i].url, r.reason?.message); });
+  results.forEach((r, i) => {
+    if (r.status === 'fulfilled') all.push(...r.value);
+    else console.warn('Feed failed:', NEWS_FEEDS[i].url, r.reason?.message);
+  });
   const seen = new Set();
-  NEWS_ITEMS = all.filter(it => { const key = it.title.toLowerCase().slice(0, 60); if (seen.has(key)) return false; seen.add(key); return true; });
-  NEWS_ITEMS.sort((a, b) => { if (a.critical !== b.critical) return a.critical ? -1 : 1; return new Date(b.pubDate) - new Date(a.pubDate); });
+  NEWS_ITEMS = all.filter(it => {
+    const key = it.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 55);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  NEWS_ITEMS.sort((a, b) => (new Date(b.pubDate).getTime() || 0) - (new Date(a.pubDate).getTime() || 0));
   renderNews();
   if (stamp) stamp.textContent = 'live · ' + new Date().toLocaleTimeString();
 }
+
 function renderNews() {
   for (const cat of NEWS_CATEGORIES) {
     const items = NEWS_ITEMS.filter(it => it.category === cat);
@@ -2774,20 +2853,21 @@ function renderNews() {
     if (count) count.textContent = items.length;
     if (!feed) continue;
     if (!items.length) { feed.innerHTML = '<li class="empty">No items.</li>'; continue; }
-    feed.innerHTML = items.slice(0, 25).map(it => {
+    feed.innerHTML = items.slice(0, 30).map(it => {
       const tagCls = NEWS_TAG_CLASS[cat] || 'metal';
       const tagLbl = NEWS_TAG_LABEL[cat] || cat;
       const intel = [];
-      if (it.critical) intel.push(`<span class="tag critical">⚠ Event</span>`);
+      if (it.critical) intel.push(`<span class="tag critical">⚡ Breaking/Key</span>`);
       for (const c of (it.countries || []).slice(0, 2)) intel.push(`<span class="tag country">${c}</span>`);
       for (const p of (it.producers || []).slice(0, 2)) intel.push(`<span class="tag producer">${p}</span>`);
       for (const m of (it.mines || []).slice(0, 2)) intel.push(`<span class="tag mine">${m}</span>`);
       return `<li><div class="title"><a href="${it.link}" target="_blank" rel="noopener">${escapeNewsHtml(it.title)}</a></div><div class="meta"><span>${escapeNewsHtml(it.source)}</span><span>· ${timeAgo(it.pubDate)}</span><span class="tag ${tagCls}">${tagLbl}</span>${intel.join(' ')}</div></li>`;
     }).join('');
-  }
+}
 }
 function escapeNewsHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function wireNewsControls() {
+  document.getElementById('btnRefreshNews')?.addEventListener('click', loadNews);
   document.querySelectorAll('[data-news-filter]').forEach(b => {
     b.addEventListener('click', () => {
       document.querySelectorAll('[data-news-filter]').forEach(x => x.classList.remove('active'));
@@ -3253,7 +3333,6 @@ async function shfeWire() {
   });
   setInterval(shfeLoadLastUpdated, 60 * 1000);
 }
-
 /* ========================================================================
    CFTC COT & LME COTR
    ======================================================================== */
@@ -3778,18 +3857,16 @@ function rolloverGetEffectiveLmeRoll(metal) {
   }
   return rolloverGetDefaultLmeRoll(metal);
 }
-/* HEDGER SHORT: Backwardation (spread > 0) = LOSS (red), Contango (spread < 0) = GAIN (green) */
 function rolloverLmeStructureInfo(spread) {
   if (spread == null || !isFinite(spread)) return { cls: 'flat', txt: '—' };
-  if (spread > 0) return { cls: 'ctg', txt: 'BACKWARDATION' };  // red — loss for short
-  if (spread < 0) return { cls: 'bwd', txt: 'CONTANGO' };       // green — gain for short
+  if (spread > 0) return { cls: 'ctg', txt: 'BACKWARDATION' };
+  if (spread < 0) return { cls: 'bwd', txt: 'CONTANGO' };
   return { cls: 'flat', txt: 'FLAT' };
 }
-/* MCX LONG SPEC: Backwardation (roll < 0) = LOSS (red), Contango (roll > 0) = GAIN (green) */
 function rolloverMcxStructureInfo(roll) {
   if (roll == null || !isFinite(roll)) return { cls: 'flat', txt: '—' };
-  if (roll > 0) return { cls: 'bwd', txt: 'CONTANGO' };        // green — gain
-  if (roll < 0) return { cls: 'ctg', txt: 'BACKWARDATION' };   // red — loss
+  if (roll > 0) return { cls: 'bwd', txt: 'CONTANGO' };
+  if (roll < 0) return { cls: 'ctg', txt: 'BACKWARDATION' };
   return { cls: 'flat', txt: 'FLAT' };
 }
 function rolloverLmeDefaults(metal) {
@@ -3823,7 +3900,6 @@ function rolloverMcxDefaults(metal) {
 function rolloverRollInputHtml(metal, editKey, defaultValue) {
   const isEdited = ROLL_EDITS[editKey] !== undefined && ROLL_EDITS[editKey] !== null && isFinite(ROLL_EDITS[editKey]);
   const v = isEdited ? ROLL_EDITS[editKey] : defaultValue;
-  /* HEDGER SHORT: positive spread = red (loss), negative = green (gain) */
   const cls = v == null ? '' : (v > 0 ? 'neg' : v < 0 ? 'pos' : '');
   const display = v == null ? '' : v.toFixed(2);
   const st = rolloverLmeStructureInfo(v);
@@ -4008,7 +4084,6 @@ function rolloverRenderCalendar() {
   `;
 }
 
-/* ROLL-OVER P&L TRACKER (HEDGER SHORT — LME sign flipped, MCX sign spec) */
 function rolloverRenderPlTracker() {
   const grid = document.getElementById('rollPlGrid');
   if (!grid) return;
@@ -4029,7 +4104,6 @@ function rolloverRenderPlTracker() {
     const mcxPl = (mcxQtyMt != null && mcxRoll != null) ? mcxRoll * mcxQtyMt * 1000 : null;
 
     const lmeQtyT = numOrNull(inputs.lmeQtyT);
-    /* HEDGER SHORT → invert LME sign */
     const lmePlUsd = (lmeQtyT != null && rollUsd != null) ? -rollUsd * lmeQtyT : null;
     const lmePlInr = lmePlUsd != null && ROLL_SPOT_USDINR != null ? lmePlUsd * ROLL_SPOT_USDINR : null;
 
@@ -4037,9 +4111,7 @@ function rolloverRenderPlTracker() {
     const totalCls = total == null ? 'neu' : (total > 0 ? 'pos' : total < 0 ? 'neg' : 'neu');
     const totalLbl = total == null ? '—' : (total > 0 ? 'GAIN' : total < 0 ? 'COST' : 'FLAT');
 
-    /* MCX roll number colour flipped: positive = gain (green), negative = loss (red) */
     const mcxRollCls = mcxRoll == null ? '' : (mcxRoll > 0 ? 'pos' : mcxRoll < 0 ? 'neg' : '');
-    /* LME roll number colour flipped for hedger */
     const lmeRollCls = rollUsd == null ? '' : (rollUsd > 0 ? 'neg' : rollUsd < 0 ? 'pos' : '');
 
     html += `<div class="roll-pl-card ${m.cls}" data-pl-metal="${m.key}">
@@ -4345,19 +4417,570 @@ function rolloverWire() {
 }
 
 /* ========================================================================
+   2-PAGE INSTITUTIONAL PDF REPORT WITH EMBEDDED CHARTS
+   ======================================================================== */
+function computeQuantMetricsForPdf(seriesName, metalKey) {
+  const prices = seriesValues(seriesName).map(p => p.v);
+  if (prices.length < 100) return { composite: null, badge: 'N/A', momZ: null, basisZ: null, volScore: null };
+  const lookback = 20;
+  const roll = [];
+  for (let i = lookback; i < prices.length; i++) roll.push((prices[i] - prices[i - lookback]) / prices[i - lookback]);
+  const recent = roll.slice(-250);
+  const meanR = recent.reduce((a, b) => a + b, 0) / recent.length;
+  const sdR = Math.sqrt(recent.reduce((s, x) => s + (x - meanR) ** 2, 0) / (recent.length - 1 || 1));
+  const momZ = sdR > 0 ? (roll[roll.length - 1] - meanR) / sdR : 0;
+
+  const rets = [];
+  for (let i = 1; i < prices.length; i++) rets.push((prices[i] - prices[i - 1]) / prices[i - 1]);
+  const vol20 = Math.sqrt(rets.slice(-20).reduce((s, x, _, a) => s + (x - a.reduce((p, q) => p + q, 0) / a.length) ** 2, 0) / 19);
+  const vol90 = Math.sqrt(rets.slice(-90).reduce((s, x, _, a) => s + (x - a.reduce((p, q) => p + q, 0) / a.length) ** 2, 0) / 89);
+  const volScore = Math.max(-1, Math.min(1, (vol90 > 0 ? vol20 / vol90 : 1) - 1));
+
+  let basisZ = 0;
+  const lmcSeries = computeLmcSpreadSeries(metalKey);
+  if (lmcSeries.length > 20) {
+    const allSpreads = lmcSeries.map(p => p.spread);
+    const meanB = allSpreads.reduce((a, b) => a + b, 0) / allSpreads.length;
+    const sdB = Math.sqrt(allSpreads.reduce((s, x) => s + (x - meanB) ** 2, 0) / (allSpreads.length - 1 || 1));
+    const latestB = allSpreads[allSpreads.length - 1];
+    basisZ = sdB > 0 ? (latestB - meanB) / sdB : 0;
+  }
+  const composite = momZ * 0.5 + volScore * 0.2 + basisZ * 0.3;
+  const badge = composite >= 0.5 ? 'BULLISH' : composite <= -0.5 ? 'BEARISH' : 'NEUTRAL';
+  return { composite, badge, momZ, basisZ, volScore };
+}
+
+function captureCanvasWithDarkBg(canvasId, bgHex = '#161d2b') {
+  const srcCanvas = document.getElementById(canvasId);
+  if (!srcCanvas || srcCanvas.width === 0 || srcCanvas.height === 0) return null;
+  const tmp = document.createElement('canvas');
+  tmp.width = srcCanvas.width;
+  tmp.height = srcCanvas.height;
+  const ctx = tmp.getContext('2d');
+  ctx.fillStyle = bgHex;
+  ctx.fillRect(0, 0, tmp.width, tmp.height);
+  ctx.drawImage(srcCanvas, 0, 0);
+  return tmp.toDataURL('image/png', 0.95);
+}
+
+async function ensureAllChartsRenderedForPdf() {
+  const tabIds = ['tab-main', 'tab-lme', 'tab-shfe', 'tab-positioning', 'tab-rollover'];
+  const prevStyles = {};
+  tabIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      prevStyles[id] = el.getAttribute('style') || '';
+      if (el.style.display === 'none') {
+        el.style.display = 'block';
+        el.style.position = 'fixed';
+        el.style.left = '-9999px';
+        el.style.top = '0';
+        el.style.width = '1400px';
+      }
+    }
+  });
+
+  if (!LME_HISTORY.entries || !LME_HISTORY.entries.length) {
+    try { await lmeLoadHistory(); } catch (e) {}
+  } else {
+    try { lmeRenderCharts(); } catch (e) {}
+  }
+
+  if (!ROLL_LATEST_CSP && CSP_RAW.length) {
+    ROLL_CSP_RAW = CSP_RAW.slice();
+    ROLL_LATEST_CSP = CSP_RAW[CSP_RAW.length - 1];
+  }
+  if (!ROLL_METALS_RAW.length && RAW.length) {
+    ROLL_METALS_RAW = RAW.slice();
+  }
+  try {
+    rolloverRenderLmeRollChart();
+    rolloverRenderMcxRollChart();
+    shfeRenderCharts();
+    renderCftcChart();
+    renderLmeCotrCharts();
+  } catch (e) {}
+
+  await new Promise(r => setTimeout(r, 250));
+
+  const snapshots = {
+    lmc:      captureCanvasWithDarkBg('lmcChart'),
+    csp:      captureCanvasWithDarkBg('cspChart'),
+    csp2:     captureCanvasWithDarkBg('csp2Chart'),
+    shfeTot:  captureCanvasWithDarkBg('shfeChartTotal'),
+    rollLme:  captureCanvasWithDarkBg('rollLmeRollChart'),
+    rollMcx:  captureCanvasWithDarkBg('rollMcxRollChart'),
+    cotCftc:  captureCanvasWithDarkBg('cftcNetChart'),
+    cotLmeCu: captureCanvasWithDarkBg('chart-copper'),
+    sbi:      captureCanvasWithDarkBg('sbiChart')
+  };
+
+  tabIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('style', prevStyles[id]);
+  });
+
+  return snapshots;
+}
+
+async function generateInstitutionalPdfReport() {
+  const btn = document.getElementById('btnDownloadPdf');
+  const origHtml = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rendering Charts & PDF…'; }
+
+  try {
+    computeParityDefaults();
+    const chartImgs = await ensureAllChartsRenderedForPdf();
+
+    const { jsPDF } = window.jspdf;
+    if (!jsPDF) throw new Error('jsPDF library not loaded');
+
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const now = new Date();
+    const todayIso = now.toISOString().slice(0, 10);
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    const cNavy  = [14, 20, 32];
+    const cSlate = [22, 29, 43];
+    const cAmber = [232, 163, 61];
+    const cGreen = [39, 174, 96];
+    const cRed   = [214, 48, 49];
+    const cText  = [30, 35, 45];
+    const cMuted = [110, 118, 135];
+
+    const fNum = (v, dp = 2) => (v == null || !isFinite(v)) ? '—' : Number(v).toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+    const fSgn = (v, dp = 2) => (v == null || !isFinite(v)) ? '—' : (v >= 0 ? '+' : '') + fNum(v, dp);
+
+    const usdinrSpot = LIVE_LATEST['USDINR']?.price ?? ROLL_SPOT_USDINR ?? latest['USDINR']?.value ?? null;
+    const sbiTt = parityEdits.__usdinr ?? (SBI_RAW.length ? SBI_RAW[SBI_RAW.length - 1].value : null);
+    const dxyVal = LIVE_LATEST['DXY']?.price ?? latest['Dollar Index']?.value ?? null;
+    const us02y = LIVE_LATEST['US02Y']?.price ?? null;
+    const us10y = LIVE_LATEST['US10Y']?.price ?? null;
+    const goldSpot = LIVE_LATEST['XAUUSD']?.price ?? null;
+    const curve2s10s = (us10y != null && us02y != null) ? ((us10y - us02y) * 100).toFixed(0) + ' bps' : '—';
+    const cspDateStr = CSP_RAW.length ? CSP_RAW[CSP_RAW.length - 1].date : '—';
+    const shfeDateStr = SHFE_HISTORY.length ? SHFE_HISTORY[SHFE_HISTORY.length - 1].date : '—';
+
+    const drawPageHeader = (pageTitleSuffix) => {
+      doc.setFillColor(...cNavy);
+      doc.rect(0, 0, pageW, 19, 'F');
+      doc.setFillColor(...cAmber);
+      doc.rect(0, 19, pageW, 1.1, 'F');
+
+      doc.setTextColor(...cAmber);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12.5);
+      doc.text(`NON-FERROUS METALS RISK & HEDGING DESK  |  ${pageTitleSuffix}`, 10, 8);
+
+      doc.setTextColor(225, 232, 240);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.2);
+      doc.text(`Run: ${todayIso} ${timeStr} IST   ·   LME Official CSP: ${cspDateStr}   ·   SHFE Warrant Date: ${shfeDateStr}`, 10, 14.5);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...cAmber);
+      doc.text(
+        `USD/INR Spot: ${fNum(usdinrSpot, 2)}  |  SBI TT: ${fNum(sbiTt, 2)}  |  DXY: ${fNum(dxyVal, 2)}  |  US 2Y/10Y: ${fNum(us02y, 2)}% / ${fNum(us10y, 2)}% (${curve2s10s})  |  Gold: $${fNum(goldSpot, 1)}`,
+        pageW - 10, 14.5, { align: 'right' }
+      );
+    };
+
+    const drawSectionHeader = (title, subtitle, yPos) => {
+      doc.setFillColor(...cSlate);
+      doc.rect(10, yPos, pageW - 20, 5.2, 'F');
+      doc.setFillColor(...cAmber);
+      doc.rect(10, yPos, 2, 5.2, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.8);
+      doc.setTextColor(255, 255, 255);
+      doc.text(title, 14, yPos + 3.7);
+      if (subtitle) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.8);
+        doc.setTextColor(180, 192, 210);
+        doc.text(subtitle, pageW - 12, yPos + 3.7, { align: 'right' });
+      }
+      return yPos + 6.2;
+    };
+
+    const drawPageFooter = (pageNum, totalPages) => {
+      doc.setDrawColor(200, 208, 220);
+      doc.line(10, pageH - 7.5, pageW - 10, pageH - 7.5);
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(6.8);
+      doc.setTextColor(...cMuted);
+      doc.text('CONFIDENTIAL · Non-Ferrous Metals Trading & Risk Management Desk · Sources: LME, MCX, SHFE, CFTC, SBI FX, NALCO', 10, pageH - 3.8);
+      doc.text(`Page ${pageNum} of ${totalPages}`, pageW - 10, pageH - 3.8, { align: 'right' });
+    };
+
+    /* PAGE 1: TABLES & EXECUTIVE BRIEF */
+    drawPageHeader('DAILY INTELLIGENCE & QUANTITATIVE RISK BRIEF');
+    let y = 23.5;
+
+    y = drawSectionHeader('1. EXECUTIVE DESK BRIEFING & ACTIONABLE SIGNALS', 'Auto-synthesized from live curve, parity & producer models', y);
+
+    const cuParity = parityCalc(PARITY_METALS[0]);
+    const znParity = parityCalc(PARITY_METALS[1]);
+    const alParity = parityCalc(PARITY_METALS[2]);
+    const lmeExp = rolloverNextLme3MExpiry();
+    const mcxExp = rolloverNextMcxExpiry();
+    const lmeDays = rolloverDaysUntil(lmeExp);
+    const mcxDays = rolloverDaysUntil(mcxExp);
+
+    let nalcoSummary = 'NALCO data pending fetch.';
+    if (NALCO_RAW.length) {
+      const nLast = NALCO_RAW[0];
+      const nRef = getLmeCashOn(nLast.effDate);
+      const nSig = computeNalcoSignal(nRef, countAllCspDaysAfter(nLast.effDate));
+      const dirWord = nLast.direction === 'increase' ? 'HIKED' : 'CUT';
+      nalcoSummary = `Latest NALCO revision w.e.f. ${nLast.effDate} (${dirWord} Rs.${fNum(nLast.magnitude, 0)}/MT; Ref LME Cash $${fNum(nRef, 2)}/t) -> Rolling 3-Day Signal: ${nSig.status.toUpperCase()} (${nSig.detail}).`;
+    }
+
+    const bulletLines = [
+      `• Arbitrage & Landed Parity: Cu Net Diff (Landed - MCX) at Rs.${fSgn(cuParity.net, 2)}/kg (${cuParity.net < 0 ? 'Import Window OPEN' : 'Import Closed / Domestic Discount'}); Zn at Rs.${fSgn(znParity.net, 2)}/kg; Al at Rs.${fSgn(alParity.net, 2)}/kg (SBI TT USD/INR @ ${fNum(sbiTt, 2)}).`,
+      `• Curve & Roll Carry: LME Cash-3M spreads at Cu: ${fSgn(rolloverGetEffectiveLmeRoll('Cu'), 2)} $/t, Al: ${fSgn(rolloverGetEffectiveLmeRoll('Al'), 2)} $/t, Zn: ${fSgn(rolloverGetEffectiveLmeRoll('Zn'), 2)} $/t. Next LME 3rd-Wed Prompt: ${rolloverFmtDate(lmeExp)} (${lmeDays ?? '—'}d) | MCX Near-Month Expiry: ${rolloverFmtDate(mcxExp)} (${mcxDays ?? '—'}d).`,
+      `• Primary Producer Watch (NALCO): ${nalcoSummary}`
+    ];
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.4);
+    doc.setTextColor(...cText);
+    bulletLines.forEach(line => {
+      doc.text(line, 12, y + 2.8);
+      y += 4.0;
+    });
+    y += 1.5;
+
+    y = drawSectionHeader('2. OUTRIGHT BENCHMARKS, TERM STRUCTURE & QUANT TECHNICAL REGIME', 'LME / MCX Live & Official CSP + 20D/20W EMA & Composite Z-Score', y);
+
+    const benchRows = [
+      { key: 'Cu', name: 'Copper (Cu)',    lmeSym: 'COPPER',    mcxSym: 'COPPER1!',    series: 'LME Copper',    mcxSeries: 'MCX Copper' },
+      { key: 'Al', name: 'Aluminium (Al)', lmeSym: 'ALUMINIUM', mcxSym: 'ALUMINIUM1!', series: 'LME Aluminium', mcxSeries: 'MCX Aluminium' },
+      { key: 'Zn', name: 'Zinc (Zn)',      lmeSym: 'ZINC',      mcxSym: 'ZINC1!',      series: 'LME Zinc',      mcxSeries: 'MCX Zinc' },
+    ].map(m => {
+      const lmeLive = LIVE_LATEST[m.lmeSym]?.price ?? latest[m.series]?.value ?? null;
+      const lastCsp = CSP_RAW.length ? (CSP_RAW[CSP_RAW.length - 1][m.key] || {}) : {};
+      const c3mSpread = rolloverGetEffectiveLmeRoll(m.key);
+      const lmeStruct = c3mSpread == null ? '—' : (c3mSpread > 0.5 ? 'BWD' : c3mSpread < -0.5 ? 'CTG' : 'FLAT');
+      const mcxDef = rolloverMcxDefaults(m.key);
+      const mcxFront = mcxDef.front ?? LIVE_LATEST[m.mcxSym]?.price ?? latest[m.mcxSeries]?.value ?? null;
+      const mcxNext = mcxDef.next;
+      const mcxRoll = mcxDef.roll;
+      const mcxStruct = mcxRoll == null ? '—' : (mcxRoll > 0 ? 'CTG' : mcxRoll < 0 ? 'BWD' : 'FLAT');
+      const tr = computeTrend(m.series);
+      const qm = computeQuantMetricsForPdf(m.series, m.name.split(' ')[0]);
+
+      return [
+        m.name,
+        `$${fNum(lmeLive, 2)}`,
+        `$${fNum(lastCsp.cash, 2)}`,
+        `$${fNum(lastCsp.threeM, 2)}`,
+        `${fSgn(c3mSpread, 2)} (${lmeStruct})`,
+        `Rs.${fNum(mcxFront, 2)}`,
+        `Rs.${fNum(mcxNext, 2)}`,
+        `${fSgn(mcxRoll, 2)} (${mcxStruct})`,
+        tr && tr.shortDist != null ? `${tr.shortTrend === 'up' ? 'UP' : 'DN'} (${fSgn(tr.shortDist, 2)}%)` : '—',
+        tr && tr.mediumDist != null ? `${tr.mediumTrend === 'up' ? 'UP' : 'DN'} (${fSgn(tr.mediumDist, 2)}%)` : '—',
+        qm.composite != null ? `${qm.badge} (${fSgn(qm.composite, 2)}s)` : '—'
+      ];
+    });
+
+    doc.autoTable({
+      startY: y,
+      margin: { left: 10, right: 10 },
+      head: [['Metal', 'LME Live ($/t)', 'CSP Cash ($/t)', 'CSP 3M ($/t)', 'Cash-3M ($/t)', 'MCX Front (Rs/kg)', 'MCX Next (Rs/kg)', 'MCX 1M Roll', '20D EMA Trend', '20W EMA Trend', 'Quant Regime']],
+      body: benchRows,
+      theme: 'grid',
+      styles: { fontSize: 7.1, cellPadding: 1.5, textColor: cText, lineColor: [215, 222, 232], lineWidth: 0.15 },
+      headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold', halign: 'center' },
+      columnStyles: {
+        0: { fontStyle: 'bold', halign: 'left' },
+        1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' },
+        4: { halign: 'right', fontStyle: 'bold' },
+        5: { halign: 'right' }, 6: { halign: 'right' },
+        7: { halign: 'right', fontStyle: 'bold' },
+        8: { halign: 'center' }, 9: { halign: 'center' }, 10: { halign: 'center', fontStyle: 'bold' }
+      },
+      didParseCell: function(data) {
+        if (data.section === 'body') {
+          const txt = String(data.cell.raw || '');
+          if ([4, 7, 8, 9, 10].includes(data.column.index)) {
+            if (txt.includes('BWD') || txt.includes('UP') || txt.includes('BULLISH')) data.cell.styles.textColor = cGreen;
+            else if (txt.includes('CTG') || txt.includes('DN') || txt.includes('BEARISH')) data.cell.styles.textColor = cRed;
+          }
+        }
+      }
+    });
+    y = doc.lastAutoTable.finalY + 3.5;
+
+    y = drawSectionHeader('3. PHYSICAL IMPORT PARITY WATERFALL (LME -> LANDED INR vs. MCX)', `FX Basis: SBI TT Sell @ ${fNum(sbiTt, 2)}`, y);
+
+    const parityRows = PARITY_METALS.map(m => {
+      const e = parityEdits[m.key] || {};
+      const c = parityCalc(m);
+      const signal = c.net == null ? '—' : (c.net < -2 ? 'IMPORT ARB OPEN' : c.net > 2 ? 'DOMESTIC DISCOUNT' : 'PARITY BALANCED');
+      return [
+        m.name,
+        `$${fNum(e.lme3m, 2)}`,
+        `${fSgn(e.basis, 2)}`,
+        `$${fNum(c.lmeCash, 2)}`,
+        `$${fNum(e.premium, 2)}`,
+        `$${fNum(c.cost, 2)}`,
+        `${fNum(parityEdits.__usdinr, 2)}`,
+        `${fNum(e.dutyPct, 2)}%`,
+        `Rs.${fNum(c.duty, 0)}`,
+        `Rs.${fNum(e.freight, 0)}`,
+        `Rs.${fNum(c.landedKg, 2)}`,
+        `Rs.${fNum(e.mcx, 2)}`,
+        `Rs.${fSgn(c.net, 2)}`,
+        signal
+      ];
+    });
+
+    doc.autoTable({
+      startY: y,
+      margin: { left: 10, right: 10 },
+      head: [['Metal', 'LME 3M', 'Basis', 'LME Cash', 'Premium', 'CIF Cost', 'SBI TT', 'Duty %', 'Duty (Rs/t)', 'Freight', 'Landed (Rs/kg)', 'MCX (Rs/kg)', 'Net (L - M)', 'Desk Signal']],
+      body: parityRows,
+      theme: 'grid',
+      styles: { fontSize: 6.9, cellPadding: 1.4, textColor: cText, lineColor: [215, 222, 232], lineWidth: 0.15 },
+      headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold', halign: 'center' },
+      columnStyles: {
+        0: { fontStyle: 'bold', halign: 'left' },
+        1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' },
+        5: { halign: 'right' }, 6: { halign: 'right' }, 7: { halign: 'right' }, 8: { halign: 'right' },
+        9: { halign: 'right' }, 10: { halign: 'right', fontStyle: 'bold' }, 11: { halign: 'right' },
+        12: { halign: 'right', fontStyle: 'bold' }, 13: { halign: 'center', fontStyle: 'bold' }
+      },
+      didParseCell: function(data) {
+        if (data.section === 'body' && (data.column.index === 12 || data.column.index === 13)) {
+          const txt = String(data.cell.raw || '');
+          if (txt.includes('-') || txt.includes('OPEN')) data.cell.styles.textColor = cGreen;
+          else if (txt.includes('+') || txt.includes('DISCOUNT')) data.cell.styles.textColor = cRed;
+        }
+      }
+    });
+    y = doc.lastAutoTable.finalY + 3.5;
+
+    const halfW = (pageW - 24) / 2;
+    const ySideStart = y;
+
+    doc.setFillColor(...cSlate);
+    doc.rect(10, ySideStart, halfW, 5.2, 'F');
+    doc.setFillColor(...cAmber);
+    doc.rect(10, ySideStart, 2, 5.2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.6);
+    doc.setTextColor(255, 255, 255);
+    doc.text('4A. EXCHANGE INVENTORIES & WARRANT FLOWS (LME & SHFE)', 14, ySideStart + 3.7);
+
+    const lmeEntries = LME_HISTORY.entries || [];
+    const lmeLast = lmeEntries.length ? lmeEntries[lmeEntries.length - 1] : {};
+    const lmePrev = lmeEntries.length > 1 ? lmeEntries[lmeEntries.length - 2] : {};
+    const shfeLast = SHFE_HISTORY.length ? SHFE_HISTORY[SHFE_HISTORY.length - 1] : { metals: {} };
+
+    const invRows = ['copper', 'aluminium', 'zinc'].map(mk => {
+      const label = LME_METAL_META[mk]?.label || mk;
+      const curL = lmeLast[mk] || {};
+      const prvL = lmePrev[mk] || {};
+      const cspKey = mk === 'copper' ? 'Cu' : mk === 'aluminium' ? 'Al' : 'Zn';
+      const fallbackStock = CSP_RAW.length ? CSP_RAW[CSP_RAW.length - 1][cspKey]?.stock : null;
+      const totalL = curL.total ?? fallbackStock ?? null;
+      const dLme = (curL.total != null && prvL.total != null) ? curL.total - prvL.total : null;
+      const cancRatio = (curL.live != null && curL.cancelled != null && (curL.live + curL.cancelled) > 0)
+        ? ((curL.cancelled / (curL.live + curL.cancelled)) * 100).toFixed(1) + '%'
+        : '—';
+      const shfeM = shfeLast.metals?.[mk] || {};
+      return [
+        label,
+        fNum(totalL, 0),
+        fNum(curL.live, 0),
+        fNum(curL.cancelled, 0),
+        cancRatio,
+        fSgn(dLme, 0),
+        fNum(shfeM.qty, 0),
+        fSgn(shfeM.change, 0)
+      ];
+    });
+
+    doc.autoTable({
+      startY: ySideStart + 6.2,
+      margin: { left: 10, right: pageW - 10 - halfW },
+      tableWidth: halfW,
+      head: [['Metal', 'LME Tot', 'LME Live', 'Cancelled', 'Canc %', 'LME Chg', 'SHFE (t)', 'SHFE Chg']],
+      body: invRows,
+      theme: 'grid',
+      styles: { fontSize: 6.8, cellPadding: 1.4, textColor: cText, lineColor: [215, 222, 232], lineWidth: 0.15 },
+      headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold', halign: 'center' },
+      columnStyles: {
+        0: { fontStyle: 'bold' },
+        1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' },
+        4: { halign: 'right', fontStyle: 'bold' }, 5: { halign: 'right' },
+        6: { halign: 'right', fontStyle: 'bold' }, 7: { halign: 'right' }
+      }
+    });
+
+    const rightX = 14 + halfW;
+    doc.setFillColor(...cSlate);
+    doc.rect(rightX, ySideStart, halfW, 5.2, 'F');
+    doc.setFillColor(...cAmber);
+    doc.rect(rightX, ySideStart, 2, 5.2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.6);
+    doc.setTextColor(255, 255, 255);
+    doc.text('4B. COMMITMENTS OF TRADERS (LME FUNDS & CFTC COMEX)', rightX + 4, ySideStart + 3.7);
+
+    const cotRows = [];
+    for (const code of ['CA', 'AH', 'ZS']) {
+      const meta = LME_COTR_METALS[code];
+      const st = lmeCotrStats(meta.key);
+      if (st) {
+        cotRows.push([
+          `LME ${meta.label}`,
+          st.date,
+          fNum(st.cur.oi, 0),
+          fSgn(st.cur.fundNet, 0),
+          fSgn(st.deltaFund, 0),
+          `${fNum(st.cur.fundNetPct, 1)}%`,
+          `${fSgn(st.z, 2)}s (${st.signal})`
+        ]);
+      } else {
+        cotRows.push([`LME ${meta.label}`, '—', '—', '—', '—', '—', 'No COTR loaded']);
+      }
+    }
+    const cftcSt = cftcStats();
+    if (cftcSt) {
+      cotRows.push([
+        'COMEX Cu (CFTC)',
+        cftcSt.last.date,
+        fNum(cftcSt.last.oi, 0),
+        fSgn(cftcSt.last.ncNet, 0),
+        fSgn(cftcSt.deltaNc, 0),
+        `${fNum(cftcSt.last.ncNetPct, 1)}%`,
+        `${fSgn(cftcSt.z, 2)}s (${cftcSt.signal})`
+      ]);
+    }
+
+    doc.autoTable({
+      startY: ySideStart + 6.2,
+      margin: { left: rightX, right: 10 },
+      tableWidth: halfW,
+      head: [['Contract', 'Date', 'Open Int', 'Spec Net', 'Wk Chg', '% OI', 'Z-Score / Signal']],
+      body: cotRows,
+      theme: 'grid',
+      styles: { fontSize: 6.8, cellPadding: 1.4, textColor: cText, lineColor: [215, 222, 232], lineWidth: 0.15 },
+      headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold', halign: 'center' },
+      columnStyles: {
+        0: { fontStyle: 'bold' }, 1: { halign: 'center' }, 2: { halign: 'right' },
+        3: { halign: 'right', fontStyle: 'bold' }, 4: { halign: 'right' },
+        5: { halign: 'right' }, 6: { halign: 'center', fontStyle: 'bold' }
+      }
+    });
+
+    drawPageFooter(1, 2);
+
+    /* PAGE 2: 6 HIGH-RES EMBEDDED CHARTS + NEWS WIRE */
+    doc.addPage('a4', 'landscape');
+    drawPageHeader('VISUAL ANALYTICS — SPREADS, STOCKS, ROLL CARRY & COT CHARTS');
+
+    let y2 = 23.5;
+    y2 = drawSectionHeader('5. DESK CHART TEAR SHEET (LIVE SNAPSHOTS FROM DASHBOARD ENGINES)', 'LME-MCX Arbitrage · Cash-3M Curve · Stocks · SHFE · Roll-Over · COT', y2);
+
+    const chartPanels = [
+      { title: `LME–MCX Spread History (${currentLMC} Rs/kg)`, img: chartImgs.lmc },
+      { title: `LME ${currentCSP} Cash–3M Spread & Warehouse Stock`, img: chartImgs.csp },
+      { title: `LME ${currentCSP2} Cash Price vs. Stock`, img: chartImgs.csp2 },
+      { title: `SHFE Deliverable Inventory Trend (Cu / Al / Zn)`, img: chartImgs.shfeTot },
+      { title: `LME ${rollLmeRollMetal} Roll Spread History (Cash − 3M)`, img: chartImgs.rollLme || chartImgs.sbi },
+      { title: `COT Net Positioning (COMEX / LME Copper)`, img: chartImgs.cotCftc || chartImgs.cotLmeCu || chartImgs.rollMcx }
+    ];
+
+    const cols = 3;
+    const gapX = 4;
+    const gapY = 4;
+    const boxW = (pageW - 20 - gapX * (cols - 1)) / cols;
+    const boxH = 58;
+
+    chartPanels.forEach((panel, idx) => {
+      const r = Math.floor(idx / cols);
+      const c = idx % cols;
+      const bx = 10 + c * (boxW + gapX);
+      const by = y2 + r * (boxH + gapY);
+
+      doc.setFillColor(22, 29, 43);
+      doc.setDrawColor(45, 58, 82);
+      doc.rect(bx, by, boxW, boxH, 'FD');
+
+      doc.setFillColor(14, 20, 32);
+      doc.rect(bx, by, boxW, 5.5, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6.8);
+      doc.setTextColor(...cAmber);
+      doc.text(panel.title, bx + 2.5, by + 3.8);
+
+      if (panel.img) {
+        doc.addImage(panel.img, 'PNG', bx + 1.5, by + 6.5, boxW - 3, boxH - 8);
+      } else {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(7);
+        doc.setTextColor(140, 150, 165);
+        doc.text('Chart awaiting data load', bx + boxW / 2, by + boxH / 2, { align: 'center' });
+      }
+    });
+
+    y2 += 2 * boxH + gapY + 3.5;
+
+    y2 = drawSectionHeader('6. PHYSICAL SUPPLY, SMELTER & MACRO INTELLIGENCE WIRE', 'Filtered from live RSS feeds (Producers, Mines, Macro & FX)', y2);
+
+    const topNews = NEWS_ITEMS.slice(0, 5);
+    if (!topNews.length) {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(7.2);
+      doc.setTextColor(...cMuted);
+      doc.text('No live news items loaded yet.', 12, y2 + 3);
+    } else {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.1);
+      doc.setTextColor(...cText);
+      topNews.forEach(item => {
+        const prefix = item.critical ? '[BREAKING/KEY] ' : `[${(item.category || 'MARKET').toUpperCase()}] `;
+        const tags = [...(item.countries || []), ...(item.producers || []), ...(item.mines || [])].slice(0, 3).join(', ');
+        const tagSuffix = tags ? `  (${tags})` : '';
+        const cleanTitle = item.title.replace(/[^\x20-\x7E]/g, '');
+        const line = `• ${prefix}${cleanTitle}${tagSuffix} — ${item.source}`;
+        doc.text(line.slice(0, 170), 12, y2 + 2.6);
+        y2 += 3.7;
+      });
+    }
+
+    drawPageFooter(2, 2);
+
+    doc.save(`NF_Desk_Intelligence_Report_${todayIso}.pdf`);
+  } catch (err) {
+    console.error('PDF generation failed:', err);
+    alert('PDF generation error: ' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
+  }
+}
+
+/* ========================================================================
    INIT
    ======================================================================== */
 function init() {
   document.getElementById('fileMetals').addEventListener('change', e => { const f = e.target.files[0]; if (!f) return; readFile(f, txt => { if (loadMetalsFile(txt)) maybeRender(); }); });
   document.getElementById('fileCSP').addEventListener('change', e => { const f = e.target.files[0]; if (!f) return; readFile(f, txt => { if (loadCSPFile(txt)) maybeRender(); }); });
   document.getElementById('btnRefreshAll').addEventListener('click', () => autoLoadFromGitHub(false));
+  document.getElementById('btnDownloadPdf')?.addEventListener('click', generateInstitutionalPdfReport);
   document.getElementById('btnOpenCspUpdater').addEventListener('click', openCspUpdater);
   document.getElementById('sbiPdfBtn').addEventListener('click', fetchSbiFromPdf);
   document.getElementById('sbiCsvBtn').addEventListener('click', () => fetchSbiFromCsv(document.getElementById('sbiUrl').value.trim()));
   autoLoadFromGitHub(true);
   startLiveFeed();
   loadNews();
-  setInterval(loadNews, 15 * 60 * 1000);
+  setInterval(loadNews, 3 * 60 * 1000);
   wireNewsControls();
   startNalcoFeed();
   fetchSbiFromCsv(document.getElementById('sbiUrl').value.trim());
