@@ -4583,19 +4583,18 @@ async function generateInstitutionalPdfReport() {
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     /* ---------- DARK THEME ---------- */
-    const cNavy   = [8, 12, 22];
-    const cSlate  = [14, 20, 32];
-    const cAmber  = [255, 165, 45];
-    const cGreen  = [34, 197, 94];
-    const cRed    = [239, 68, 68];
-    const cText   = [225, 232, 240];
-    const cMuted  = [148, 163, 184];
-    const cWhite  = [255, 255, 255];
-    const cLine   = [45, 58, 82];
-    const cRowEven = [20, 28, 42];
-    const cRowOdd  = [26, 34, 50];
-    const cLabelBg = [16, 22, 34];
-    const cPanelBg = [18, 24, 38];
+    const cNavy    = [8, 12, 22];
+    const cCard    = [22, 29, 43];
+    const cCard2   = [28, 37, 54];
+    const cBorder  = [35, 45, 66];
+    const cAmber   = [232, 163, 61];
+    const cGreen   = [46, 204, 113];
+    const cRed     = [231, 76, 60];
+    const cText    = [230, 236, 245];
+    const cMuted   = [124, 138, 160];
+    const cWhite   = [255, 255, 255];
+    const cRowEven = [26, 34, 50];
+    const cRowOdd  = [32, 42, 60];
 
     const fNum = (v, dp = 2) => (v == null || !isFinite(v)) ? '-' : Number(v).toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
     const fSgn = (v, dp = 2) => (v == null || !isFinite(v)) ? '-' : (v >= 0 ? '+' : '') + fNum(v, dp);
@@ -4610,9 +4609,6 @@ async function generateInstitutionalPdfReport() {
     const cspDateStr = CSP_RAW.length ? CSP_RAW[CSP_RAW.length - 1].date : '-';
     const shfeDateStr = SHFE_HISTORY.length ? SHFE_HISTORY[SHFE_HISTORY.length - 1].date : '-';
 
-    /* ==================================================================
-       STANDARD HEADER (used on Page 1 and Page 3)
-       ================================================================== */
     const drawBigHeader = (pageTitleSuffix) => {
       doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
       doc.rect(0, 0, pageW, 20, 'F');
@@ -4640,10 +4636,6 @@ async function generateInstitutionalPdfReport() {
       doc.text(pdfClean(`USD/INR ${fNum(usdinrSpot, 2)}  |  SBI TT ${fNum(sbiTt, 2)}  |  DXY ${fNum(dxyVal, 2)}  |  US 2Y/10Y ${fNum(us02y, 2)}% / ${fNum(us10y, 2)}% (${curve2s10s})  |  Gold $${fNum(goldSpot, 1)}`), pageW - 10, 15.2, { align: 'right' });
     };
 
-    /* ==================================================================
-       COMPACT HEADER — single line, 12mm — used on Page 2 so charts
-       get maximum vertical space.
-       ================================================================== */
     const drawCompactHeader = (pageTitleSuffix) => {
       doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
       doc.rect(0, 0, pageW, 11, 'F');
@@ -4663,11 +4655,11 @@ async function generateInstitutionalPdfReport() {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
       doc.setTextColor(200, 215, 235);
-      doc.text(pdfClean(`${todayIso} ${timeStr}   |   LME CSP: ${cspDateStr}   |   USD/INR ${fNum(usdinrSpot, 2)}   |   SBI TT ${fNum(sbiTt, 2)}`), pageW - 10, 7.2, { align: 'right' });
+      doc.text(pdfClean(`${todayIso} ${timeStr}   |   LME CSP: ${cspDateStr}   |   USD/INR ${fNum(usdinrSpot, 2)}`), pageW - 10, 7.2, { align: 'right' });
     };
 
     const drawPageFooter = (pageNum, totalPages) => {
-      doc.setDrawColor(cLine[0], cLine[1], cLine[2]);
+      doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
       doc.line(10, pageH - 7, pageW - 10, pageH - 7);
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(6.6);
@@ -4677,7 +4669,7 @@ async function generateInstitutionalPdfReport() {
     };
 
     /* =============================================================
-       PAGE 1 — PER-METAL TABLE
+       PAGE 1 — PER-METAL TABLE + LATEST CSP + NALCO
        ============================================================= */
     drawBigHeader('PAGE 1  |  PER-METAL DESK SNAPSHOT');
     let y = 24;
@@ -4731,15 +4723,23 @@ async function generateInstitutionalPdfReport() {
         deskSignal = 'PARITY BALANCED'; deskSignalColor = cAmber;
       }
 
+      // CSP spread
+      const cashSpread = (cashNow != null && threeNow != null) ? cashNow - threeNow : null;
+      const spreadLabel = cashSpread == null ? '—' : (cashSpread > 0.5 ? 'Backwardation' : cashSpread < -0.5 ? 'Contango' : 'Flat');
+      const spreadColor = cashSpread == null ? cMuted : (cashSpread > 0.5 ? cGreen : cashSpread < -0.5 ? cRed : cMuted);
+
       d[key] = {
         parity, e,
         cashNow, cashChg, threeNow, threeChg,
+        stockNow: lmeStockCur,
         lmeStockChg, shfeChg,
         lmeRoll, mcxRoll: mcxDef.roll,
-        deskSignal, deskSignalColor
+        deskSignal, deskSignalColor,
+        cashSpread, spreadLabel, spreadColor
       };
     }
 
+    /* ---------- Table geometry ---------- */
     const labelColW = 62;
     const valueColW = (pageW - 20 - labelColW) / 3;
     const rowH = 6.4;
@@ -4773,7 +4773,7 @@ async function generateInstitutionalPdfReport() {
     };
 
     const drawSectionBar = (yy, title) => {
-      doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
+      doc.setFillColor(cCard[0], cCard[1], cCard[2]);
       doc.rect(10, yy, pageW - 20, sectionH + 0.4, 'F');
       doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
       doc.rect(10, yy, 2.5, sectionH + 0.4, 'F');
@@ -4786,7 +4786,7 @@ async function generateInstitutionalPdfReport() {
 
     const drawRow = (yy, label, values, opts = {}) => {
       const h = opts.h || rowH;
-      doc.setFillColor(cLabelBg[0], cLabelBg[1], cLabelBg[2]);
+      doc.setFillColor(cCard2[0], cCard2[1], cCard2[2]);
       doc.rect(10, yy, labelColW, h, 'F');
       doc.setFont('helvetica', opts.bold ? 'bold' : 'normal');
       doc.setFontSize(7.9);
@@ -4807,7 +4807,7 @@ async function generateInstitutionalPdfReport() {
         doc.text(pdfClean(txt), xLeft + valueColW / 2, yy + h * 0.68, { align: 'center' });
       });
 
-      doc.setDrawColor(cLine[0], cLine[1], cLine[2]);
+      doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
       doc.setLineWidth(0.1);
       doc.line(10, yy + h, pageW - 10, yy + h);
       return yy + h;
@@ -4903,41 +4903,164 @@ async function generateInstitutionalPdfReport() {
       }),
       { bold: true, fs: 8.8 });
 
-    /* NALCO BAND */
+    /* =============================================================
+       LATEST CSP — 3 metal cards like the dashboard
+       ============================================================= */
     y += 3;
-    if (y + 26 < pageH - 8) {
-      const boxH = 26;
+
+    // Section title
+    doc.setFillColor(cCard[0], cCard[1], cCard[2]);
+    doc.rect(10, y, pageW - 20, sectionH + 0.4, 'F');
+    doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
+    doc.rect(10, y, 2.5, sectionH + 0.4, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.2);
+    doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
+    doc.text('4.  LATEST CASH / 3M / STOCK  —  LME OFFICIAL', 15, y + 4.5);
+
+    // right-aligned date
+    if (cspLast) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.6);
+      doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
+      doc.text(`As of ${cspLast.date}`, pageW - 12, y + 4.5, { align: 'right' });
+    }
+    y += sectionH + 1;
+
+    const cspBoxH = 22;
+    const cspGap = 3;
+    const cspColW = (pageW - 20 - cspGap * 2) / 3;
+    const cspColors = { Cu: [214, 139, 77], Zn: [91, 143, 201], Al: [147, 162, 181] };
+
+    ['Cu', 'Zn', 'Al'].forEach((key, i) => {
+      const cx = 10 + i * (cspColW + cspGap);
+      const cy = y;
+      const info = d[key];
+      const rgb = cspColors[key];
+
+      // card bg + border
+      doc.setFillColor(cCard2[0], cCard2[1], cCard2[2]);
+      doc.rect(cx, cy, cspColW, cspBoxH, 'F');
+      doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
+      doc.setLineWidth(0.15);
+      doc.rect(cx, cy, cspColW, cspBoxH, 'S');
+
+      // left color bar
+      doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+      doc.rect(cx, cy, 1.5, cspBoxH, 'F');
+
+      // Metal name
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+      doc.text(`${PARITY_METALS.find(x => x.key === key).name} (${key})`, cx + 4, cy + 5.5);
+
+      // date pill on the right
+      if (cspLast) {
+        const dateStr = cspLast.date;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.4);
+        const dateW = doc.getTextWidth(dateStr) + 4;
+        doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
+        doc.rect(cx + cspColW - dateW - 3, cy + 2, dateW, 4, 'F');
+        doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
+        doc.text(dateStr, cx + cspColW - 3 - dateW / 2, cy + 4.7, { align: 'center' });
+      }
+
+      // Divider
+      doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
+      doc.line(cx + 3, cy + 7, cx + cspColW - 3, cy + 7);
+
+      // 3 columns: Cash / 3M / Stock
+      const cellW = (cspColW - 8) / 3;
+      const labelY = cy + 11;
+      const valueY = cy + 16;
+
+      const drawCspCell = (idx, lbl, val, colorRgb) => {
+        const ccx = cx + 4 + idx * cellW;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.4);
+        doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
+        doc.text(lbl, ccx, labelY);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(...(colorRgb || cWhite));
+        doc.text(pdfClean(val), ccx, valueY);
+      };
+
+      drawCspCell(0, 'CASH',  info.cashNow != null ? fNum(info.cashNow, 2) : '-');
+      drawCspCell(1, '3M',    info.threeNow != null ? fNum(info.threeNow, 2) : '-');
+      drawCspCell(2, 'STOCK', info.stockNow != null ? fNum(info.stockNow, 0) : '-');
+
+      // bottom spread row
+      const spreadY = cy + cspBoxH - 3.5;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.6);
+      doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
+      doc.text('CASH–3M SPREAD', cx + 4, spreadY);
+
+      // spread value
+      const spread = info.cashSpread;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(...info.spreadColor);
+      doc.text(spread != null ? fNum(spread, 2) : '-', cx + cspColW - 4, spreadY, { align: 'right' });
+
+      // badge pill next to the spread value (to the left of the value)
+      if (spread != null) {
+        const badge = info.spreadLabel;
+        const badgeCol = info.spreadColor;
+        const badgeBg = info.spreadLabel === 'Backwardation' ? [34, 60, 44] : info.spreadLabel === 'Contango' ? [60, 34, 34] : [40, 44, 56];
+        const badgeTextW = doc.getTextWidth(badge);
+        const badgeW = badgeTextW + 6;
+        const badgeX = cx + cspColW - 4 - doc.getTextWidth(fNum(spread, 2)) - 3 - badgeW;
+        doc.setFillColor(badgeBg[0], badgeBg[1], badgeBg[2]);
+        doc.roundedRect(badgeX, spreadY - 3.6, badgeW, 4.4, 2.2, 2.2, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6);
+        doc.setTextColor(badgeCol[0], badgeCol[1], badgeCol[2]);
+        doc.text(badge, badgeX + badgeW / 2, spreadY - 0.5, { align: 'center' });
+      }
+    });
+
+    y += cspBoxH + 3;
+
+    /* =============================================================
+       NALCO BAND
+       ============================================================= */
+    if (y + 24 < pageH - 8) {
+      const boxH = 24;
       const boxW = pageW - 20;
       const boxX = 10;
 
-      doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
+      doc.setFillColor(cCard[0], cCard[1], cCard[2]);
       doc.rect(boxX, y, boxW, boxH, 'F');
       doc.setDrawColor(cAmber[0], cAmber[1], cAmber[2]);
       doc.setLineWidth(0.3);
       doc.rect(boxX, y, boxW, boxH, 'S');
 
       doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
-      doc.rect(boxX, y, boxW, 6.5, 'F');
+      doc.rect(boxX, y, boxW, 6, 'F');
       doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
-      doc.rect(boxX, y, 3, 6.5, 'F');
+      doc.rect(boxX, y, 3, 6, 'F');
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9.4);
+      doc.setFontSize(9);
       doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
-      doc.text('NALCO ALUMINIUM — REVISION WATCH & ROLLING 3-DAY SIGNAL', boxX + 6, y + 4.6);
+      doc.text('NALCO ALUMINIUM — REVISION WATCH & ROLLING 3-DAY SIGNAL', boxX + 6, y + 4.3);
 
       const innerPad = 5;
       const colW2 = (boxW - innerPad * 2) / 4;
-      const labelY = y + 11;
-      const valueY = y + 16.6;
-      const detailY = y + 23;
+      const labelY = y + 10.2;
+      const valueY = y + 15.4;
+      const detailY = y + 21.2;
 
       const drawNalcoCol = (cx, lbl, val, col) => {
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.6);
+        doc.setFontSize(6.4);
         doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
         doc.text(pdfClean(lbl), cx, labelY);
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9.2);
+        doc.setFontSize(8.8);
         doc.setTextColor(...(col || cWhite));
         doc.text(pdfClean(val), cx, valueY);
       };
@@ -4956,12 +5079,12 @@ async function generateInstitutionalPdfReport() {
         drawNalcoCol(boxX + innerPad + colW2 * 3, '3-DAY ROLLING SIGNAL',    nSig.status.toUpperCase(), sigColor);
 
         doc.setFont('helvetica', 'italic');
-        doc.setFontSize(7.6);
+        doc.setFontSize(7);
         doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
         doc.text(pdfClean(nSig.detail), boxX + innerPad, detailY);
       } else {
         doc.setFont('helvetica', 'italic');
-        doc.setFontSize(8);
+        doc.setFontSize(7.6);
         doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
         doc.text('NALCO data pending fetch.', boxX + innerPad, valueY);
       }
@@ -4969,105 +5092,169 @@ async function generateInstitutionalPdfReport() {
     }
 
     doc.setFont('helvetica', 'italic');
-    doc.setFontSize(6.6);
+    doc.setFontSize(6.4);
     doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
     doc.text(`Generated ${todayIso} ${timeStr} · Sources: LME · SHFE · CFTC · MCX · SBI FX · NALCO`, 10, pageH - 4);
 
     /* =============================================================
-       PAGE 2 — CHARTS ONLY (compact header, 3 full-width COT charts)
+       PAGE 2 — COT CHARTS + INFO CARDS (equal 2-column grid)
        ============================================================= */
     doc.addPage('a4', 'landscape');
-    drawCompactHeader('PAGE 2  |  LME COT NET POSITIONING');
-    // Compact header occupies y=0..11.8; content starts at y=14
-    let y2 = 14;
+    drawCompactHeader('PAGE 2  |  LME COT POSITIONING & DESK INFO');
+    const yp2 = 14;
 
-    // Section title bar (thin)
-    doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
-    doc.rect(10, y2, pageW - 20, 5.8, 'F');
-    doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
-    doc.rect(10, y2, 2.5, 5.8, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
-    doc.text('1.  LME COMMITMENTS OF TRADERS — NET POSITIONING (Cu / Zn / Al)', 15, y2 + 4.1);
-    y2 += 7;
+    const contentTop = yp2;
+    const contentBottom = pageH - 10;
+    const contentH = contentBottom - contentTop;
 
-    // Fill remaining page height with 3 equal-height chart panels
-    const footerReserve = 10;                     // space for footer line
-    const chartsTop = y2;
-    const chartsBottom = pageH - footerReserve;
-    const chartGap = 2.5;
-    const totalChartsH = chartsBottom - chartsTop;
-    const cotChartH = (totalChartsH - chartGap * 2) / 3;
+    const outerGapX = 4;
+    const colW = (pageW - 20 - outerGapX) / 2;
+    const leftX = 10;
+    const rightX = 10 + colW + outerGapX;
 
-    const drawFullWidthChart = (title, sub, img, yy, h) => {
-      doc.setFillColor(cPanelBg[0], cPanelBg[1], cPanelBg[2]);
-      doc.rect(10, yy, pageW - 20, h, 'F');
-      doc.setDrawColor(cLine[0], cLine[1], cLine[2]);
-      doc.setLineWidth(0.2);
-      doc.rect(10, yy, pageW - 20, h, 'S');
+    const rowGapY = 3;
+    const panelH = (contentH - rowGapY * 2) / 3;
 
-      doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
-      doc.rect(10, yy, pageW - 20, 6, 'F');
-      doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
-      doc.rect(10, yy, 2.5, 6, 'F');
+    const cotCardData = [
+      { key: 'copper',    label: 'Copper',    rgb: [214, 139, 77] },
+      { key: 'zinc',      label: 'Zinc',      rgb: [91, 143, 201] },
+      { key: 'aluminium', label: 'Aluminium', rgb: [147, 162, 181] }
+    ];
+
+    const chartData = [
+      { title: 'LME COPPER — Investment Funds Net Position',    img: chartImgs.cotLmeCu, rgb: [214, 139, 77] },
+      { title: 'LME ZINC — Investment Funds Net Position',      img: chartImgs.cotLmeZn, rgb: [91, 143, 201] },
+      { title: 'LME ALUMINIUM — Investment Funds Net Position', img: chartImgs.cotLmeAl, rgb: [147, 162, 181] }
+    ];
+
+    /* Right column: info cards (no z-score) */
+    for (let i = 0; i < 3; i++) {
+      const cd = cotCardData[i];
+      const st = lmeCotrStats(cd.key);
+      const cx = rightX;
+      const cy = contentTop + i * (panelH + rowGapY);
+
+      doc.setFillColor(cCard[0], cCard[1], cCard[2]);
+      doc.rect(cx, cy, colW, panelH, 'F');
+      doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
+      doc.setLineWidth(0.15);
+      doc.rect(cx, cy, colW, panelH, 'S');
+
+      doc.setFillColor(cd.rgb[0], cd.rgb[1], cd.rgb[2]);
+      doc.rect(cx, cy, 1.8, panelH, 'F');
+
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8.6);
-      doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
-      doc.text(pdfClean(title), 15, yy + 4.1);
+      doc.setFontSize(11);
+      doc.setTextColor(cd.rgb[0], cd.rgb[1], cd.rgb[2]);
+      doc.text(cd.label, cx + 5, cy + 7);
 
-      if (sub) {
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.4);
-        doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
-        doc.text(pdfClean(sub), pageW - 12, yy + 4.1, { align: 'right' });
+      if (st) {
+        const badge = st.signal;
+        const badgeCls = st.signalCls;
+        const badgeCol = badgeCls === 'bwd' ? cGreen : badgeCls === 'ctg' ? cRed : cMuted;
+        const badgeBg = badgeCls === 'bwd' ? [34, 60, 44] : badgeCls === 'ctg' ? [60, 34, 34] : [40, 44, 56];
+        const badgeTextW = doc.getTextWidth(badge);
+        const badgeW = badgeTextW + 8;
+        doc.setFillColor(badgeBg[0], badgeBg[1], badgeBg[2]);
+        doc.roundedRect(cx + colW - badgeW - 5, cy + 3.2, badgeW, 5.5, 2.75, 2.75, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(badgeCol[0], badgeCol[1], badgeCol[2]);
+        doc.text(badge, cx + colW - badgeW / 2 - 5, cy + 7);
       }
 
-      const imgY = yy + 6.5;
-      const imgH = h - 7.5;
+      doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
+      doc.line(cx + 4, cy + 10, cx + colW - 4, cy + 10);
 
-      if (img) {
-        try { doc.addImage(img, 'PNG', 11, imgY, pageW - 22, imgH); }
+      const labelX = cx + 5;
+      const valueX = cx + colW - 5;
+      const rowsCount = 7;
+      const rowPadTop = 13;
+      const rowPadBottom = 3;
+      const rowSpacing = (panelH - rowPadTop - rowPadBottom) / rowsCount;
+
+      const drawInfoRow = (idx, label, value, col) => {
+        const ry = cy + rowPadTop + idx * rowSpacing + 3;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.4);
+        doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
+        doc.text(pdfClean(label), labelX, ry);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.4);
+        doc.setTextColor(...(col || cText));
+        doc.text(pdfClean(value), valueX, ry, { align: 'right' });
+      };
+
+      if (st) {
+        const { cur, date, weeks, deltaFund, deltaComm } = st;
+        const signCol = v => v == null ? cText : (v > 0 ? cGreen : v < 0 ? cRed : cText);
+
+        drawInfoRow(0, `Report (${weeks}w)`, date);
+        drawInfoRow(1, 'Open Interest', fNum(cur.oi, 0));
+        drawInfoRow(2, 'Investment Funds Net', fSgn(cur.fundNet, 0), signCol(cur.fundNet));
+        drawInfoRow(3, 'Commercial Net', fSgn(cur.commNet, 0), signCol(cur.commNet));
+        drawInfoRow(4, 'Funds Net % of OI', `${fNum(cur.fundNetPct, 2)}%`);
+        drawInfoRow(5, 'Weekly Δ Funds', fSgn(deltaFund, 0), signCol(deltaFund));
+        drawInfoRow(6, 'Weekly Δ Comm', fSgn(deltaComm, 0), signCol(deltaComm));
+      } else {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(7.8);
+        doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
+        doc.text('No COTR data loaded', cx + 5, cy + panelH / 2);
+      }
+    }
+
+    /* Left column: charts */
+    for (let i = 0; i < 3; i++) {
+      const cd = chartData[i];
+      const cx = leftX;
+      const cy = contentTop + i * (panelH + rowGapY);
+
+      doc.setFillColor(cCard[0], cCard[1], cCard[2]);
+      doc.rect(cx, cy, colW, panelH, 'F');
+      doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
+      doc.setLineWidth(0.15);
+      doc.rect(cx, cy, colW, panelH, 'S');
+
+      doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
+      doc.rect(cx, cy, colW, 6.5, 'F');
+      doc.setFillColor(cd.rgb[0], cd.rgb[1], cd.rgb[2]);
+      doc.rect(cx, cy, 2.5, 6.5, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.6);
+      doc.setTextColor(cd.rgb[0], cd.rgb[1], cd.rgb[2]);
+      doc.text(pdfClean(cd.title), cx + 4.5, cy + 4.4);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.4);
+      doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
+      doc.text('Funds Net + Hedgers Net  ·  LME Cash overlay', cx + colW - 4, cy + 4.4, { align: 'right' });
+
+      const imgY = cy + 7;
+      const imgH = panelH - 8;
+
+      if (cd.img) {
+        try { doc.addImage(cd.img, 'PNG', cx + 1.5, imgY, colW - 3, imgH); }
         catch (e) {
           doc.setFont('helvetica', 'italic'); doc.setFontSize(8);
           doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
-          doc.text('Chart render error', pageW / 2, imgY + imgH / 2, { align: 'center' });
+          doc.text('Chart render error', cx + colW / 2, imgY + imgH / 2, { align: 'center' });
         }
       } else {
         doc.setFont('helvetica', 'italic'); doc.setFontSize(8);
         doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
-        doc.text('Chart data unavailable', pageW / 2, imgY + imgH / 2, { align: 'center' });
+        doc.text('Chart data unavailable', cx + colW / 2, imgY + imgH / 2, { align: 'center' });
       }
-    };
-
-    drawFullWidthChart(
-      'LME COPPER — Investment Funds Net Position (with LME Price)',
-      'Speculators Net + Hedgers Net · overlay LME Cash ($/t)',
-      chartImgs.cotLmeCu,
-      chartsTop, cotChartH
-    );
-    drawFullWidthChart(
-      'LME ZINC — Investment Funds Net Position (with LME Price)',
-      'Speculators Net + Hedgers Net · overlay LME Cash ($/t)',
-      chartImgs.cotLmeZn,
-      chartsTop + (cotChartH + chartGap), cotChartH
-    );
-    drawFullWidthChart(
-      'LME ALUMINIUM — Investment Funds Net Position (with LME Price)',
-      'Speculators Net + Hedgers Net · overlay LME Cash ($/t)',
-      chartImgs.cotLmeAl,
-      chartsTop + 2 * (cotChartH + chartGap), cotChartH
-    );
+    }
 
     /* =============================================================
-       PAGE 3 — COT SUMMARY TABLE + TECHNICAL SIGNALS
+       PAGE 3 — COT TABLE + TECHNICAL SIGNALS
        ============================================================= */
     doc.addPage('a4', 'landscape');
     drawBigHeader('PAGE 3  |  COT SUMMARY & TECHNICAL SIGNALS');
     let y3 = 24;
 
-    /* Section title */
-    doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
+    doc.setFillColor(cCard[0], cCard[1], cCard[2]);
     doc.rect(10, y3, pageW - 20, 6.5, 'F');
     doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
     doc.rect(10, y3, 2.5, 6.5, 'F');
@@ -5095,7 +5282,6 @@ async function generateInstitutionalPdfReport() {
         cotTableRows.push([`LME ${meta.label}`, '-', '-', '-', '-', '-', 'No COTR loaded']);
       }
     }
-    // Add COMEX row if we have CFTC data
     const cftcSt = cftcStats();
     if (cftcSt) {
       cotTableRows.push([
@@ -5115,21 +5301,8 @@ async function generateInstitutionalPdfReport() {
       head: [['Contract', 'Report Date', 'Open Interest', 'Net Spec Position (lots)', 'Weekly Change', '% of OI', '52W Z-Score & Signal']],
       body: cotTableRows,
       theme: 'grid',
-      styles: {
-        fontSize: 8.6,
-        cellPadding: 2.4,
-        textColor: cText,
-        lineColor: cLine,
-        lineWidth: 0.15,
-        fillColor: cRowEven
-      },
-      headStyles: {
-        fillColor: cSlate,
-        textColor: cWhite,
-        fontStyle: 'bold',
-        halign: 'center',
-        fontSize: 8.8
-      },
+      styles: { fontSize: 8.6, cellPadding: 2.4, textColor: cText, lineColor: cBorder, lineWidth: 0.15, fillColor: cRowEven },
+      headStyles: { fillColor: cNavy, textColor: cWhite, fontStyle: 'bold', halign: 'center', fontSize: 8.8 },
       alternateRowStyles: { fillColor: cRowOdd },
       columnStyles: {
         0: { fontStyle: 'bold', halign: 'left', textColor: cWhite },
@@ -5150,8 +5323,7 @@ async function generateInstitutionalPdfReport() {
     });
     y3 = doc.lastAutoTable.finalY + 6;
 
-    /* Technical Signals table */
-    doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
+    doc.setFillColor(cCard[0], cCard[1], cCard[2]);
     doc.rect(10, y3, pageW - 20, 6.5, 'F');
     doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
     doc.rect(10, y3, 2.5, 6.5, 'F');
@@ -5175,20 +5347,11 @@ async function generateInstitutionalPdfReport() {
       if (!SERIES_NAMES.includes(tm.name)) continue;
       const t = computeTrend(tm.name);
       if (!t) continue;
-
       const shortArrow = t.shortTrend === 'up' ? 'UP' : t.shortTrend === 'down' ? 'DOWN' : 'N/A';
       const shortDist = t.shortDist != null ? `${t.shortDist>=0?'+':''}${t.shortDist.toFixed(2)}%` : '-';
       const medArrow = t.mediumTrend === 'up' ? 'UP' : t.mediumTrend === 'down' ? 'DOWN' : 'N/A';
       const medDist = t.mediumDist != null ? `${t.mediumDist>=0?'+':''}${t.mediumDist.toFixed(2)}%` : '-';
-
-      trendRows.push([
-        tm.label,
-        fNum(t.latestPrice, 2),
-        shortArrow,
-        shortDist,
-        medArrow,
-        medDist
-      ]);
+      trendRows.push([tm.label, fNum(t.latestPrice, 2), shortArrow, shortDist, medArrow, medDist]);
     }
 
     doc.autoTable({
@@ -5197,21 +5360,8 @@ async function generateInstitutionalPdfReport() {
       head: [['Instrument', 'Price', 'Short-term Trend (20D)', 'Distance', 'Medium-term Trend (20W)', 'Distance']],
       body: trendRows,
       theme: 'grid',
-      styles: {
-        fontSize: 8.6,
-        cellPadding: 2.4,
-        textColor: cText,
-        lineColor: cLine,
-        lineWidth: 0.15,
-        fillColor: cRowEven
-      },
-      headStyles: {
-        fillColor: cSlate,
-        textColor: cWhite,
-        fontStyle: 'bold',
-        halign: 'center',
-        fontSize: 8.8
-      },
+      styles: { fontSize: 8.6, cellPadding: 2.4, textColor: cText, lineColor: cBorder, lineWidth: 0.15, fillColor: cRowEven },
+      headStyles: { fillColor: cNavy, textColor: cWhite, fontStyle: 'bold', halign: 'center', fontSize: 8.8 },
       alternateRowStyles: { fillColor: cRowOdd },
       columnStyles: {
         0: { fontStyle: 'bold', halign: 'left', textColor: cWhite },
