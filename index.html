@@ -427,6 +427,94 @@
   .roll-spark-title .chg.neg { color:var(--red); }
   .roll-spark-title .chg.muted { color:var(--muted); }
   .roll-spark-chart { position:relative; width:100%; height:80px; }
+
+  /* ============================================================
+     PURE ARB (Glencore-style)
+     ============================================================ */
+  .arb-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
+  /* Universal chart control strip */
+  .chart-ctl { display:flex; gap:6px; flex-wrap:wrap; align-items:center; justify-content:flex-end;
+    font-size:0.68rem; color:var(--muted); }
+  .chart-ctl label { display:inline-flex; align-items:center; gap:4px; }
+  .chart-ctl select { background:#0e1724; border:1px solid var(--border); color:var(--text);
+    padding:4px 8px; border-radius:6px; font-size:0.68rem; font-family:inherit; cursor:pointer; }
+  .chart-ctl .grp { display:inline-flex; background:#0e1724; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+  .chart-ctl .grp button { background:transparent; border:none; color:var(--muted); padding:4px 8px;
+    font-size:0.66rem; font-weight:600; cursor:pointer; font-family:inherit; }
+  .chart-ctl .grp button.active { background:var(--accent); color:#0e1420; }
+  .arb-chip { display:inline-block; font-size:0.58rem; font-weight:700; letter-spacing:0.4px;
+    padding:2px 8px; border-radius:10px; margin-left:6px; }
+  .arb-chip.ctg { background:rgba(231,76,60,0.18); color:var(--red); }
+  .arb-chip.bwd { background:rgba(46,204,113,0.18); color:var(--green); }
+  .arb-chip.flat { background:rgba(124,138,160,0.18); color:var(--muted); }
+  @media(max-width:900px){ .arb-grid { grid-template-columns:1fr; } }
+  .arb-card { background:var(--card2); border:1px solid var(--border); border-radius:12px;
+    padding:14px; position:relative; overflow:hidden; }
+  .arb-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; }
+  .arb-card.cu::before { background:var(--copper); }
+  .arb-card.zn::before { background:var(--zinc); }
+  .arb-card.al::before { background:var(--alu); }
+  .arb-card .head { display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  .arb-card .name { font-size:0.95rem; font-weight:700; }
+  .arb-card .badge { font-size:0.6rem; font-weight:700; padding:2px 9px; border-radius:10px; letter-spacing:0.4px; }
+  .arb-card .badge.pos { background:rgba(46,204,113,0.18); color:var(--green); }
+  .arb-card .badge.neg { background:rgba(231,76,60,0.18); color:var(--red); }
+  .arb-card .badge.na { background:rgba(124,138,160,0.18); color:var(--muted); }
+  .arb-row { display:grid; grid-template-columns:1fr 130px; gap:8px; align-items:center;
+    padding:5px 0; border-bottom:1px dashed #1a2334; font-size:0.72rem; }
+  .arb-row:last-child { border-bottom:none; }
+  .arb-row .lbl { color:var(--muted); }
+  .arb-row .val { text-align:right; font-weight:700; color:#fff; font-variant-numeric:tabular-nums; font-size:0.78rem; }
+  .arb-row .val.pos { color:var(--green); }
+  .arb-row .val.neg { color:var(--red); }
+  .arb-row.result { background:rgba(232,163,61,0.06); border-radius:6px;
+    padding:8px; margin-top:4px; border-bottom:none; }
+  .arb-row.result .lbl { color:var(--accent); font-weight:700; }
+  .arb-row.result .val { font-size:0.98rem; font-weight:800; }
+
+  /* ============================================================
+     WEEKLY CHANGE TABLE
+     ============================================================ */
+  .wc-table { width:100%; border-collapse:collapse; font-size:0.78rem; }
+  .wc-table th { text-align:right; color:var(--muted); font-weight:600; padding:8px 10px;
+    border-bottom:1px solid var(--border); font-size:0.65rem; text-transform:uppercase;
+    letter-spacing:0.4px; white-space:nowrap; background:#0e1724; }
+  .wc-table th.l { text-align:left; }
+  .wc-table td { padding:8px 10px; border-bottom:1px solid #1a2334; color:#c6d0de;
+    font-variant-numeric:tabular-nums; text-align:right; }
+  .wc-table td.metal-name { text-align:left; font-weight:700; font-size:0.82rem; }
+  .wc-table td.pos { color:var(--green); font-weight:600; }
+  .wc-table td.neg { color:var(--red); font-weight:600; }
+  .wc-table td.neu { color:var(--muted); font-weight:500; }
+  .wc-table .chg-cell { display:inline-flex; align-items:center; gap:5px; justify-content:flex-end; }
+  .wc-table .arrow { font-size:0.7rem; }
+  .wc-table tbody tr:hover td { background:rgba(232,163,61,0.04); }
+
+  /* ============================================================
+     CANCELLED RATIO HEATMAP
+     ============================================================ */
+  .heatmap-wrap { overflow-x:auto; padding-bottom:6px; }
+  .heatmap { display:grid; gap:2px; }
+  .heatmap-row { display:flex; align-items:center; gap:2px; }
+  .heatmap-label { width:72px; flex-shrink:0; font-size:0.72rem; font-weight:600;
+    padding-right:8px; text-align:right; white-space:nowrap; }
+  .heatmap-cell { width:16px; height:24px; border-radius:2px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.55rem; font-weight:600; color:#fff;
+    cursor:pointer; transition:transform 0.1s, outline 0.1s; position:relative; }
+  .heatmap-cell:hover { transform:scale(1.15); outline:2px solid var(--accent); z-index:5; }
+  .heatmap-col-labels { display:flex; gap:2px; margin-left:80px; padding:4px 0 2px; }
+  .heatmap-col-labels span { width:16px; flex-shrink:0; font-size:0.55rem; color:var(--muted);
+    text-align:center; transform:rotate(-45deg); transform-origin:center; white-space:nowrap; height:14px; }
+  .heatmap-legend { display:flex; align-items:center; gap:8px; font-size:0.65rem;
+    color:var(--muted); margin-top:10px; padding-left:80px; }
+  .heatmap-legend .grad { display:inline-block; width:140px; height:10px; border-radius:3px;
+    background:linear-gradient(to right, #16202f, #1e3a5f, #2a6f8f, #d68b4d, #e74c3c); }
+  .heatmap-summary { display:flex; gap:16px; flex-wrap:wrap; font-size:0.7rem;
+    margin-top:12px; padding-left:80px; }
+  .heatmap-summary .item { display:flex; align-items:center; gap:5px; }
+  .heatmap-summary .item .dot { width:8px; height:8px; border-radius:50%; }
 </style>
 </head>
 <body>
@@ -512,13 +600,69 @@
           <div class="parity-grid" id="nalcoGrid"><div class="loading"><div class="spinner"></div> Waiting for NALCO data…</div></div>
         </div>
       </div>
+      <!-- ==================== PURE MCX-LME ARB (snapshot) ==================== -->
       <div class="grid">
         <div class="card span-12">
           <h3 style="justify-content:space-between;display:flex;">
+            <span><i class="fas fa-exchange-alt"></i> Pure MCX–LME Arb <span class="sub">— Glencore-style · LME Cash = 3M + Basis</span></span>
+            <span class="controls"><span id="arbUpdated" style="font-size:0.65rem;color:var(--muted);"></span></span>
+          </h3>
+          <div class="arb-grid" id="arbGrid"></div>
+        </div>
+      </div>
+
+      <!-- ==================== PURE ARB — HISTORY CHART ==================== -->
+      <div class="grid">
+        <div class="card span-12">
+          <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:10px;">
+            <span><i class="fas fa-chart-area"></i> Pure MCX–LME Arb — History <span class="sub">— USD/t spread over time</span></span>
+            <span class="chart-ctl" style="gap:8px;flex-wrap:wrap;">
+              <label>X:
+                <select id="arbHistTf">
+                  <option value="1m">1M</option>
+                  <option value="3m">3M</option>
+                  <option value="6m" selected>6M</option>
+                  <option value="1y">1Y</option>
+                  <option value="3y">3Y</option>
+                  <option value="all">All</option>
+                  <option value="custom">Custom…</option>
+                </select>
+              </label>
+              <span class="grp" id="arbHistFreq">
+                <button data-arb-freq="daily" class="active">D</button>
+                <button data-arb-freq="weekly">W</button>
+                <button data-arb-freq="monthly">M</button>
+              </span>
+              <label>Y:
+                <select id="arbHistYAxis">
+                  <option value="auto" selected>Auto</option>
+                  <option value="zero">Zero-centred</option>
+                  <option value="absolute">Absolute (|spread|)</option>
+                </select>
+              </label>
+            </span>
+          </h3>
+          <div id="arbHistCustom" class="controls" style="display:none;margin-bottom:6px;gap:8px;align-items:center;">
+            <span style="font-size:0.68rem;color:var(--muted);">From:</span><input type="date" class="date-input" id="arbHistFrom">
+            <span style="font-size:0.68rem;color:var(--muted);">To:</span><input type="date" class="date-input" id="arbHistTo">
+            <button class="btn small" id="arbHistApply">Apply</button>
+            <span id="arbHistRangeLabel" style="font-size:0.68rem;color:var(--accent);"></span>
+          </div>
+          <div class="chart-wrap tall"><canvas id="arbHistChart"></canvas></div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="card span-12">
+          <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:8px;">
             <span><i class="fas fa-university" style="color:var(--sbi);"></i> SBI TT Sell vs USDINR <span class="sub">— spot comparison</span></span>
-            <span class="controls">
-              <select class="tf-select" id="sbiTf"><option value="1m">1M</option><option value="3m">3M</option><option value="6m">6M</option><option value="1y" selected>1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option></select>
-              <span class="freq-group" id="sbiFreq"><button data-freq="daily" class="active">D</button><button data-freq="weekly">W</button><button data-freq="monthly">M</button></span>
+            <span class="chart-ctl">
+              <label>X:
+                <select id="sbiTf"><option value="1m">1M</option><option value="3m">3M</option><option value="6m">6M</option><option value="1y" selected>1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option></select>
+              </label>
+              <span class="grp" id="sbiFreq"><button data-freq="daily" class="active">D</button><button data-freq="weekly">W</button><button data-freq="monthly">M</button></span>
+              <label>Y:
+                <select id="sbiYMode"><option value="auto" selected>Auto</option><option value="zero">Zero-centred</option><option value="log">Log</option></select>
+              </label>
             </span>
           </h3>
           <div class="chart-wrap tall" id="sbiChartWrap"><canvas id="sbiChart"></canvas></div>
@@ -578,14 +722,17 @@
       </div>
       <div class="grid">
         <div class="card span-12">
-          <h3 style="justify-content:space-between;display:flex;">
+          <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:8px;">
             <span><i class="fas fa-chart-line"></i> LME–MCX Spread History</span>
-            <span class="controls">
-              <button class="btn active" data-lmc="Copper">Cu</button>
-              <button class="btn" data-lmc="Zinc">Zn</button>
-              <button class="btn" data-lmc="Aluminium">Al</button>
-              <select class="tf-select" id="lmcTf"><option value="1m">1M</option><option value="3m">3M</option><option value="6m">6M</option><option value="1y" selected>1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option></select>
-              <span class="freq-group" id="lmcFreq"><button data-freq="daily" class="active">D</button><button data-freq="weekly">W</button><button data-freq="monthly">M</button></span>
+            <span class="chart-ctl">
+              <span class="grp">
+                <button class="btn active" data-lmc="Copper" style="background:transparent;border:none;color:inherit;padding:4px 8px;">Cu</button>
+                <button class="btn" data-lmc="Zinc" style="background:transparent;border:none;color:inherit;padding:4px 8px;">Zn</button>
+                <button class="btn" data-lmc="Aluminium" style="background:transparent;border:none;color:inherit;padding:4px 8px;">Al</button>
+              </span>
+              <label>X:<select id="lmcTf"><option value="1m">1M</option><option value="3m">3M</option><option value="6m">6M</option><option value="1y" selected>1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option></select></label>
+              <span class="grp" id="lmcFreq"><button data-freq="daily" class="active">D</button><button data-freq="weekly">W</button><button data-freq="monthly">M</button></span>
+              <label>Y:<select id="lmcYMode"><option value="auto" selected>Auto</option><option value="zero">Zero-centred</option></select></label>
             </span>
           </h3>
           <div class="chart-wrap" style="height:240px;"><canvas id="lmcChart"></canvas></div>
@@ -593,11 +740,12 @@
       </div>
       <div class="grid">
         <div class="card span-12">
-          <h3 style="justify-content:space-between;display:flex;">
+          <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:8px;">
             <span><i class="fas fa-chart-area"></i> Price Chart</span>
-            <span class="controls">
-              <select class="tf-select" id="priceTf"><option value="2d">2D</option><option value="5d">5D</option><option value="8d">8D</option><option value="15d">15D</option><option value="1m" selected>1M</option><option value="3m">3M</option><option value="6m">6M</option><option value="1y">1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option><option value="custom">Custom…</option></select>
-              <span class="freq-group" id="priceFreq"><button data-freq="daily" class="active">D</button><button data-freq="weekly">W</button><button data-freq="monthly">M</button></span>
+            <span class="chart-ctl">
+              <label>X:<select id="priceTf"><option value="2d">2D</option><option value="5d">5D</option><option value="8d">8D</option><option value="15d">15D</option><option value="1m" selected>1M</option><option value="3m">3M</option><option value="6m">6M</option><option value="1y">1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option><option value="custom">Custom…</option></select></label>
+              <span class="grp" id="priceFreq"><button data-freq="daily" class="active">D</button><button data-freq="weekly">W</button><button data-freq="monthly">M</button></span>
+              <label>Y:<select id="priceYMode"><option value="auto" selected>Auto</option><option value="zero">Zero-centred</option><option value="log">Log</option></select></label>
             </span>
           </h3>
           <div id="priceCustomRange" class="controls" style="display:none;margin-bottom:4px;gap:8px;align-items:center;">
@@ -614,7 +762,6 @@
             <button class="btn small" id="priceAllBtn">All</button>
             <button class="btn small" id="priceNoneBtn">None</button>
             <button class="btn small" id="priceMetalsBtn">Metals only</button>
-            <label style="margin-left:8px;font-size:0.68rem;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox" id="priceLogToggle" style="accent-color:var(--accent);"> Log scale</label>
             <span id="priceModeHint" style="font-size:0.65rem;color:var(--accent);">Single-select mode: clicking a series replaces the current one.</span>
           </div>
           <div class="price-picker" id="pricePicker"></div>
@@ -637,11 +784,16 @@
       </div>
       <div class="grid">
         <div class="card span-6">
-          <h3 style="justify-content:space-between;display:flex;">
+          <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:8px;">
             <span><i class="fas fa-balance-scale"></i> LME Cash–3M Spread</span>
-            <span class="controls">
-              <button class="btn active" data-csp="Cu">Cu</button><button class="btn" data-csp="Zn">Zn</button><button class="btn" data-csp="Al">Al</button>
-              <span class="freq-group" id="cspFreq"><button data-freq="daily" class="active">D</button><button data-freq="weekly">W</button><button data-freq="monthly">M</button></span>
+            <span class="chart-ctl">
+              <span class="grp">
+                <button class="btn active" data-csp="Cu" style="background:transparent;border:none;color:inherit;padding:4px 8px;">Cu</button>
+                <button class="btn" data-csp="Zn" style="background:transparent;border:none;color:inherit;padding:4px 8px;">Zn</button>
+                <button class="btn" data-csp="Al" style="background:transparent;border:none;color:inherit;padding:4px 8px;">Al</button>
+              </span>
+              <span class="grp" id="cspFreq"><button data-freq="daily" class="active">D</button><button data-freq="weekly">W</button><button data-freq="monthly">M</button></span>
+              <label>Y:<select id="cspYMode"><option value="auto" selected>Auto</option><option value="zero">Zero-centred</option></select></label>
             </span>
           </h3>
           <div class="spread-stats" id="cspStats">
@@ -652,11 +804,16 @@
           <div class="chart-wrap" style="height:200px;"><canvas id="cspChart"></canvas></div>
         </div>
         <div class="card span-6">
-          <h3 style="justify-content:space-between;display:flex;">
+          <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:8px;">
             <span><i class="fas fa-chart-line"></i> Cash Price vs LME Stock</span>
-            <span class="controls">
-              <button class="btn active" data-csp2="Cu">Cu</button><button class="btn" data-csp2="Zn">Zn</button><button class="btn" data-csp2="Al">Al</button>
-              <span class="freq-group" id="csp2Freq"><button data-freq="daily" class="active">D</button><button data-freq="weekly">W</button><button data-freq="monthly">M</button></span>
+            <span class="chart-ctl">
+              <span class="grp">
+                <button class="btn active" data-csp2="Cu" style="background:transparent;border:none;color:inherit;padding:4px 8px;">Cu</button>
+                <button class="btn" data-csp2="Zn" style="background:transparent;border:none;color:inherit;padding:4px 8px;">Zn</button>
+                <button class="btn" data-csp2="Al" style="background:transparent;border:none;color:inherit;padding:4px 8px;">Al</button>
+              </span>
+              <span class="grp" id="csp2Freq"><button data-freq="daily" class="active">D</button><button data-freq="weekly">W</button><button data-freq="monthly">M</button></span>
+              <label>Y:<select id="csp2YMode"><option value="auto" selected>Auto</option><option value="zero">Zero-centred</option><option value="log">Log</option></select></label>
             </span>
           </h3>
           <div class="chart-wrap" style="height:270px;"><canvas id="csp2Chart"></canvas></div>
@@ -664,12 +821,13 @@
       </div>
       <div class="grid">
         <div class="card span-12">
-          <h3 style="justify-content:space-between;display:flex;">
+          <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:8px;">
             <span><i class="fas fa-project-diagram"></i> Correlations</span>
-            <span class="controls">
-              <select class="tf-select" id="corrData"><option value="returns" selected>Returns</option><option value="levels">Levels</option></select>
-              <select class="tf-select" id="corrTf"><option value="1m">1M</option><option value="3m">3M</option><option value="6m">6M</option><option value="1y" selected>1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option></select>
-              <select class="tf-select" id="corrMode"><option value="rolling" selected>Rolling</option><option value="matrix">Matrix</option></select>
+            <span class="chart-ctl">
+              <label>Data:<select id="corrData"><option value="returns" selected>Returns</option><option value="levels">Levels</option></select></label>
+              <label>X:<select id="corrTf"><option value="1m">1M</option><option value="3m">3M</option><option value="6m">6M</option><option value="1y" selected>1Y</option><option value="3y">3Y</option><option value="5y">5Y</option><option value="all">All</option></select></label>
+              <label>Mode:<select id="corrMode"><option value="rolling" selected>Rolling</option><option value="matrix">Matrix</option></select></label>
+              <label>Y:<select id="corrYMode"><option value="auto" selected>Auto</option><option value="zero">Zero-centred</option></select></label>
             </span>
           </h3>
           <div id="corrPairControls" class="controls" style="margin-bottom:6px;">
@@ -705,6 +863,16 @@
             <div class="card" data-news-cat="macro"><h3 style="font-size:0.72rem;"><span><i class="fas fa-globe"></i> Macro</span><span class="count" id="newsCount-macro">0</span></h3><ul class="feed" id="newsFeed-macro"><li class="empty">Loading…</li></ul></div>
             <div class="card" data-news-cat="fx"><h3 style="font-size:0.72rem;"><span><i class="fas fa-dollar-sign"></i> Currency</span><span class="count" id="newsCount-fx">0</span></h3><ul class="feed" id="newsFeed-fx"><li class="empty">Loading…</li></ul></div>
           </div>
+        </div>
+      </div>
+      <!-- ==================== WEEKLY CHANGE DASHBOARD ==================== -->
+      <div class="grid">
+        <div class="card span-12">
+          <h3 style="justify-content:space-between;display:flex;">
+            <span><i class="fas fa-bolt"></i> Weekly Change <span class="sub">— % change over multiple horizons</span></span>
+            <span class="controls"><span id="wcUpdated" style="font-size:0.65rem;color:var(--muted);"></span></span>
+          </h3>
+          <div style="overflow-x:auto;"><div id="wcPanel"></div></div>
         </div>
       </div>
       <div class="grid">
@@ -766,6 +934,23 @@
       <div class="lme-chart-box"><div class="ct">Total Inventory Trend</div><div class="cw"><canvas id="lmeChTotal"></canvas></div></div>
       <div class="lme-chart-box"><div class="ct">Cancelled Ratio (%)</div><div class="cw"><canvas id="lmeChRatio"></canvas></div></div>
       <div class="lme-chart-box"><div class="ct">Daily Change</div><div class="cw"><canvas id="lmeChChange"></canvas></div></div>
+    </div>
+
+    <!-- ==================== LME CANCELLED RATIO HEATMAP ==================== -->
+    <div class="card" style="margin-top:18px;">
+      <h3 style="justify-content:space-between;display:flex;flex-wrap:wrap;gap:8px;">
+        <span><i class="fas fa-fire"></i> LME Cancelled Ratio Heatmap <span class="sub">— squeeze leading indicator</span></span>
+        <span class="chart-ctl">
+          <span class="grp" id="heatmapTfGroup">
+            <button data-hm-tf="30" class="active">30D</button>
+            <button data-hm-tf="60">60D</button>
+            <button data-hm-tf="90">90D</button>
+            <button data-hm-tf="180">180D</button>
+          </span>
+          <span id="heatmapUpdated" style="font-size:0.65rem;color:var(--muted);"></span>
+        </span>
+      </h3>
+      <div id="heatmapPanel"><div style="padding:20px;color:var(--muted);text-align:center;">Waiting for LME history…</div></div>
     </div>
   </div>
 
@@ -983,6 +1168,7 @@
               <button data-range="3y">3Y</button>
               <button data-range="all">All</button>
             </span>
+            <label style="font-size:0.68rem;color:var(--muted);display:inline-flex;align-items:center;gap:4px;">Y:<select id="rollLmeYMode" style="background:#0e1724;border:1px solid var(--border);color:var(--text);padding:3px 7px;border-radius:6px;font-size:0.66rem;"><option value="auto" selected>Auto</option><option value="zero">Zero-centred</option></select></label>
           </span>
         </h3>
         <div class="chart-wrap"><canvas id="rollLmeRollChart"></canvas></div>
@@ -1006,6 +1192,7 @@
               <button data-range="3y">3Y</button>
               <button data-range="all">All</button>
             </span>
+            <label style="font-size:0.68rem;color:var(--muted);display:inline-flex;align-items:center;gap:4px;">Y:<select id="rollMcxYMode" style="background:#0e1724;border:1px solid var(--border);color:var(--text);padding:3px 7px;border-radius:6px;font-size:0.66rem;"><option value="auto" selected>Auto</option><option value="zero">Zero-centred</option></select></label>
           </span>
         </h3>
         <div class="chart-wrap"><canvas id="rollMcxRollChart"></canvas></div>
@@ -1240,7 +1427,6 @@ function fmtIndian(v, dp = 0) {
   const formatted = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
   return '₹' + (neg ? '-' : '') + formatted + (decPart ? '.' + decPart : '');
 }
-/* Strip non-ASCII so jsPDF's built-in Helvetica never prints garbled glyphs */
 function pdfClean(str) {
   if (str == null) return '-';
   return String(str)
@@ -1252,7 +1438,6 @@ function pdfClean(str) {
     .replace(/\u20b9/g, 'Rs.')
     .replace(/[^\x20-\x7E]/g, '');
 }
-/* Safe RGB helper — never returns NaN channels */
 function safeRgbFromHex(hex, fallback) {
   const fb = fallback || [100, 100, 100];
   if (typeof hex !== 'string') return fb;
@@ -1358,6 +1543,11 @@ const lmeChartSettings = {
 };
 let lmeCotrQueue = [];
 
+/* Pure Arb state */
+let arbHistChart = null;
+let arbHistFreq = 'daily';
+let HEATMAP_TF = 30;
+
 /* ========================================================================
    TAB SWITCHING
    ======================================================================== */
@@ -1432,6 +1622,7 @@ async function fetchLive() {
     if (updatedEl) updatedEl.textContent = 'Updated ' + liveLastFetch.toLocaleTimeString();
     renderPriceGrid();
     renderParity();
+    renderPureArb();
     const bySym = {};
     for (const r of rows) bySym[r.symbol] = r;
     ROLL_LIVE_LATEST = bySym;
@@ -1643,7 +1834,7 @@ async function fetchSbiFromCsv(url) {
     renderSbiChart();
     if (!parityEdited.has('__usdinr')) {
       const last = SBI_RAW[SBI_RAW.length-1];
-      if (last) { parityEdits.__usdinr = last.value; renderParity(); }
+      if (last) { parityEdits.__usdinr = last.value; renderParity(); renderPureArb(); }
     }
   } catch (e) { statusEl.textContent = 'CSV parse error: ' + e.message; statusEl.className = 'status err'; }
 }
@@ -1674,7 +1865,7 @@ async function fetchSbiFromPdf() {
     SBI_RAW = [...byDate.values()].sort((a,b) => a.t - b.t);
     statusEl.textContent = `USD/INR TT SELL = ${ttSell} (PDF${dateStr ? ' · ' + dateStr : ''})`;
     statusEl.className = 'status ok';
-    if (!parityEdited.has('__usdinr')) { parityEdits.__usdinr = ttSell; renderParity(); }
+    if (!parityEdited.has('__usdinr')) { parityEdits.__usdinr = ttSell; renderParity(); renderPureArb(); }
     renderSbiChart();
   } catch (e) { statusEl.textContent = 'SBI PDF error: ' + e.message; statusEl.className = 'status err'; }
 }
@@ -1797,6 +1988,7 @@ function renderParity() {
       ev.target.classList.remove('live');
       updateParityCard(metal);
       if (field === 'basis' || field === 'premium' || field === 'dutyPct' || field === 'freight') scheduleSaveParityOverrides();
+      if (field === 'basis' || field === 'lme3m' || field === 'mcx') renderPureArb();
     });
   });
   if (usdInp && !usdInp.dataset.wired) {
@@ -1805,6 +1997,7 @@ function renderParity() {
       parityEdited.add('__usdinr');
       ev.target.classList.add('edited');
       for (const mm of PARITY_METALS) updateParityCard(mm.key);
+      renderPureArb();
     });
     usdInp.dataset.wired = '1';
   }
@@ -1864,6 +2057,7 @@ async function loadParityOverrides() {
       if (typeof data[key] === 'number' && isFinite(data[key])) { if (!parityEdits[k]) parityEdits[k] = {}; parityEdits[k].freight = data[key]; parityEdited.add(k + '.freight'); }
     }
     renderParity();
+    renderPureArb();
   } catch (e) { console.warn('parity_overrides.json load failed:', e); }
 }
 let overridesSaveTimer = null;
@@ -1887,7 +2081,7 @@ async function saveParityOverrides() {
 }
 
 /* ========================================================================
-   NALCO — FIXED: previous-day CSP as reference
+   NALCO
    ======================================================================== */
 async function fetchNalcoNotifications() {
   try {
@@ -1928,7 +2122,6 @@ function parseNalcoHTML(html) {
   rows.sort((a, b) => b.effDate.localeCompare(a.effDate));
   return rows;
 }
-
 function getPrevLmeCashBefore(date) {
   let best = null;
   for (const r of CSP_RAW) {
@@ -2084,7 +2277,7 @@ async function saveCspToGitHub() {
       try {
         const txt = await fetchText(CSP_URL + '?t=' + Date.now());
         const r = parseCSPCSV(txt);
-        if (r.ok) { renderCSPLatest(); renderCSPDaysTable(); renderNalcoCard(); renderCSP(); renderCSP2(); }
+        if (r.ok) { renderCSPLatest(); renderCSPDaysTable(); renderNalcoCard(); renderCSP(); renderCSP2(); renderPureArb(); }
       } catch (e) {}
     }, 3000);
   } catch (e) {
@@ -2139,7 +2332,7 @@ async function deleteCspRow() {
       try {
         const txt = await fetchText(CSP_URL + '?t=' + Date.now());
         const r = parseCSPCSV(txt);
-        if (r.ok) { renderCSPLatest(); renderCSPDaysTable(); renderNalcoCard(); renderCSP(); renderCSP2(); }
+        if (r.ok) { renderCSPLatest(); renderCSPDaysTable(); renderNalcoCard(); renderCSP(); renderCSP2(); renderPureArb(); }
       } catch (e) {}
     }, 3000);
   } catch (e) {
@@ -2288,8 +2481,10 @@ function renderSbiChart() {
   if (usdData.length) datasets.push({ label: 'USDINR (Spot)', data: usdData, borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,0.08)', borderWidth: 1.8, pointRadius: 0, tension: 0.15, yAxisID: 'y' });
   if (sbiData.length) datasets.push({ label: 'SBI TT Sell', data: sbiData, borderColor: '#ff6b9d', backgroundColor: 'rgba(255,107,157,0.08)', borderWidth: 1.8, pointRadius: 0, tension: 0.15, yAxisID: 'y', borderDash: [6, 3] });
   if (spreadData.length) datasets.push({ label: 'Spread (Spot − SBI)', data: spreadData, borderColor: '#e8a33d', backgroundColor: 'rgba(232,163,61,0.06)', borderWidth: 1.2, pointRadius: 0, tension: 0.15, yAxisID: 'y1' });
+  const yMode = document.getElementById('sbiYMode')?.value || 'auto';
+  const yScale = applyYMode({ position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } }, yMode, [usdData.map(p=>p.y), sbiData.map(p=>p.y)]);
   if (sbiChart) sbiChart.destroy();
-  sbiChart = new Chart(canvas, { type: 'line', data: { datasets }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } }, y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } }, y1: { position: 'right', grid: { display: false }, ticks: { color: '#e8a33d', font: { size: 9 } } } } } });
+  sbiChart = new Chart(canvas, { type: 'line', data: { datasets }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } }, y: yScale, y1: { position: 'right', grid: { display: false }, ticks: { color: '#e8a33d', font: { size: 9 } } } } } });
 }
 
 /* ========================================================================
@@ -2317,8 +2512,10 @@ function renderLmcChart() {
   const resampled = resample(filtered, lmcFreq);
   const color = CSP_COLORS[LMC_METAL_MAP[currentLMC]] || '#e8a33d';
   const data = resampled.map(p => ({ x: p.t, y: p.spread }));
+  const yMode = document.getElementById('lmcYMode')?.value || 'auto';
+  const yScale = applyYMode({ grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 }, callback: v => '₹' + v } }, yMode, [data.map(p=>p.y)]);
   if (lmcChart) lmcChart.destroy();
-  lmcChart = new Chart(canvas, { type: 'line', data: { datasets: [{ label: `${currentLMC} MCX − LME (₹/kg)`, data, borderColor: color, backgroundColor: color + '20', borderWidth: 2, pointRadius: 0, tension: 0.15, fill: true }]}, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } }, y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 }, callback: v => '₹' + v } } } } });
+  lmcChart = new Chart(canvas, { type: 'line', data: { datasets: [{ label: `${currentLMC} MCX − LME (₹/kg)`, data, borderColor: color, backgroundColor: color + '20', borderWidth: 2, pointRadius: 0, tension: 0.15, fill: true }]}, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } }, y: yScale } } });
 }
 
 /* ========================================================================
@@ -2391,10 +2588,12 @@ function renderPriceChart() {
   const rangeLbl = document.getElementById('priceRangeLabel');
   if (tf === 'custom') rangeLbl.textContent = (fromDate || toDate) ? `${fromDate||'start'} → ${toDate||'end'}` : 'Full range';
   else rangeLbl.textContent = '';
-  const logScale = document.getElementById('priceLogToggle').checked;
+  const yMode = document.getElementById('priceYMode')?.value || 'auto';
   const hasFx = datasets.some(d => d.yAxisID === 'y1');
+  const allY = datasets.filter(d => d.yAxisID === 'y').flatMap(d => d.data.map(p => p.y));
+  const yScale = applyYMode({ position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } }, yMode, [allY]);
   if (priceChart) priceChart.destroy();
-  priceChart = new Chart(document.getElementById('priceChart'), { type: 'line', data: { datasets }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } }, y: { position: 'left', type: logScale ? 'logarithmic' : 'linear', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } }, ...(hasFx ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 9 } } } } : {}) } } } );
+  priceChart = new Chart(document.getElementById('priceChart'), { type: 'line', data: { datasets }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } }, y: yScale, ...(hasFx ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 9 } } } } : {}) } } } );
 }
 
 /* ========================================================================
@@ -2506,11 +2705,13 @@ function renderCSP() {
   const spreadData = data.map(r => r.spread);
   const stockData = data.map(r => r.stock);
   const hasStock = stockData.some(s => s != null);
+  const yMode = document.getElementById('cspYMode')?.value || 'auto';
+  const yScale = applyYMode({ position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, yMode, [spreadData]);
   if (cspChart) cspChart.destroy();
   cspChart = new Chart(document.getElementById('cspChart'), { data: { labels, datasets: [
     { type:'bar', label:'Cash − 3M', data: spreadData, backgroundColor: spreadData.map(v => v >= 0 ? 'rgba(46,204,113,0.6)' : 'rgba(231,76,60,0.6)'), yAxisID: 'y', order: 2 },
     ...(hasStock ? [{ type:'line', label:'LME Stock', data: stockData, borderColor: '#e8a33d', borderWidth: 1.5, pointRadius: 0, tension: 0.15, yAxisID: 'y1', order: 1 }] : []),
-  ]}, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, ...(hasStock ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 8 } } } } : {}) } } });
+  ]}, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: yScale, ...(hasStock ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 8 } } } } : {}) } } });
 }
 function renderCSP2() {
   const metal = currentCSP2;
@@ -2523,11 +2724,13 @@ function renderCSP2() {
   const stockData = data.map(r => ({ x: r.t, y: r.stock }));
   const hasStock = stockData.some(s => s.y != null);
   const color = CSP_COLORS[metal] || '#d68b4d';
+  const yMode = document.getElementById('csp2YMode')?.value || 'auto';
+  const yScale = applyYMode({ position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, yMode, [cashData.map(p=>p.y)]);
   if (csp2Chart) csp2Chart.destroy();
   csp2Chart = new Chart(document.getElementById('csp2Chart'), { data: { datasets: [
     { type:'line', label: `${metal} Cash`, data: cashData, borderColor: color, backgroundColor: color + '20', borderWidth: 2, pointRadius: 0, tension: 0.15, yAxisID: 'y' },
     ...(hasStock ? [{ type:'line', label: `${metal} Stock`, data: stockData, borderColor: '#e8a33d', borderWidth: 1.5, borderDash: [5, 3], pointRadius: 0, tension: 0.15, yAxisID: 'y1' }] : []),
-  ]}, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, ...(hasStock ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 9 } } } } : {}) } } });
+  ]}, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: yScale, ...(hasStock ? { y1: { position: 'right', grid: { display: false }, ticks: { color: '#5f7593', font: { size: 9 } } } } : {}) } } });
 }
 
 /* ========================================================================
@@ -2611,8 +2814,9 @@ function renderCorrRolling() {
   const cur = series[series.length-1].corr;
   const cls = cur > 0.3 ? 'var(--green)' : cur < -0.3 ? 'var(--red)' : 'var(--accent)';
   document.getElementById('corrCurrent').innerHTML = `ρ = <span style="color:${cls};">${cur.toFixed(3)}</span>`;
+  const corrY = { min: -1, max: 1, grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } };
   if (corrChart) corrChart.destroy();
-  corrChart = new Chart(document.getElementById('corrChart'), { type: 'line', data: { datasets: [{ label: `${a} vs ${b} — ${win}d ρ`, data: series.map(r => ({ x: r.t, y: r.corr })), borderColor: '#e8a33d', backgroundColor: 'rgba(232,163,61,0.1)', borderWidth: 1.8, pointRadius: 0, tension: 0.15, fill: true }]}, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { min: -1, max: 1, grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } } } } });
+  corrChart = new Chart(document.getElementById('corrChart'), { type: 'line', data: { datasets: [{ label: `${a} vs ${b} — ${win}d ρ`, data: series.map(r => ({ x: r.t, y: r.corr })), borderColor: '#e8a33d', backgroundColor: 'rgba(232,163,61,0.1)', borderWidth: 1.8, pointRadius: 0, tension: 0.15, fill: true }]}, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', font: { size: 10 } } } }, scales: { x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: corrY } } });
 }
 function renderCorrMatrix() {
   const tf = document.getElementById('corrTf').value;
@@ -2905,7 +3109,7 @@ async function fetchNewsFeed(feedInfo) {
         const parsed = parseRssXmlText(xmlText, feedInfo);
         if (parsed.length > 0) return parsed;
       }
-    } catch (e) {}
+    } catch (e) { /* silent — CORS/proxy failures are expected */ }
   }
   try {
     const api = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(cleanUrl);
@@ -2929,19 +3133,28 @@ async function fetchNewsFeed(feedInfo) {
 async function loadNews() {
   const stamp = document.getElementById('newsUpdated');
   if (stamp) stamp.textContent = 'fetching live RSS…';
-  const results = await Promise.allSettled(NEWS_FEEDS.map(f => fetchNewsFeed(f)));
-  const all = [];
-  results.forEach((r, i) => { if (r.status === 'fulfilled' && Array.isArray(r.value)) all.push(...r.value); });
-  const seen = new Set();
-  NEWS_ITEMS = all.filter(it => {
-    const key = it.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 50);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-  NEWS_ITEMS.sort((a, b) => (new Date(b.pubDate).getTime() || 0) - (new Date(a.pubDate).getTime() || 0));
-  renderNews();
-  if (stamp) stamp.textContent = `live · ${NEWS_ITEMS.length} items · ` + new Date().toLocaleTimeString();
+  const origError = console.error;
+  const origWarn = console.warn;
+  console.error = (...a) => { if (!/corsproxy|allorigins|codetabs|rss2json|Failed to load resource|Access to fetch|net::ERR/.test(String(a[0]))) origError(...a); };
+  console.warn = (...a) => { if (!/corsproxy|allorigins|codetabs|rss2json/.test(String(a[0]))) origWarn(...a); };
+  try {
+    const results = await Promise.allSettled(NEWS_FEEDS.map(f => fetchNewsFeed(f)));
+    const all = [];
+    results.forEach((r, i) => { if (r.status === 'fulfilled' && Array.isArray(r.value)) all.push(...r.value); });
+    const seen = new Set();
+    NEWS_ITEMS = all.filter(it => {
+      const key = it.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 50);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    NEWS_ITEMS.sort((a, b) => (new Date(b.pubDate).getTime() || 0) - (new Date(a.pubDate).getTime() || 0));
+    renderNews();
+    if (stamp) stamp.textContent = `live · ${NEWS_ITEMS.length} items · ` + new Date().toLocaleTimeString();
+  } finally {
+    console.error = origError;
+    console.warn = origWarn;
+  }
 }
 function renderNews() {
   for (const cat of NEWS_CATEGORIES) {
@@ -3030,6 +3243,21 @@ async function autoLoadFromGitHub(silent = false) {
     document.getElementById('btnCSP').classList.add('loaded');
     cspOk = true;
   } catch (e) { errs.push('lme_csp.csv: ' + e.message); }
+
+  // Pre-fetch LME history so heatmap renders even without opening the LME tab
+  if (!LME_HISTORY.entries.length) {
+    try {
+      const lmeRes = await fetch(LME_URL + '?t=' + Date.now(), { cache: 'no-store' });
+      if (lmeRes.ok) {
+        const data = await lmeRes.json();
+        if (data.entries) {
+          data.entries.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+          LME_HISTORY = data;
+        }
+      }
+    } catch (e) { /* silent */ }
+  }
+
   if (btn && !silent) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh from GitHub'; }
   if (metalsOk || cspOk) { if (!silent) showStatus('ok', 'Loaded from GitHub' + (metalsOk ? ' · metals.csv ✓' : '') + (cspOk ? ' · lme_csp.csv ✓' : ''), errs.length ? errs : null); maybeRender(); }
   else if (!silent) showStatus('err', 'Could not load GitHub CSVs', errs);
@@ -3064,7 +3292,12 @@ function maybeRender() {
     ['nalco card', () => renderNalcoCard()], ['sbi chart', () => renderSbiChart()], ['csp latest', () => renderCSPLatest()],
     ['csp days table', () => renderCSPDaysTable()], ['csp updater', () => wireCspUpdater()], ['lmc chart', () => renderLmcChart()],
     ['price picker', () => populatePricePicker()], ['price chart', () => renderPriceChart()], ['season chart', () => renderSeasonChart()],
-    ['csp card', () => renderCSP()], ['csp2 card', () => renderCSP2()], ['sentiment', () => renderSentiment()],
+    ['csp card', () => renderCSP()], ['csp2 card', () => renderCSP2()],
+    ['pure arb',       () => renderPureArb()],
+    ['pure arb hist',  () => renderArbHistChart()],
+    ['weekly change',  () => renderWeeklyChange()],
+    ['heatmap',        () => renderHeatmap()],
+    ['sentiment', () => renderSentiment()],
     ['trend analysis', () => renderTrendAnalysis()], ['corr dropdowns', () => populateCorrDropdowns()],
     ['series picker', () => populateSeriesPicker()], ['corr chart', () => renderCorrChart()],
   ];
@@ -3080,7 +3313,6 @@ function maybeRender() {
 function wireControls() {
   document.getElementById('priceTf').addEventListener('change', renderPriceChart);
   document.getElementById('priceApplyRange').addEventListener('click', renderPriceChart);
-  document.getElementById('priceLogToggle').addEventListener('change', renderPriceChart);
   document.getElementById('seasonYears').addEventListener('change', renderSeasonChart);
   document.getElementById('seasonMode').addEventListener('change', renderSeasonChart);
   document.getElementById('lmcTf').addEventListener('change', renderLmcChart);
@@ -3132,7 +3364,7 @@ function wireControls() {
   document.getElementById('corrA').addEventListener('change', renderCorrChart);
   document.getElementById('corrB').addEventListener('change', renderCorrChart);
   document.getElementById('corrWindow').addEventListener('change', renderCorrChart);
-  document.getElementById('parityResetBtn')?.addEventListener('click', () => { for (const k of Object.keys(parityEdits)) delete parityEdits[k]; parityEdits.__usdinr = null; parityEdited.clear(); initParityEdits(); scheduleSaveParityOverrides(); renderParity(); });
+  document.getElementById('parityResetBtn')?.addEventListener('click', () => { for (const k of Object.keys(parityEdits)) delete parityEdits[k]; parityEdits.__usdinr = null; parityEdited.clear(); initParityEdits(); scheduleSaveParityOverrides(); renderParity(); renderPureArb(); });
 }
 
 /* ========================================================================
@@ -3163,13 +3395,14 @@ function lmeRender() {
   const g = document.getElementById('lmeMetalsGrid');
   document.getElementById('lmeMetaUpdated').innerHTML = '<span style="color:var(--green);">●</span> Loaded';
   document.getElementById('lmeMetaCounts').textContent = entries.length + ' days';
-  if (!entries.length) { g.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);text-align:center;padding:40px;">No LME data yet.</div>'; document.getElementById('lmeChartsSection').style.display = 'none'; return; }
+  if (!entries.length) { g.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);text-align:center;padding:40px;">No LME data yet.</div>'; document.getElementById('lmeChartsSection').style.display = 'none'; renderHeatmap(); return; }
   const latest = entries[entries.length-1];
   const prev = entries.length > 1 ? entries[entries.length-2] : {};
   g.innerHTML = LME_ORDER.map(k => lmeCardHtml(k, latest, prev)).join('');
   g.querySelectorAll('.lme-sum-card').forEach(card => { card.onclick = () => { LME_ACTIVE = card.dataset.metal; g.querySelectorAll('.lme-sum-card').forEach(c => c.classList.toggle('active', c.dataset.metal === LME_ACTIVE)); lmeRenderCharts(); }; });
   document.getElementById('lmeChartsSection').style.display = 'block';
   lmeRenderCharts();
+  renderHeatmap();
 }
 function lmeRenderCharts() {
   const entries = LME_HISTORY.entries || [];
@@ -4400,8 +4633,11 @@ function rolloverRenderLmeRollChart() {
   if (noteEl) noteEl.textContent = `${rows.length} pts · LME ${rollLmeRollMetal} (Cash − 3M)`;
   const data = rows.map(r => ({ x: r.t, y: r.roll }));
   const color = CSP_COLORS[rollLmeRollMetal] || '#e8a33d';
+  const yMode = document.getElementById('rollLmeYMode')?.value || 'auto';
+  const opts = rolloverRollChartOptions();
+  opts.scales.y = applyYMode(opts.scales.y, yMode, [data.map(p=>p.y)]);
   if (rollLmeRollChart) rollLmeRollChart.destroy();
-  rollLmeRollChart = new Chart(canvas, { type: 'line', data: { datasets: [{ data, borderColor: color, backgroundColor: color + '20', borderWidth: 1.8, pointRadius: 0, pointHoverRadius: 3, tension: 0.15, fill: true }]}, options: rolloverRollChartOptions() });
+  rollLmeRollChart = new Chart(canvas, { type: 'line', data: { datasets: [{ data, borderColor: color, backgroundColor: color + '20', borderWidth: 1.8, pointRadius: 0, pointHoverRadius: 3, tension: 0.15, fill: true }]}, options: opts });
 }
 function rolloverBuildMcxRollSeries(metal) {
   const cols = ROLL_MCX_COLS[metal];
@@ -4425,8 +4661,11 @@ function rolloverRenderMcxRollChart() {
   if (noteEl) noteEl.textContent = `${rows.length} pts · MCX ${rollMcxRollMetal} (Next − Front)`;
   const data = rows.map(r => ({ x: r.t, y: r.roll }));
   const color = CSP_COLORS[rollMcxRollMetal] || '#e8a33d';
+  const yMode = document.getElementById('rollMcxYMode')?.value || 'auto';
+  const opts = rolloverRollChartOptions();
+  opts.scales.y = applyYMode(opts.scales.y, yMode, [data.map(p=>p.y)]);
   if (rollMcxRollChart) rollMcxRollChart.destroy();
-  rollMcxRollChart = new Chart(canvas, { type: 'line', data: { datasets: [{ data, borderColor: color, backgroundColor: color + '20', borderWidth: 1.8, pointRadius: 0, pointHoverRadius: 3, tension: 0.15, fill: true }]}, options: rolloverRollChartOptions() });
+  rollMcxRollChart = new Chart(canvas, { type: 'line', data: { datasets: [{ data, borderColor: color, backgroundColor: color + '20', borderWidth: 1.8, pointRadius: 0, pointHoverRadius: 3, tension: 0.15, fill: true }]}, options: opts });
 }
 function rolloverWire() {
   document.getElementById('reloadBtn')?.addEventListener('click', rolloverLoadAll);
@@ -4447,8 +4686,454 @@ function rolloverWire() {
   document.querySelectorAll('#rollLmeRangeGroup button').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('#rollLmeRangeGroup button').forEach(x => x.classList.remove('active')); b.classList.add('active'); rollLmeRollRange = b.dataset.range; rolloverRenderLmeRollChart(); }));
   document.querySelectorAll('#rollMcxMetalGroup button').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('#rollMcxMetalGroup button').forEach(x => x.classList.remove('active')); b.classList.add('active'); rollMcxRollMetal = b.dataset.metal; rolloverRenderMcxRollChart(); }));
   document.querySelectorAll('#rollMcxRangeGroup button').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('#rollMcxRangeGroup button').forEach(x => x.classList.remove('active')); b.classList.add('active'); rollMcxRollRange = b.dataset.range; rolloverRenderMcxRollChart(); }));
+  document.getElementById('rollLmeYMode')?.addEventListener('change', rolloverRenderLmeRollChart);
+  document.getElementById('rollMcxYMode')?.addEventListener('change', rolloverRenderMcxRollChart);
   ROLL_EDITS = rolloverLoadEdits();
   ROLL_PL_INPUTS = rolloverLoadPlInputs();
+}
+
+/* ========================================================================
+   UNIVERSAL Y-AXIS HELPER
+   ======================================================================== */
+function applyYMode(scaleOpts, mode, dataArrays) {
+  if (mode === 'log') { scaleOpts.type = 'logarithmic'; return scaleOpts; }
+  scaleOpts.type = 'linear';
+  if (mode === 'zero') {
+    const flat = (dataArrays || []).flat().filter(v => v != null && isFinite(v));
+    const absMax = Math.max(...flat.map(Math.abs), 1);
+    scaleOpts.min = -absMax;
+    scaleOpts.max = absMax;
+  }
+  return scaleOpts;
+}
+function wireUniversalY(id, redrawFn) {
+  document.getElementById(id)?.addEventListener('change', redrawFn);
+}
+
+/* ========================================================================
+   PURE MCX-LME ARB — Snapshot cards (uses PARITY model, not CSP cash directly)
+   ======================================================================== */
+const ARB_METALS = [
+  { key:'Cu', name:'Copper',    mcxSeries:'MCX Copper',    cls:'cu', color:'#d68b4d' },
+  { key:'Zn', name:'Zinc',      mcxSeries:'MCX Zinc',      cls:'zn', color:'#5b8fc9' },
+  { key:'Al', name:'Aluminium', mcxSeries:'MCX Aluminium', cls:'al', color:'#93a2b5' },
+];
+function latestSeries(name) {
+  for (let i = RAW.length - 1; i >= 0; i--) { const v = RAW[i].series[name]; if (v != null) return v; }
+  return null;
+}
+function fmtSigned(v, dp = 2) {
+  if (v == null || !isFinite(v)) return '—';
+  return (v >= 0 ? '+' : '') + fmt(v, dp);
+}
+function renderPureArb() {
+  const grid = document.getElementById('arbGrid');
+  const updated = document.getElementById('arbUpdated');
+  if (!grid) return;
+  if (!RAW.length || !parityEdits.__usdinr) {
+    grid.innerHTML = '<div style="grid-column:1/-1;padding:24px;color:var(--muted);text-align:center;">Waiting for parity model + FX…</div>';
+    return;
+  }
+  computeParityDefaults();
+  const fx = parityEdits.__usdinr;
+  let html = '';
+  for (const m of PARITY_METALS) {
+    const e = parityEdits[m.key];
+    if (!e) continue;
+
+    const mcxLiveSym = m.key === 'Cu' ? 'COPPER1!' : m.key === 'Zn' ? 'ZINC1!' : 'ALUMINIUM1!';
+    let mcxPrice = LIVE_LATEST[mcxLiveSym]?.price ?? null;
+    if (mcxPrice == null) mcxPrice = latestSeries(m.mcxSeries);
+
+    const lmeLiveSym = m.key === 'Cu' ? 'COPPER' : m.key === 'Zn' ? 'ZINC' : 'ALUMINIUM';
+    let lme3m = LIVE_LATEST[lmeLiveSym]?.price ?? null;
+    if (lme3m == null && SERIES_NAMES.includes(m.lme3mSeries)) lme3m = latestSeries(m.lme3mSeries);
+
+    const basis = numOrNull(e.basis) ?? 0;
+    const lmeCash = (lme3m != null) ? (lme3m + basis) : null;
+
+    let structCls = 'flat', structTxt = 'FLAT';
+    if (basis > 0.5) { structCls = 'bwd'; structTxt = 'BACKWARDATION'; }
+    else if (basis < -0.5) { structCls = 'ctg'; structTxt = 'CONTANGO'; }
+
+    const mcxUsd = (mcxPrice != null && fx) ? (mcxPrice * 1000) / fx : null;
+    const arb = (mcxUsd != null && lmeCash != null) ? mcxUsd - lmeCash : null;
+    const arbPct = (arb != null && lmeCash) ? (arb / lmeCash) * 100 : null;
+
+    let badgeTxt, badgeCls;
+    if (arb == null) { badgeTxt = '—'; badgeCls = 'na'; }
+    else if (arb > 50) { badgeTxt = 'MCX PREMIUM'; badgeCls = 'pos'; }
+    else if (arb < -50) { badgeTxt = 'MCX DISCOUNT'; badgeCls = 'neg'; }
+    else { badgeTxt = 'NEAR PARITY'; badgeCls = 'na'; }
+    const arbCls = arb == null ? '' : (arb > 0 ? 'pos' : arb < 0 ? 'neg' : '');
+
+    html += `
+      <div class="arb-card ${m.cls}">
+        <div class="head">
+          <span class="name" style="color:${m.color}">${m.name}<span class="arb-chip ${structCls}">${structTxt}</span></span>
+          <span class="badge ${badgeCls}">${badgeTxt}</span>
+        </div>
+        <div class="arb-row"><span class="lbl">LME 3M ($/t)</span><span class="val">$${fmt(lme3m, 2)}</span></div>
+        <div class="arb-row"><span class="lbl">Basis (− Ctg / + Bwd)</span><span class="val">${(basis>=0?'+':'')+fmt(basis,2)}</span></div>
+        <div class="arb-row"><span class="lbl">LME Cash ($/t)</span><span class="val">$${fmt(lmeCash, 2)}</span></div>
+        <div class="arb-row"><span class="lbl">MCX (₹/kg)</span><span class="val">${fmt(mcxPrice, 2)}</span></div>
+        <div class="arb-row"><span class="lbl">USD/INR</span><span class="val">${fmt(fx, 2)}</span></div>
+        <div class="arb-row"><span class="lbl">MCX in USD/t</span><span class="val">$${fmt(mcxUsd, 2)}</span></div>
+        <div class="arb-row result"><span class="lbl">Pure Arb (USD/t)</span><span class="val ${arbCls}">${fmtSigned(arb, 2)}</span></div>
+        <div class="arb-row"><span class="lbl">Pure Arb (% of LME)</span><span class="val ${arbCls}">${arbPct != null ? fmtSigned(arbPct, 2) + '%' : '—'}</span></div>
+      </div>`;
+  }
+  grid.innerHTML = html;
+  if (updated) updated.textContent = 'As of ' + new Date().toLocaleTimeString() + ' · LME Cash = 3M + Basis';
+}
+
+/* ========================================================================
+   PURE ARB — HISTORY CHART
+   ======================================================================== */
+function buildPureArbSeries() {
+  const map = new Map();
+  for (const r of RAW) {
+    const cu = r.series['MCX Copper'];
+    const zn = r.series['MCX Zinc'];
+    const al = r.series['MCX Aluminium'];
+    const fx = r.series['USDINR'];
+    if (fx == null) continue;
+    map.set(r.date, { date: r.date, t: r.t, cu, zn, al, fx });
+  }
+  const cspMap = new Map();
+  for (const c of CSP_RAW) {
+    cspMap.set(c.date, {
+      Cu: c.Cu?.cash ?? null,
+      Zn: c.Zn?.cash ?? null,
+      Al: c.Al?.cash ?? null,
+    });
+  }
+  const cspDates = [...cspMap.keys()].sort();
+  const filledCsp = new Map();
+  let last = { Cu: null, Zn: null, Al: null };
+  for (const d of cspDates) {
+    last = cspMap.get(d);
+    filledCsp.set(d, { ...last });
+  }
+  function cspOnOrBefore(date) {
+    let best = null;
+    for (const d of cspDates) { if (d <= date) best = d; else break; }
+    return best ? filledCsp.get(best) : null;
+  }
+  const out = [];
+  for (const [date, row] of [...map.entries()].sort()) {
+    const csp = cspOnOrBefore(date);
+    if (!csp) continue;
+    const cuUsd = (row.cu != null) ? (row.cu * 1000) / row.fx : null;
+    const znUsd = (row.zn != null) ? (row.zn * 1000) / row.fx : null;
+    const alUsd = (row.al != null) ? (row.al * 1000) / row.fx : null;
+    out.push({
+      t: row.t,
+      date,
+      Cu: (cuUsd != null && csp.Cu != null) ? (cuUsd - csp.Cu) : null,
+      Zn: (znUsd != null && csp.Zn != null) ? (znUsd - csp.Zn) : null,
+      Al: (alUsd != null && csp.Al != null) ? (alUsd - csp.Al) : null,
+    });
+  }
+  return out;
+}
+function resampleArb(series, freq) {
+  if (freq === 'daily' || !series.length) return series;
+  const buckets = new Map();
+  for (const p of series) {
+    const d = new Date(p.t);
+    let key;
+    if (freq === 'weekly') {
+      const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+      const dayNum = date.getUTCDay() || 7;
+      date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+      const wk = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+      key = `${d.getUTCFullYear()}-W${String(wk).padStart(2,'0')}`;
+    } else if (freq === 'monthly') {
+      key = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`;
+    } else {
+      key = p.t;
+    }
+    buckets.set(key, p);
+  }
+  return [...buckets.values()].sort((a,b) => a.t - b.t);
+}
+function renderArbHistChart() {
+  const canvas = document.getElementById('arbHistChart');
+  const rangeLabel = document.getElementById('arbHistRangeLabel');
+  const customWrap = document.getElementById('arbHistCustom');
+  if (!canvas) return;
+  if (!RAW.length || !CSP_RAW.length) return;
+
+  const full = buildPureArbSeries();
+  const tf = document.getElementById('arbHistTf').value;
+
+  let filtered = full;
+  if (tf === 'custom') {
+    customWrap.style.display = 'flex';
+    const from = document.getElementById('arbHistFrom').value;
+    const to = document.getElementById('arbHistTo').value;
+    if (from) filtered = filtered.filter(p => p.date >= from);
+    if (to) filtered = filtered.filter(p => p.date <= to);
+    if (rangeLabel) rangeLabel.textContent = (from || to) ? `${from||'start'} → ${to||'end'}` : '';
+  } else {
+    customWrap.style.display = 'none';
+    if (rangeLabel) rangeLabel.textContent = '';
+    const cutoff = tfCutoff(tf);
+    if (cutoff) filtered = filtered.filter(p => p.t >= cutoff);
+  }
+
+  const resampled = resampleArb(filtered, arbHistFreq);
+  const yMode = document.getElementById('arbHistYAxis').value;
+
+  const datasets = [];
+  const colors = { Cu: '#d68b4d', Zn: '#5b8fc9', Al: '#93a2b5' };
+  const labels = { Cu: 'Copper', Zn: 'Zinc', Al: 'Aluminium' };
+
+  for (const mk of ['Cu', 'Zn', 'Al']) {
+    let data = resampled.map(p => ({ x: p.t, y: p[mk] }));
+    if (yMode === 'absolute') data = data.map(p => ({ x: p.x, y: p.y != null ? Math.abs(p.y) : null }));
+    datasets.push({
+      label: labels[mk],
+      data,
+      borderColor: colors[mk],
+      backgroundColor: colors[mk] + '15',
+      borderWidth: 2,
+      pointRadius: 0,
+      tension: 0.15,
+      fill: false,
+    });
+  }
+
+  if (arbHistChart) arbHistChart.destroy();
+  const yOpts = { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 }, callback: v => (v >= 0 ? '+' : '') + v } };
+  if (yMode === 'zero') {
+    const allVals = datasets.flatMap(d => d.data.map(p => p.y)).filter(v => v != null);
+    const absMax = Math.max(...allVals.map(Math.abs), 1);
+    yOpts.min = -absMax;
+    yOpts.max = absMax;
+  }
+  if (yMode === 'absolute') {
+    yOpts.min = 0;
+  }
+  arbHistChart = new Chart(canvas, {
+    type: 'line',
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          backgroundColor: 'rgba(14,20,32,0.95)',
+          borderColor: '#232d42',
+          borderWidth: 1,
+          titleColor: '#e8a33d',
+          bodyColor: '#e6ecf5',
+          padding: 10,
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y;
+              if (v == null) return `${ctx.dataset.label}: —`;
+              return `${ctx.dataset.label}: ${v >= 0 ? '+' : ''}${v.toFixed(2)} USD/t`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: { type: 'time', grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 10 } } },
+        y: yOpts,
+      },
+    },
+  });
+}
+function wireArbHistControls() {
+  document.getElementById('arbHistTf')?.addEventListener('change', renderArbHistChart);
+  document.getElementById('arbHistApply')?.addEventListener('click', renderArbHistChart);
+  document.getElementById('arbHistYAxis')?.addEventListener('change', renderArbHistChart);
+  document.querySelectorAll('#arbHistFreq button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#arbHistFreq button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      arbHistFreq = b.dataset.arbFreq;
+      renderArbHistChart();
+    });
+  });
+}
+function wireHeatmapControls() {
+  document.querySelectorAll('#heatmapTfGroup button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#heatmapTfGroup button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      HEATMAP_TF = parseInt(b.dataset.hmTf, 10);
+      renderHeatmap();
+    });
+  });
+}
+
+/* ========================================================================
+   WEEKLY CHANGE DASHBOARD
+   ======================================================================== */
+function computeChange(name, horizonDays) {
+  const series = [];
+  for (const r of RAW) { const v = r.series[name]; if (v != null) series.push({ t: r.t, v }); }
+  if (series.length < 2) return null;
+  const last = series[series.length - 1];
+  const target = last.t - horizonDays * 86400000;
+  let ref = null;
+  for (let i = series.length - 1; i >= 0; i--) { if (series[i].t <= target) { ref = series[i]; break; } }
+  if (!ref || ref.v === 0) return null;
+  const chg = last.v - ref.v;
+  return { latest: last.v, chg, pct: (chg / ref.v) * 100 };
+}
+function renderWeeklyChange() {
+  const panel = document.getElementById('wcPanel');
+  const updated = document.getElementById('wcUpdated');
+  if (!panel) return;
+  if (!RAW.length || !SERIES_NAMES.length) {
+    panel.innerHTML = '<div style="color:var(--muted);padding:16px;">Waiting for metals.csv…</div>';
+    return;
+  }
+  const instruments = [
+    { name: 'LME Copper',    label: 'LME Copper',    color: '#d68b4d', venue: 'LME' },
+    { name: 'LME Aluminium', label: 'LME Aluminium', color: '#93a2b5', venue: 'LME' },
+    { name: 'LME Zinc',      label: 'LME Zinc',      color: '#5b8fc9', venue: 'LME' },
+    { name: 'MCX Copper',    label: 'MCX Copper',    color: '#c07c2b', venue: 'MCX' },
+    { name: 'MCX Aluminium', label: 'MCX Aluminium', color: '#c07c2b', venue: 'MCX' },
+    { name: 'MCX Zinc',      label: 'MCX Zinc',      color: '#c07c2b', venue: 'MCX' },
+    { name: 'USDINR',        label: 'USD/INR',       color: '#2ecc71', venue: 'FX' },
+    { name: 'DXY',           label: 'Dollar Index',  color: '#2ecc71', venue: 'FX' },
+    { name: 'US 10Y',        label: 'US 10Y Yield',  color: '#9b59b6', venue: 'YIELD' },
+  ].filter(i => SERIES_NAMES.includes(i.name));
+  const horizons = [
+    { days: 1,   label: '1D' }, { days: 7,   label: '1W' }, { days: 30,  label: '1M' },
+    { days: 90,  label: '3M' }, { days: 180, label: '6M' }, { days: 365, label: '1Y' },
+  ];
+  const fmtPct = v => v == null || !isFinite(v) ? '—' : (v > 0 ? '+' : '') + v.toFixed(2) + '%';
+  const cls = v => v == null ? 'neu' : (v > 0.01 ? 'pos' : v < -0.01 ? 'neg' : 'neu');
+  const ar = v => v == null ? '' : (v > 0.01 ? '\u25B2' : v < -0.01 ? '\u25BC' : '\u2022');
+
+  let html = '<table class="wc-table"><thead><tr><th class="l">Instrument</th><th>Latest</th>';
+  horizons.forEach(h => html += `<th>${h.label}</th>`);
+  html += '</tr></thead><tbody>';
+  for (const inst of instruments) {
+    const prices = [];
+    for (const r of RAW) { const v = r.series[inst.name]; if (v != null) prices.push(v); }
+    const latest = prices.length ? prices[prices.length - 1] : null;
+    html += `<tr><td class="metal-name" style="color:${inst.color}">${inst.label} <span style="color:var(--muted);font-weight:400;font-size:0.65rem;">${inst.venue}</span></td>`;
+    html += `<td style="font-weight:600;color:#fff;">${latest != null ? fmt(latest, 2) : '—'}</td>`;
+    for (const h of horizons) {
+      const c = computeChange(inst.name, h.days);
+      const v = c ? c.pct : null;
+      html += `<td class="${cls(v)}"><span class="chg-cell">${fmtPct(v)}<span class="arrow">${ar(v)}</span></span></td>`;
+    }
+    html += `</tr>`;
+  }
+  html += '</tbody></table>';
+  panel.innerHTML = html;
+  if (updated && RAW.length) updated.textContent = 'As of ' + RAW[RAW.length-1].date;
+}
+
+/* ========================================================================
+   LME CANCELLED RATIO HEATMAP
+   ======================================================================== */
+function lerpColor(a, b, t) {
+  return [ Math.round(a[0] + (b[0]-a[0])*t), Math.round(a[1] + (b[1]-a[1])*t), Math.round(a[2] + (b[2]-a[2])*t) ];
+}
+function ratioColor(ratio) {
+  if (ratio == null) return '#0e1420';
+  const stops = [
+    { pct: 0,   rgb: [22, 32, 47]   },
+    { pct: 15,  rgb: [30, 58, 95]   },
+    { pct: 30,  rgb: [42, 111, 143] },
+    { pct: 50,  rgb: [214, 139, 77] },
+    { pct: 75,  rgb: [231, 76, 60]  },
+    { pct: 100, rgb: [180, 30, 20]  },
+  ];
+  const p = Math.max(0, Math.min(100, ratio));
+  let lo = stops[0], hi = stops[stops.length-1];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (p >= stops[i].pct && p <= stops[i+1].pct) { lo = stops[i]; hi = stops[i+1]; break; }
+  }
+  const range = hi.pct - lo.pct || 1;
+  const t = (p - lo.pct) / range;
+  const [r, g, b] = lerpColor(lo.rgb, hi.rgb, t);
+  return `rgb(${r},${g},${b})`;
+}
+function textColorOn(bg) {
+  const m = bg.match(/(\d+),\s*(\d+),\s*(\d+)/);
+  if (!m) return '#fff';
+  const [r, g, b] = [+m[1], +m[2], +m[3]];
+  const lum = 0.299*r + 0.587*g + 0.114*b;
+  return lum > 140 ? '#0e1420' : '#ffffff';
+}
+function renderHeatmap() {
+  const panel = document.getElementById('heatmapPanel');
+  const updated = document.getElementById('heatmapUpdated');
+  if (!panel) return;
+  const entries = (LME_HISTORY.entries || []).slice();
+  if (!entries.length) {
+    panel.innerHTML = '<div style="padding:20px;color:var(--muted);text-align:center;">No LME history yet.</div>';
+    return;
+  }
+  const recent = entries.slice(-HEATMAP_TF);
+  const metals = ['copper', 'aluminium', 'zinc', 'lead', 'nickel', 'tin'];
+  const grid = {};
+  for (const mk of metals) {
+    grid[mk] = recent.map(e => {
+      const m = e[mk];
+      if (!m || m.live == null || m.cancelled == null) return null;
+      const total = m.live + m.cancelled;
+      if (total === 0) return null;
+      return (m.cancelled / total) * 100;
+    });
+  }
+  const showEvery = recent.length > 60 ? 10 : recent.length > 30 ? 5 : 3;
+  let html = '<div class="heatmap-wrap"><div class="heatmap">';
+  for (const mk of metals) {
+    const meta = LME_METAL_META[mk];
+    html += '<div class="heatmap-row">';
+    html += `<div class="heatmap-label" style="color:${meta.color}">${meta.label}</div>`;
+    recent.forEach((e, i) => {
+      const ratio = grid[mk][i];
+      const bg = ratioColor(ratio);
+      const fg = textColorOn(bg);
+      const val = ratio == null ? '' : ratio.toFixed(0);
+      const title = `${meta.label} · ${e.date} · ${ratio == null ? '—' : ratio.toFixed(2) + '%'}`;
+      html += `<div class="heatmap-cell" style="background:${bg};color:${fg};" title="${title}">${val}</div>`;
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+  html += '<div class="heatmap-col-labels">';
+  recent.forEach((e, i) => {
+    const show = (i % showEvery === 0) || (i === recent.length - 1);
+    html += `<span>${show ? e.date.slice(5) : ''}</span>`;
+  });
+  html += '</div>';
+  html += '<div class="heatmap-legend"><span>0%</span><span class="grad"></span><span>100%</span>';
+  html += '<span style="margin-left:14px;">Cancelled warrants as % of total</span></div>';
+  html += '<div class="heatmap-summary">';
+  for (const mk of metals) {
+    const meta = LME_METAL_META[mk];
+    const arr = grid[mk].filter(v => v != null);
+    if (!arr.length) continue;
+    const latest = arr[arr.length - 1];
+    const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
+    const delta = latest - avg;
+    const col = delta > 5 ? 'var(--red)' : delta < -5 ? 'var(--green)' : 'var(--muted)';
+    html += `<div class="item"><span class="dot" style="background:${meta.color};"></span>`;
+    html += `<span style="color:var(--muted);">${meta.label}:</span>`;
+    html += `<strong style="color:#fff;">${latest.toFixed(1)}%</strong>`;
+    html += `<span style="color:${col};">(${delta >= 0 ? '+' : ''}${delta.toFixed(1)} vs avg)</span></div>`;
+  }
+  html += '</div></div>';
+  panel.innerHTML = html;
+  if (updated) updated.textContent = `${recent.length}d · ${recent[0].date} → ${recent[recent.length-1].date}`;
 }
 
 /* ========================================================================
@@ -4582,7 +5267,6 @@ async function generateInstitutionalPdfReport() {
     const todayIso = now.toISOString().slice(0, 10);
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-    /* ---------- DARK THEME ---------- */
     const cNavy    = [8, 12, 22];
     const cCard    = [22, 29, 43];
     const cCard2   = [28, 37, 54];
@@ -4609,7 +5293,6 @@ async function generateInstitutionalPdfReport() {
     const cspDateStr = CSP_RAW.length ? CSP_RAW[CSP_RAW.length - 1].date : '-';
     const shfeDateStr = SHFE_HISTORY.length ? SHFE_HISTORY[SHFE_HISTORY.length - 1].date : '-';
 
-    /* ---------- HEADERS / FOOTER ---------- */
     const drawBigHeader = (pageTitleSuffix) => {
       doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
       doc.rect(0, 0, pageW, 20, 'F');
@@ -4669,9 +5352,6 @@ async function generateInstitutionalPdfReport() {
       doc.text(`Page ${pageNum} of ${totalPages}`, pageW - 10, pageH - 3.5, { align: 'right' });
     };
 
-    /* =============================================================
-       PAGE 1 — PER-METAL TABLE + LATEST CSP + NALCO
-       ============================================================= */
     drawBigHeader('PAGE 1  |  PER-METAL DESK SNAPSHOT');
     let y = 24;
 
@@ -4902,9 +5582,6 @@ async function generateInstitutionalPdfReport() {
       }),
       { bold: true, fs: 8.8 });
 
-    /* =============================================================
-       LATEST CSP — 3 metal cards
-       ============================================================= */
     y += 3;
 
     doc.setFillColor(cCard[0], cCard[1], cCard[2]);
@@ -5023,9 +5700,6 @@ async function generateInstitutionalPdfReport() {
 
     y += cspBoxH + 3;
 
-    /* =============================================================
-       NALCO BAND
-       ============================================================= */
     if (y + 24 < pageH - 8) {
       const boxH = 24;
       const boxW = pageW - 20;
@@ -5094,9 +5768,6 @@ async function generateInstitutionalPdfReport() {
     doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
     doc.text(`Generated ${todayIso} ${timeStr} · Sources: LME · SHFE · CFTC · MCX · SBI FX · NALCO`, 10, pageH - 4);
 
-    /* =============================================================
-       PAGE 2 — COT CHARTS + INFO CARDS (equal 2-column grid)
-       ============================================================= */
     doc.addPage('a4', 'landscape');
     drawCompactHeader('PAGE 2  |  LME COT POSITIONING & DESK INFO');
     const yp2 = 14;
@@ -5125,7 +5796,6 @@ async function generateInstitutionalPdfReport() {
       { title: 'LME ALUMINIUM — Investment Funds Net Position', img: chartImgs.cotLmeAl, rgb: [147, 162, 181] }
     ];
 
-    /* Right column: info cards */
     for (let i = 0; i < 3; i++) {
       const cd = cotCardData[i];
       const st = lmeCotrStats(cd.key);
@@ -5202,7 +5872,6 @@ async function generateInstitutionalPdfReport() {
       }
     }
 
-    /* Left column: charts */
     for (let i = 0; i < 3; i++) {
       const cd = chartData[i];
       const cx = leftX;
@@ -5244,14 +5913,11 @@ async function generateInstitutionalPdfReport() {
         doc.text('Chart data unavailable', cx + colW / 2, imgY + imgH / 2, { align: 'center' });
       }
     }
-        /* =============================================================
-       PAGE 3 — SHFE INVENTORY + TECHNICAL SIGNALS
-       ============================================================= */
+
     doc.addPage('a4', 'landscape');
     drawBigHeader('PAGE 3  |  SHFE INVENTORY & TECHNICAL SIGNALS');
     let y3 = 24;
 
-    /* ---------- Fetch SHFE live if cache is empty ---------- */
     let SHFE_WAREHOUSE_CACHE = (typeof window !== 'undefined' && window.__SHFE_LAST_INVENTORY) ? window.__SHFE_LAST_INVENTORY : null;
     if (!SHFE_WAREHOUSE_CACHE) {
       try {
@@ -5270,7 +5936,6 @@ async function generateInstitutionalPdfReport() {
       } catch (e) { console.warn('SHFE fetch from PDF failed:', e); }
     }
 
-    /* ---------- SECTION 1: SHFE SUMMARY STRIP ---------- */
     doc.setFillColor(cCard[0], cCard[1], cCard[2]);
     doc.rect(10, y3, pageW - 20, 6, 'F');
     doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
@@ -5295,7 +5960,6 @@ async function generateInstitutionalPdfReport() {
       { key: 'zinc',      label: 'Zinc (Zn)',      rgb: [91, 143, 201] },
     ];
 
-    /* ---- Compact summary strip (18mm) ---- */
     const sumBoxH = 18;
     const sumGap = 3;
     const sumColW = (pageW - 20 - sumGap * 2) / 3;
@@ -5357,8 +6021,7 @@ async function generateInstitutionalPdfReport() {
 
     y3 += sumBoxH + 3;
 
-    /* ---- Warehouse detail — smaller box so trend table fits on same page ---- */
-    const wsDetailH = 55;                     // was 78, reduced to fit trend table
+    const wsDetailH = 55;
     const wsColGap = 3;
     const wsColW = (pageW - 20 - wsColGap * 2) / 3;
 
@@ -5447,7 +6110,6 @@ async function generateInstitutionalPdfReport() {
 
     y3 += wsDetailH + 3;
 
-    /* ---------- SECTION 2: TECHNICAL SIGNALS ---------- */
     doc.setFillColor(cCard[0], cCard[1], cCard[2]);
     doc.rect(10, y3, pageW - 20, 6, 'F');
     doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
@@ -5539,6 +6201,7 @@ async function generateInstitutionalPdfReport() {
     if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
   }
 }
+
 /* ========================================================================
    INIT
    ======================================================================== */
@@ -5566,6 +6229,18 @@ function init() {
   wirePositioningTab();
   setInterval(fetchCftcCot, 6 * 60 * 60 * 1000);
   rolloverWire();
+
+  // Universal X/Y control wiring
+  wireHeatmapControls();
+  wireArbHistControls();
+  wireUniversalY('sbiYMode', renderSbiChart);
+  wireUniversalY('lmcYMode', renderLmcChart);
+  wireUniversalY('priceYMode', renderPriceChart);
+  wireUniversalY('cspYMode', renderCSP);
+  wireUniversalY('csp2YMode', renderCSP2);
+  wireUniversalY('corrYMode', renderCorrChart);
+  wireUniversalY('rollLmeYMode', rolloverRenderLmeRollChart);
+  wireUniversalY('rollMcxYMode', rolloverRenderMcxRollChart);
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
 else init();
