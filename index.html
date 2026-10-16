@@ -4575,11 +4575,13 @@ async function generateInstitutionalPdfReport() {
     if (!jsPDF) throw new Error('jsPDF library not loaded');
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     if (typeof doc.autoTable !== 'function') throw new Error('jsPDF-AutoTable plugin not loaded');
+
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
     const now = new Date();
     const todayIso = now.toISOString().slice(0, 10);
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
     const cNavy  = [14, 20, 32];
     const cSlate = [22, 29, 43];
     const cAmber = [232, 163, 61];
@@ -4587,8 +4589,12 @@ async function generateInstitutionalPdfReport() {
     const cRed   = [214, 48, 49];
     const cText  = [30, 35, 45];
     const cMuted = [110, 118, 135];
+    const cWhite = [255, 255, 255];
+    const cLine  = [215, 222, 232];
+
     const fNum = (v, dp = 2) => (v == null || !isFinite(v)) ? '-' : Number(v).toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
     const fSgn = (v, dp = 2) => (v == null || !isFinite(v)) ? '-' : (v >= 0 ? '+' : '') + fNum(v, dp);
+
     const usdinrSpot = LIVE_LATEST['USDINR']?.price ?? ROLL_SPOT_USDINR ?? latest['USDINR']?.value ?? null;
     const sbiTt = parityEdits.__usdinr ?? (SBI_RAW.length ? SBI_RAW[SBI_RAW.length - 1].value : null);
     const dxyVal = LIVE_LATEST['DXY']?.price ?? latest['Dollar Index']?.value ?? null;
@@ -4598,388 +4604,387 @@ async function generateInstitutionalPdfReport() {
     const curve2s10s = (us10y != null && us02y != null) ? ((us10y - us02y) * 100).toFixed(0) + ' bps' : '-';
     const cspDateStr = CSP_RAW.length ? CSP_RAW[CSP_RAW.length - 1].date : '-';
     const shfeDateStr = SHFE_HISTORY.length ? SHFE_HISTORY[SHFE_HISTORY.length - 1].date : '-';
+
     const drawPageHeader = (pageTitleSuffix) => {
       doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
-      doc.rect(0, 0, pageW, 22, 'F');
+      doc.rect(0, 0, pageW, 20, 'F');
       doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
-      doc.rect(0, 22, pageW, 1.2, 'F');
+      doc.rect(0, 20, pageW, 1.0, 'F');
+
       doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(13.5);
-      doc.text('NON-FERROUS METALS RISK & HEDGING DESK', 10, 8.5);
+      doc.setFontSize(12);
+      doc.text('NON-FERROUS METALS RISK & HEDGING DESK', 10, 7.5);
+
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.2);
+      doc.setFontSize(7.4);
       doc.setTextColor(215, 225, 238);
-      doc.text(pdfClean(`Run: ${todayIso} ${timeStr} IST   |   LME CSP: ${cspDateStr}   |   SHFE Warrant: ${shfeDateStr}`), pageW - 10, 8.5, { align: 'right' });
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9.2);
-      doc.setTextColor(190, 204, 222);
-      doc.text(pdfClean(pageTitleSuffix), 10, 16.5);
+      doc.text(pdfClean(`Run: ${todayIso} ${timeStr} IST   |   LME CSP: ${cspDateStr}   |   SHFE: ${shfeDateStr}`), pageW - 10, 7.5, { align: 'right' });
+
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8.2);
+      doc.setFontSize(8.6);
+      doc.setTextColor(230, 240, 250);
+      doc.text(pdfClean(pageTitleSuffix), 10, 14.5);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.4);
       doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
-      doc.text(pdfClean(`USD/INR Spot: ${fNum(usdinrSpot, 2)}  |  SBI TT: ${fNum(sbiTt, 2)}  |  DXY: ${fNum(dxyVal, 2)}  |  US 2Y/10Y: ${fNum(us02y, 2)}% / ${fNum(us10y, 2)}% (${curve2s10s})  |  Gold: $${fNum(goldSpot, 1)}`), pageW - 10, 16.5, { align: 'right' });
+      doc.text(pdfClean(`USD/INR ${fNum(usdinrSpot, 2)}  |  SBI TT ${fNum(sbiTt, 2)}  |  DXY ${fNum(dxyVal, 2)}  |  US 2Y/10Y ${fNum(us02y, 2)}% / ${fNum(us10y, 2)}% (${curve2s10s})  |  Gold $${fNum(goldSpot, 1)}`), pageW - 10, 14.5, { align: 'right' });
     };
-    const drawSectionHeader = (title, subtitle, yPos) => {
-      const h = 6.2;
-      doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
-      doc.rect(10, yPos, pageW - 20, h, 'F');
-      doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
-      doc.rect(10, yPos, 2.2, h, 'F');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9.2);
-      doc.setTextColor(255, 255, 255);
-      doc.text(pdfClean(title), 14, yPos + 4.3);
-      if (subtitle) {
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7.6);
-        doc.setTextColor(180, 192, 210);
-        doc.text(pdfClean(subtitle), pageW - 12, yPos + 4.3, { align: 'right' });
-      }
-      return yPos + h + 1.5;
-    };
+
     const drawPageFooter = (pageNum, totalPages) => {
-      doc.setDrawColor(200, 208, 220);
-      doc.line(10, pageH - 8, pageW - 10, pageH - 8);
+      doc.setDrawColor(cLine[0], cLine[1], cLine[2]);
+      doc.line(10, pageH - 7, pageW - 10, pageH - 7);
       doc.setFont('helvetica', 'italic');
-      doc.setFontSize(7.5);
+      doc.setFontSize(6.5);
       doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
-      doc.text('CONFIDENTIAL | Non-Ferrous Metals Trading & Risk Management Desk | Sources: LME, MCX, SHFE, CFTC, SBI FX, NALCO', 10, pageH - 4);
-      doc.text(`Page ${pageNum} of ${totalPages}`, pageW - 10, pageH - 4, { align: 'right' });
+      doc.text('CONFIDENTIAL | Non-Ferrous Metals Trading & Risk Management Desk | Sources: LME, MCX, SHFE, CFTC, SBI FX, NALCO', 10, pageH - 3.5);
+      doc.text(`Page ${pageNum} of ${totalPages}`, pageW - 10, pageH - 3.5, { align: 'right' });
     };
-    const drawChartCard = (title, imgData, x, y, w, h) => {
-      doc.setFillColor(22, 29, 43);
-      doc.setDrawColor(45, 58, 82);
-      doc.rect(x, y, w, h, 'FD');
-      doc.setFillColor(14, 20, 32);
-      doc.rect(x, y, w, 6.2, 'F');
+
+    /* =============================================================
+       PAGE 1 — PER-METAL VALUE TABLE (3 metal columns) + NALCO band
+       ============================================================= */
+    drawPageHeader('PAGE 1  |  PER-METAL DESK SNAPSHOT');
+    let y = 24;
+
+    /* Compute per-metal values */
+    const lmeEntries = LME_HISTORY.entries || [];
+    const lmeLast = lmeEntries.length ? lmeEntries[lmeEntries.length - 1] : {};
+    const lmePrev = lmeEntries.length > 1 ? lmeEntries[lmeEntries.length - 2] : {};
+    const cspLast = CSP_RAW.length ? CSP_RAW[CSP_RAW.length - 1] : null;
+    const cspPrev = CSP_RAW.length > 1 ? CSP_RAW[CSP_RAW.length - 2] : null;
+    const shfeLast = SHFE_HISTORY.length ? SHFE_HISTORY[SHFE_HISTORY.length - 1] : { metals: {} };
+    const shfePrev = SHFE_HISTORY.length > 1 ? SHFE_HISTORY[SHFE_HISTORY.length - 2] : { metals: {} };
+    const cftcSt = cftcStats();
+    const lmeKeyByCsp = { Cu: 'copper', Zn: 'zinc', Al: 'aluminium' };
+
+    const d = {};
+    for (const m of PARITY_METALS) {
+      const key = m.key;
+      const lmeKey = lmeKeyByCsp[key];
+      const parity = parityCalc(m);
+      const e = parityEdits[key] || {};
+
+      const lmeStockCur  = lmeLast[lmeKey]?.total ?? (cspLast ? cspLast[key]?.stock : null) ?? null;
+      const lmeStockPrev = lmePrev[lmeKey]?.total ?? (cspPrev ? cspPrev[key]?.stock : null) ?? null;
+      const lmeStockChg  = (lmeStockCur != null && lmeStockPrev != null) ? lmeStockCur - lmeStockPrev : null;
+
+      const shfeCur  = shfeLast.metals?.[lmeKey]?.qty ?? null;
+      const shfePrevQ = shfePrev.metals?.[lmeKey]?.qty ?? null;
+      const shfeChg  = (shfeCur != null && shfePrevQ != null) ? shfeCur - shfePrevQ : null;
+
+      const lmeRoll = rolloverGetEffectiveLmeRoll(key);
+      const mcxDef = rolloverMcxDefaults(key);
+
+      const lmeCotrStat = lmeCotrStats(lmeKey);
+      const isCu = key === 'Cu';
+      const comexNet = isCu && cftcSt ? cftcSt.last.ncNet : null;
+
+      d[key] = {
+        parity, e,
+        lmeStockChg,
+        shfeChg,
+        lmeRoll,
+        mcxRoll: mcxDef.roll,
+        lmeCotrStat, comexNet
+      };
+    }
+
+    /* Table geometry */
+    const labelColW = 62;
+    const valueColW = (pageW - 20 - labelColW) / 3;
+    const rowH = 6.4;
+    const sectionH = 6;
+
+    const drawHeaderRow = (yy) => {
+      doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
+      doc.rect(10, yy, pageW - 20, 8, 'F');
+      doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
+      doc.rect(10, yy, 2, 8, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(cWhite[0], cWhite[1], cWhite[2]);
+      doc.text('METRIC', 15, yy + 5.3);
+      const headers = [
+        { label: 'COPPER (Cu)',     rgb: [214, 139, 77] },
+        { label: 'ZINC (Zn)',       rgb: [91, 143, 201] },
+        { label: 'ALUMINIUM (Al)',  rgb: [147, 162, 181] },
+      ];
+      headers.forEach((h, i) => {
+        const xLeft = 10 + labelColW + i * valueColW;
+        doc.setFillColor(h.rgb[0], h.rgb[1], h.rgb[2]);
+        doc.rect(xLeft, yy, valueColW, 8, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+        doc.setTextColor(cWhite[0], cWhite[1], cWhite[2]);
+        doc.text(h.label, xLeft + valueColW / 2, yy + 5.3, { align: 'center' });
+      });
+      return yy + 8;
+    };
+
+    const drawSectionBar = (yy, title) => {
+      doc.setFillColor(240, 244, 250);
+      doc.rect(10, yy, pageW - 20, sectionH, 'F');
+      doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
+      doc.rect(10, yy, 2, sectionH, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8.5);
-      doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
-      doc.text(pdfClean(title), x + 3, y + 4.3);
-      if (imgData) {
-        doc.addImage(imgData, 'PNG', x + 1.5, y + 7.0, w - 3, h - 8.5);
+      doc.setTextColor(cSlate[0], cSlate[1], cSlate[2]);
+      doc.text(pdfClean(title), 15, yy + 4.3);
+      return yy + sectionH;
+    };
+
+    const drawRow = (yy, label, values, opts = {}) => {
+      const h = opts.h || rowH;
+      doc.setFont('helvetica', opts.bold ? 'bold' : 'normal');
+      doc.setFontSize(7.8);
+      doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
+      doc.text(pdfClean(label), 15, yy + h * 0.68);
+
+      values.forEach((v, i) => {
+        const xLeft = 10 + labelColW + i * valueColW;
+        if (i % 2 === 0) {
+          doc.setFillColor(252, 253, 255);
+          doc.rect(xLeft, yy, valueColW, h, 'F');
+        }
+        const txt = v == null ? '-' : (typeof v === 'object' ? v.text : String(v));
+        const col = (typeof v === 'object' && v.color) ? v.color : (opts.color || cText);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(opts.fs || 8.4);
+        doc.setTextColor(col[0], col[1], col[2]);
+        doc.text(pdfClean(txt), xLeft + valueColW / 2, yy + h * 0.68, { align: 'center' });
+      });
+
+      doc.setDrawColor(cLine[0], cLine[1], cLine[2]);
+      doc.setLineWidth(0.1);
+      doc.line(10, yy + h, pageW - 10, yy + h);
+      return yy + h;
+    };
+
+    const cPos = cGreen;
+    const cNeg = cRed;
+    const cNeu = cText;
+    const signColor = v => v == null ? cNeu : (v > 0 ? cPos : v < 0 ? cNeg : cNeu);
+
+    /* ----- TABLE ----- */
+    y = drawHeaderRow(y);
+
+    /* 1. DAY CHANGE */
+    y = drawSectionBar(y, '1. DAY CHANGE');
+    y = drawRow(y, 'LME Stock Chg (t)',
+      ['Cu','Zn','Al'].map(k => d[k].lmeStockChg == null ? null : { text: fSgn(d[k].lmeStockChg, 0), color: signColor(d[k].lmeStockChg) }));
+    y = drawRow(y, 'SHFE Stock Chg (t)',
+      ['Cu','Zn','Al'].map(k => d[k].shfeChg == null ? null : { text: fSgn(d[k].shfeChg, 0), color: signColor(d[k].shfeChg) }));
+    y = drawRow(y, 'COMEX Net Spec Chg (lots)',
+      ['Cu','Zn','Al'].map(k => d[k].comexNet == null ? 'n/a' :
+        (cftcSt ? { text: fSgn(cftcSt.deltaNc, 0), color: signColor(cftcSt.deltaNc) } : null)));
+
+    /* 2. IMPORT PARITY — ONLY NET */
+    y = drawSectionBar(y, '2. IMPORT PARITY (Rs/kg)');
+    y = drawRow(y, 'Landed (Rs/kg)',
+      ['Cu','Zn','Al'].map(k => d[k].parity.landedKg == null ? null : fNum(d[k].parity.landedKg, 2)));
+    y = drawRow(y, 'MCX (Rs/kg)',
+      ['Cu','Zn','Al'].map(k => d[k].e.mcx == null ? null : fNum(d[k].e.mcx, 2)));
+    y = drawRow(y, 'NET DIFF (Landed − MCX) (Rs/kg)',
+      ['Cu','Zn','Al'].map(k => {
+        const n = d[k].parity.net;
+        if (n == null) return null;
+        return { text: fSgn(n, 2), color: n < 0 ? cPos : cNeg };
+      }),
+      { bold: true, fs: 9.2, h: 7 });
+
+    /* 3. NET POSITIONING — ONLY NET + SIGNAL */
+    y = drawSectionBar(y, '3. NET POSITIONING');
+    y = drawRow(y, 'LME Funds Net (lots)',
+      ['Cu','Zn','Al'].map(k => {
+        const s = d[k].lmeCotrStat;
+        if (!s) return null;
+        return { text: fSgn(s.cur.fundNet, 0), color: signColor(s.cur.fundNet) };
+      }),
+      { bold: true, fs: 9 });
+    y = drawRow(y, 'Signal',
+      ['Cu','Zn','Al'].map(k => {
+        const s = d[k].lmeCotrStat;
+        if (!s) return null;
+        const col = s.signalCls === 'bwd' ? cGreen : s.signalCls === 'ctg' ? cRed : cMuted;
+        return { text: s.signal, color: col };
+      }),
+      { bold: true, fs: 9 });
+    y = drawRow(y, 'COMEX Net (lots)',
+      ['Cu','Zn','Al'].map(k => d[k].comexNet == null ? 'n/a' : { text: fSgn(d[k].comexNet, 0), color: signColor(d[k].comexNet) }));
+
+    /* 4. ROLLOVER — VALUE + STRUCTURE */
+    y = drawSectionBar(y, '4. ROLLOVER');
+    y = drawRow(y, 'LME Cash–3M Roll ($/t)',
+      ['Cu','Zn','Al'].map(k => d[k].lmeRoll == null ? null : { text: fSgn(d[k].lmeRoll, 2), color: signColor(d[k].lmeRoll) }),
+      { bold: true, fs: 9 });
+    y = drawRow(y, 'LME Structure',
+      ['Cu','Zn','Al'].map(k => {
+        if (d[k].lmeRoll == null) return null;
+        const st = rolloverLmeStructureInfo(d[k].lmeRoll);
+        const col = st.cls === 'bwd' ? cGreen : st.cls === 'ctg' ? cRed : cMuted;
+        return { text: st.txt, color: col };
+      }),
+      { bold: true, fs: 8.8 });
+    y = drawRow(y, 'MCX 1M Roll (Rs/kg)',
+      ['Cu','Zn','Al'].map(k => d[k].mcxRoll == null ? null : { text: fSgn(d[k].mcxRoll, 2), color: signColor(d[k].mcxRoll) }),
+      { bold: true, fs: 9 });
+    y = drawRow(y, 'MCX Structure',
+      ['Cu','Zn','Al'].map(k => {
+        if (d[k].mcxRoll == null) return null;
+        const st = rolloverMcxStructureInfo(d[k].mcxRoll);
+        const col = st.cls === 'bwd' ? cGreen : st.cls === 'ctg' ? cRed : cMuted;
+        return { text: st.txt, color: col };
+      }),
+      { bold: true, fs: 8.8 });
+
+    /* =============================================================
+       NALCO — Separate band below the table
+       ============================================================= */
+    y += 3;
+
+    if (y + 24 < pageH - 8) {
+      // NALCO box
+      const boxH = 22;
+      const boxW = pageW - 20;
+      const boxX = 10;
+
+      doc.setDrawColor(cAmber[0], cAmber[1], cAmber[2]);
+      doc.setLineWidth(0.25);
+      doc.setFillColor(255, 250, 235);
+      doc.rect(boxX, y, boxW, boxH, 'FD');
+
+      // Title strip
+      doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
+      doc.rect(boxX, y, boxW, 6.5, 'F');
+      doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
+      doc.rect(boxX, y, 2, 6.5, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(cWhite[0], cWhite[1], cWhite[2]);
+      doc.text('NALCO ALUMINIUM — REVISION WATCH & ROLLING 3-DAY SIGNAL', boxX + 5, y + 4.4);
+
+      // Body — 4 columns of info
+      let ny = y + 8.5;
+      const colW2 = boxW / 4;
+
+      const drawNalcoField = (cx, cy, lbl, val, col) => {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.6);
+        doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
+        doc.text(pdfClean(lbl), cx, cy);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.6);
+        doc.setTextColor(...(col || cText));
+        doc.text(pdfClean(val), cx, cy + 4.4);
+      };
+
+      if (NALCO_RAW.length) {
+        const nLast = NALCO_RAW[0];
+        const nRef = getPrevLmeCashBefore(nLast.effDate);
+        const nSig = computeNalcoSignal(nRef, countAllCspDaysAfter(nLast.effDate));
+
+        const dirTxt = (nLast.direction || '').toUpperCase();
+        const dirColor = nLast.direction === 'increase' ? cGreen : cRed;
+        const sigColor = nSig.status === 'up' ? cGreen : nSig.status === 'down' ? cRed : nSig.status === 'hold' ? cAmber : cMuted;
+
+        drawNalcoField(boxX + 5,               ny, 'EFFECTIVE DATE', nLast.effDate);
+        drawNalcoField(boxX + 5 + colW2,       ny, 'DIRECTION & MAGNITUDE',
+          `${dirTxt}  Rs.${fNum(nLast.magnitude, 0)}/MT`, dirColor);
+        drawNalcoField(boxX + 5 + colW2 * 2,   ny, 'PREV-DAY LME CASH (REF)',
+          nRef != null ? `$${fNum(nRef, 2)}/t` : '-');
+        drawNalcoField(boxX + 5 + colW2 * 3,   ny, '3-DAY ROLLING SIGNAL',
+          nSig.status.toUpperCase(), sigColor);
+
+        // signal detail line
+        ny += 10.5;
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(7.6);
+        doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
+        doc.text(pdfClean(nSig.detail), boxX + 5, ny);
       } else {
         doc.setFont('helvetica', 'italic');
-        doc.setFontSize(8.5);
+        doc.setFontSize(8);
         doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
-        doc.text('Chart data unavailable', x + w / 2, y + h / 2, { align: 'center' });
+        doc.text('NALCO data pending fetch.', boxX + 5, ny + 4);
+      }
+
+      y += boxH + 2;
+    }
+
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(6.5);
+    doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
+    doc.text(`Generated ${todayIso} ${timeStr} · Sources: LME · SHFE · CFTC · MCX · SBI FX · NALCO`, 10, pageH - 4);
+
+    /* =============================================================
+       PAGE 2 — 3 CHARTS
+       ============================================================= */
+    doc.addPage('a4', 'landscape');
+    drawPageHeader('PAGE 2  |  CHARTS — INVENTORY, ARBITRAGE & CURVE SPREAD');
+    let yc = 24;
+
+    const chartPanelH = pageH - yc - 12;
+    const chartGap = 4;
+    const chartW = (pageW - 20 - chartGap * 2) / 3;
+
+    const drawChartPanel = (title, sub, img, x, yy, w, h) => {
+      doc.setDrawColor(cLine[0], cLine[1], cLine[2]);
+      doc.setLineWidth(0.15);
+      doc.setFillColor(252, 253, 255);
+      doc.rect(x, yy, w, h, 'FD');
+
+      doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
+      doc.rect(x, yy, w, 7, 'F');
+      doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
+      doc.rect(x, yy, 2, 7, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(cWhite[0], cWhite[1], cWhite[2]);
+      doc.text(pdfClean(title), x + 4, yy + 4.8);
+
+      if (sub) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
+        doc.text(pdfClean(sub), x + 4, yy + 11);
+      }
+
+      const imgY = yy + 13;
+      const imgH = h - 15;
+      if (img) {
+        try { doc.addImage(img, 'PNG', x + 2, imgY, w - 4, imgH); }
+        catch (e) {
+          doc.setFont('helvetica', 'italic'); doc.setFontSize(8.5);
+          doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
+          doc.text('Chart render error', x + w / 2, imgY + imgH / 2, { align: 'center' });
+        }
+      } else {
+        doc.setFont('helvetica', 'italic'); doc.setFontSize(8.5);
+        doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
+        doc.text('Chart data unavailable', x + w / 2, imgY + imgH / 2, { align: 'center' });
       }
     };
-    drawPageHeader('PAGE 1  |  EXECUTIVE BRIEFING, IMPORT PARITY WATERFALL & ROLLOVER MONITOR');
-    let y = 26.5;
-    y = drawSectionHeader('1. EXECUTIVE DESK BRIEFING', 'Auto-synthesized from live curve, parity, inventory & producer models', y);
-    const cuParity = parityCalc(PARITY_METALS[0]);
-    const znParity = parityCalc(PARITY_METALS[1]);
-    const alParity = parityCalc(PARITY_METALS[2]);
-    const lmeExp = rolloverNextLme3MExpiry();
-    const mcxExp = rolloverNextMcxExpiry();
-    const lmeDays = rolloverDaysUntil(lmeExp);
-    const mcxDays = rolloverDaysUntil(mcxExp);
-    let nalcoSummary = 'NALCO data pending fetch.';
-    if (NALCO_RAW.length) {
-      const nLast = NALCO_RAW[0];
-      const nRef = getPrevLmeCashBefore(nLast.effDate);
-      const nSig = computeNalcoSignal(nRef, countAllCspDaysAfter(nLast.effDate));
-      const dirWord = nLast.direction === 'increase' ? 'HIKED' : 'CUT';
-      nalcoSummary = `Latest NALCO revision w.e.f. ${nLast.effDate} (${dirWord} Rs.${fNum(nLast.magnitude, 0)}/MT; Prev-day LME Cash ref $${fNum(nRef, 2)}/t) -> Rolling 3-Day Signal: ${nSig.status.toUpperCase()} (${pdfClean(nSig.detail)}).`;
-    }
-    const bulletLines = [
-      `Arbitrage & Landed Parity: Cu Net Diff (Landed - MCX) = Rs.${fSgn(cuParity.net, 2)}/kg (${cuParity.net < 0 ? 'IMPORT ARB OPEN' : 'Import closed / Domestic discount'}); Zn = Rs.${fSgn(znParity.net, 2)}/kg; Al = Rs.${fSgn(alParity.net, 2)}/kg | SBI TT USD/INR @ ${fNum(sbiTt, 2)}.`,
-      `Curve & Roll Carry: LME Cash-3M Cu: ${fSgn(rolloverGetEffectiveLmeRoll('Cu'), 2)} $/t, Al: ${fSgn(rolloverGetEffectiveLmeRoll('Al'), 2)} $/t, Zn: ${fSgn(rolloverGetEffectiveLmeRoll('Zn'), 2)} $/t. Next LME 3rd-Wed Prompt: ${rolloverFmtDate(lmeExp)} (${lmeDays ?? '-'}d) | MCX Near-Month Expiry: ${rolloverFmtDate(mcxExp)} (${mcxDays ?? '-'}d).`,
-      `Primary Producer Watch (NALCO): ${nalcoSummary}`
+
+    const chartPanels = [
+      { title: 'SHFE Inventory — Cu / Al / Zn', sub: 'Warrants & daily change (t)', img: chartImgs.shfeTot },
+      { title: `LME–MCX Spread — ${currentLMC}`, sub: 'MCX minus LME cash (Rs/kg)', img: chartImgs.lmc },
+      { title: `LME Cash–3M & Stock — ${currentCSP}`, sub: 'Curve structure & warehouse stock', img: chartImgs.csp }
     ];
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.8);
-    doc.setTextColor(cText[0], cText[1], cText[2]);
-    bulletLines.forEach(line => {
-      const wrapped = doc.splitTextToSize(pdfClean('*  ' + line), pageW - 24);
-      doc.text(wrapped, 12, y + 3.2);
-      y += wrapped.length * 4.3 + 1.0;
-    });
-    y += 1.5;
-    y = drawSectionHeader('2. PHYSICAL IMPORT PARITY WATERFALL (LME -> LANDED INR vs MCX)', `FX basis: SBI TT Sell @ ${fNum(sbiTt, 2)} | Landed = ((LME 3M + Basis + Premium) x FX x (1 + Duty%)) + Freight`, y);
-    const parityHead = [['Metal','LME 3M ($/t)','Basis ($/t)','LME Cash ($/t)','Premium ($/t)','CIF Cost ($/t)','SBI TT','Duty %','Duty (Rs/t)','Freight (Rs/t)','Landed (Rs/kg)','MCX (Rs/kg)','Net Diff (Rs/kg)','Desk Signal']];
-    for (const m of PARITY_METALS) {
-      const e = parityEdits[m.key] || {};
-      const c = parityCalc(m);
-      const signal = c.net == null ? '-' : (c.net < -2 ? 'IMPORT ARB OPEN' : c.net > 2 ? 'DOMESTIC DISCOUNT' : 'PARITY BALANCED');
-      doc.setFillColor(240, 244, 250);
-      doc.rect(10, y, pageW - 20, 4.8, 'F');
-      const mRgb = safeRgbFromHex(m.color, [100, 100, 100]);
-      doc.setFillColor(mRgb[0], mRgb[1], mRgb[2]);
-      doc.rect(10, y, 2.2, 4.8, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(9.2); doc.setTextColor(cNavy[0], cNavy[1], cNavy[2]);
-      doc.text(`${m.name.toUpperCase()} - IMPORT PARITY`, 14, y + 3.5);
-      y += 5.0;
-      doc.autoTable({
-        startY: y,
-        margin: { left: 10, right: 10 },
-        head: parityHead,
-        body: [[
-          m.name,
-          `$${fNum(e.lme3m, 2)}`,
-          fSgn(e.basis, 2),
-          `$${fNum(c.lmeCash, 2)}`,
-          `$${fNum(e.premium, 2)}`,
-          `$${fNum(c.cost, 2)}`,
-          fNum(parityEdits.__usdinr, 2),
-          `${fNum(e.dutyPct, 2)}%`,
-          fNum(c.duty, 0),
-          fNum(e.freight, 0),
-          fNum(c.landedKg, 2),
-          fNum(e.mcx, 2),
-          fSgn(c.net, 2),
-          signal
-        ]],
-        theme: 'grid',
-        styles: { fontSize: 8.4, cellPadding: 1.8, textColor: cText, lineColor: [215, 222, 232], lineWidth: 0.18, halign: 'center' },
-        headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold', halign: 'center', fontSize: 7.8 },
-        columnStyles: {
-          0: { fontStyle: 'bold', halign: 'left' },
-          10: { fontStyle: 'bold' }, 12: { fontStyle: 'bold' }, 13: { fontStyle: 'bold' }
-        },
-        didParseCell: function(data) {
-          if (data.section === 'body' && (data.column.index === 12 || data.column.index === 13)) {
-            const txt = String(data.cell.raw || '');
-            if (txt.startsWith('-') || txt.includes('OPEN')) data.cell.styles.textColor = cGreen;
-            else if (txt.startsWith('+') || txt.includes('DISCOUNT')) data.cell.styles.textColor = cRed;
-          }
-        }
-      });
-      y = doc.lastAutoTable.finalY + 2.2;
+
+    for (let i = 0; i < chartPanels.length; i++) {
+      const p = chartPanels[i];
+      const cx = 10 + i * (chartW + chartGap);
+      drawChartPanel(p.title, p.sub, p.img, cx, yc, chartW, chartPanelH);
     }
-    y += 1.0;
-    y = drawSectionHeader('3. LME & MCX ROLLOVER SPREADS & EXPIRY MONITOR', `Next LME 3M Prompt: ${rolloverFmtDate(lmeExp)} (${lmeDays ?? '-'}d)  |  Next MCX Expiry: ${rolloverFmtDate(mcxExp)} (${mcxDays ?? '-'}d)`, y);
-    const rollSummaryRows = ['Al', 'Cu', 'Zn'].map(mk => {
-      const mName = mk === 'Al' ? 'Aluminium' : mk === 'Cu' ? 'Copper' : 'Zinc';
-      const lmeD = rolloverLmeDefaults(mk);
-      const lmeRoll = rolloverGetEffectiveLmeRoll(mk);
-      const lmeStruct = rolloverLmeStructureInfo(lmeRoll).txt;
-      const mcxD = rolloverMcxDefaults(mk);
-      const mcxStruct = rolloverMcxStructureInfo(mcxD.roll).txt;
-      return [
-        mName,
-        `$${fNum(lmeD.lme3m, 2)}`,
-        `${fSgn(lmeRoll, 2)} $/t`,
-        lmeStruct,
-        fNum(lmeD.stock, 0),
-        `Rs.${fNum(mcxD.front, 2)}`,
-        `Rs.${fNum(mcxD.next, 2)}`,
-        `${fSgn(mcxD.roll, 2)} Rs/kg`,
-        mcxStruct
-      ];
-    });
-    doc.autoTable({
-      startY: y,
-      margin: { left: 10, right: 10 },
-      head: [['Metal', 'LME 3M ($/t)', 'LME Cash-3M', 'LME Structure', 'LME Stock (t)', 'MCX Front (Rs/kg)', 'MCX Next (Rs/kg)', 'MCX 1M Roll', 'MCX Structure']],
-      body: rollSummaryRows,
-      theme: 'grid',
-      styles: { fontSize: 8.4, cellPadding: 1.9, textColor: cText, lineColor: [215, 222, 232], lineWidth: 0.18, halign: 'center' },
-      headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold', fontSize: 8.0 },
-      columnStyles: {
-        0: { fontStyle: 'bold', halign: 'left' },
-        2: { fontStyle: 'bold' }, 3: { fontStyle: 'bold' },
-        7: { fontStyle: 'bold' }, 8: { fontStyle: 'bold' }
-      },
-      didParseCell: function(data) {
-        if (data.section === 'body' && (data.column.index === 3 || data.column.index === 8)) {
-          const txt = String(data.cell.raw || '');
-          if (txt === 'CONTANGO') data.cell.styles.textColor = cGreen;
-          else if (txt === 'BACKWARDATION') data.cell.styles.textColor = cRed;
-        }
-      }
-    });
-    doc.addPage('a4', 'landscape');
-    drawPageHeader('PAGE 2  |  MAJOR DAILY CHANGES & INVENTORY / CURVE ANALYTICS');
-    let y2 = 26.5;
-    y2 = drawSectionHeader('4. MAJOR DAILY CHANGES - LME / SHFE / COMEX & CURVE', 'Sorted by largest absolute day-on-day move across stock, spreads & positioning', y2);
-    const lmeEntries2 = LME_HISTORY.entries || [];
-    const lmeLast2 = lmeEntries2.length ? lmeEntries2[lmeEntries2.length - 1] : {};
-    const lmePrev2 = lmeEntries2.length > 1 ? lmeEntries2[lmeEntries2.length - 2] : {};
-    const shfeLast2 = SHFE_HISTORY.length ? SHFE_HISTORY[SHFE_HISTORY.length - 1] : { metals: {} };
-    const shfePrev2 = SHFE_HISTORY.length > 1 ? SHFE_HISTORY[SHFE_HISTORY.length - 2] : { metals: {} };
-    const cspLast2 = CSP_RAW.length ? CSP_RAW[CSP_RAW.length - 1] : null;
-    const cspPrev2 = CSP_RAW.length > 1 ? CSP_RAW[CSP_RAW.length - 2] : null;
-    const cftcSt2 = cftcStats();
-    const majorChanges2 = [];
-    ['copper','aluminium','zinc'].forEach(mk => {
-      const label = LME_METAL_META[mk].label;
-      const cur = lmeLast2[mk]?.total ?? null;
-      const prv = lmePrev2[mk]?.total ?? null;
-      const cspKey = mk === 'copper' ? 'Cu' : mk === 'aluminium' ? 'Al' : 'Zn';
-      const fallback = cspLast2 ? cspLast2[cspKey]?.stock : null;
-      const fallbackPrev = cspPrev2 ? cspPrev2[cspKey]?.stock : null;
-      const v = cur != null ? cur : fallback;
-      const pv = prv != null ? prv : fallbackPrev;
-      if (v != null && pv != null && v !== pv) {
-        majorChanges2.push({ cat: 'LME Stock', metal: label, cur: v, prev: pv, delta: v - pv, unit: 't', direction: v > pv ? 'INCREASE' : 'DECREASE' });
-      }
-    });
-    ['Cu','Al','Zn'].forEach(mk => {
-      const label = mk === 'Cu' ? 'Copper' : mk === 'Al' ? 'Aluminium' : 'Zinc';
-      const curRoll = cspLast2 && cspLast2[mk]?.cash != null && cspLast2[mk]?.threeM != null ? cspLast2[mk].cash - cspLast2[mk].threeM : null;
-      const prevRoll = cspPrev2 && cspPrev2[mk]?.cash != null && cspPrev2[mk]?.threeM != null ? cspPrev2[mk].cash - cspPrev2[mk].threeM : null;
-      if (curRoll != null && prevRoll != null && Math.abs(curRoll - prevRoll) > 0.01) {
-        majorChanges2.push({ cat: 'LME Cash-3M', metal: label, cur: curRoll, prev: prevRoll, delta: curRoll - prevRoll, unit: '$/t', direction: curRoll > prevRoll ? 'STEEPEN' : 'FLATTEN' });
-      }
-    });
-    ['copper','aluminium','zinc','lead','nickel','tin'].forEach(mk => {
-      const label = SHFE_METAL_META[mk].label;
-      const cur = shfeLast2.metals?.[mk]?.qty ?? null;
-      const prv = shfePrev2.metals?.[mk]?.qty ?? null;
-      if (cur != null && prv != null && cur !== prv) {
-        majorChanges2.push({ cat: 'SHFE Stock', metal: label, cur, prev: prv, delta: cur - prv, unit: 't', direction: cur > prv ? 'INCREASE' : 'DECREASE' });
-      }
-    });
-    if (cftcSt2) {
-      majorChanges2.push({ cat: 'COMEX Net Pos', metal: 'Copper', cur: cftcSt2.last.ncNet, prev: cftcSt2.prev.ncNet, delta: cftcSt2.deltaNc, unit: 'lots', direction: cftcSt2.deltaNc >= 0 ? 'NET BUY' : 'NET SELL' });
-    }
-    for (const code of ['CA','AH','ZS']) {
-      const meta = LME_COTR_METALS[code];
-      const st = lmeCotrStats(meta.key);
-      if (st && st.pv) {
-        majorChanges2.push({ cat: 'LME Funds Pos', metal: meta.label, cur: st.cur.fundNet, prev: st.pv.fundNet, delta: st.deltaFund, unit: 'lots', direction: st.deltaFund >= 0 ? 'NET BUY' : 'NET SELL' });
-      }
-    }
-    majorChanges2.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
-    const majorRows2 = majorChanges2.slice(0, 12).map(r => [
-      r.cat, r.metal,
-      fNum(r.prev, r.unit === '$/t' ? 2 : 0),
-      fNum(r.cur, r.unit === '$/t' ? 2 : 0),
-      (r.delta >= 0 ? '+' : '') + fNum(r.delta, r.unit === '$/t' ? 2 : 0),
-      r.unit, r.direction
-    ]);
-    doc.autoTable({
-      startY: y2,
-      margin: { left: 10, right: 10 },
-      head: [['Source', 'Instrument', 'Previous', 'Latest', 'Change', 'Unit', 'Direction']],
-      body: majorRows2.length ? majorRows2 : [['-','-','-','-','-','-','No changes detected']],
-      theme: 'grid',
-      styles: { fontSize: 8.3, cellPadding: 1.7, textColor: cText, lineColor: [215, 222, 232], lineWidth: 0.18 },
-      headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold', halign: 'center', fontSize: 8.2 },
-      columnStyles: {
-        0: { fontStyle: 'bold' }, 1: { fontStyle: 'bold' },
-        2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right', fontStyle: 'bold' },
-        5: { halign: 'center' }, 6: { halign: 'center', fontStyle: 'bold' }
-      },
-      didParseCell: function(data) {
-        if (data.section === 'body' && data.column.index === 4) {
-          const txt = String(data.cell.raw || '');
-          if (txt.startsWith('-')) data.cell.styles.textColor = cRed;
-          else if (txt.startsWith('+')) data.cell.styles.textColor = cGreen;
-        }
-        if (data.section === 'body' && data.column.index === 6) {
-          const txt = String(data.cell.raw || '').toUpperCase();
-          if (txt.includes('DECREASE') || txt.includes('SELL') || txt.includes('FLATTEN')) data.cell.styles.textColor = cRed;
-          else if (txt.includes('INCREASE') || txt.includes('BUY') || txt.includes('STEEPEN')) data.cell.styles.textColor = cGreen;
-        }
-      }
-    });
-    y2 = doc.lastAutoTable.finalY + 3.5;
-    y2 = drawSectionHeader('5. INVENTORY & CURVE VISUAL SNAPSHOT', 'SHFE Stocks  |  LME Cash-3M & Stock  |  Roll Spread History  |  LME-MCX Arbitrage', y2);
-    const chartBoxH = Math.max(42, pageH - y2 - 11);
-    const tCols = 4;
-    const tGap = 3.5;
-    const tW = (pageW - 20 - tGap * (tCols - 1)) / tCols;
-    const thumbs = [
-      { title: 'SHFE Inventory (Cu / Al / Zn)', img: chartImgs.shfeTot },
-      { title: `LME ${currentCSP} Cash-3M & Stock`, img: chartImgs.csp },
-      { title: `LME ${rollLmeRollMetal} Roll (Cash-3M)`, img: chartImgs.rollLme || chartImgs.rollMcx },
-      { title: `LME-MCX Spread (${currentLMC})`, img: chartImgs.lmc }
-    ];
-    thumbs.forEach((p, i) => {
-      const bx = 10 + i * (tW + tGap);
-      drawChartCard(p.title, p.img, bx, y2, tW, chartBoxH);
-    });
-    doc.addPage('a4', 'landscape');
-    drawPageHeader('PAGE 3  |  COT NET POSITIONING & LIVE SUPPLY / MACRO INTELLIGENCE');
-    let y3 = 26.5;
-    y3 = drawSectionHeader('6. COMMITMENTS OF TRADERS (COT) - NET POSITIONING & PRICE OVERLAY', 'LME Investment Funds & COMEX / LME Base Metals Positioning', y3);
-    const posChartH = 60;
-    const halfW = (pageW - 24) / 2;
-    drawChartCard('LME COPPER - Investment Funds Net Position (with LME Price)', chartImgs.cotLmeCu, 10, y3, halfW, posChartH);
-    const rightCotImg = chartImgs.cotCftc || chartImgs.cotLmeAl;
-    const rightCotTitle = chartImgs.cotCftc ? 'COMEX COPPER (CFTC) - Speculators & Hedgers Net (with Price)' : 'LME ALUMINIUM - Investment Funds Net Position (with LME Price)';
-    drawChartCard(rightCotTitle, rightCotImg, 10 + halfW + 4, y3, halfW, posChartH);
-    y3 += posChartH + 3.5;
-    const cotRows3 = [];
-    for (const code of ['CA','AH','ZS']) {
-      const meta = LME_COTR_METALS[code];
-      const st = lmeCotrStats(meta.key);
-      if (st) {
-        cotRows3.push([
-          `LME ${meta.label}`,
-          st.date,
-          fNum(st.cur.oi, 0),
-          fSgn(st.cur.fundNet, 0),
-          fSgn(st.deltaFund, 0),
-          `${fNum(st.cur.fundNetPct, 1)}%`,
-          `${fSgn(st.z, 2)} SD  |  ${st.signal}`
-        ]);
-      } else {
-        cotRows3.push([`LME ${meta.label}`, '-', '-', '-', '-', '-', 'No COTR loaded']);
-      }
-    }
-    if (cftcSt2) {
-      cotRows3.push([
-        'COMEX Copper (CFTC)',
-        cftcSt2.last.date,
-        fNum(cftcSt2.last.oi, 0),
-        fSgn(cftcSt2.last.ncNet, 0),
-        fSgn(cftcSt2.deltaNc, 0),
-        `${fNum(cftcSt2.last.ncNetPct, 1)}%`,
-        `${fSgn(cftcSt2.z, 2)} SD  |  ${cftcSt2.signal}`
-      ]);
-    }
-    doc.autoTable({
-      startY: y3,
-      margin: { left: 10, right: 10 },
-      head: [['Contract', 'Report Date', 'Open Interest', 'Net Spec Position (lots)', 'Weekly Change', '% of OI', '52W Z-Score & Crowding Signal']],
-      body: cotRows3,
-      theme: 'grid',
-      styles: { fontSize: 8.5, cellPadding: 2.0, textColor: cText, lineColor: [215, 222, 232], lineWidth: 0.18 },
-      headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold', halign: 'center', fontSize: 8.3 },
-      columnStyles: {
-        0: { fontStyle: 'bold' }, 1: { halign: 'center' },
-        2: { halign: 'right' }, 3: { halign: 'right', fontStyle: 'bold' }, 4: { halign: 'right', fontStyle: 'bold' },
-        5: { halign: 'right' }, 6: { halign: 'center', fontStyle: 'bold' }
-      },
-      didParseCell: function(data) {
-        if (data.section === 'body' && (data.column.index === 3 || data.column.index === 4)) {
-          const txt = String(data.cell.raw || '');
-          if (txt.startsWith('-')) data.cell.styles.textColor = cRed;
-          else if (txt.startsWith('+')) data.cell.styles.textColor = cGreen;
-        }
-      }
-    });
-    y3 = doc.lastAutoTable.finalY + 3.5;
-    if (y3 < pageH - 25) {
-      y3 = drawSectionHeader('7. SUPPLY & MACRO INTELLIGENCE WIRE', 'Top live headlines filtered for producers, mines, macro & FX', y3);
-      const maxNews = Math.min(6, Math.floor((pageH - y3 - 10) / 4.5));
-      const topNews = NEWS_ITEMS.slice(0, Math.max(1, maxNews));
-      if (!topNews.length) {
-        doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
-        doc.text('No live news items loaded yet.', 12, y3 + 3.5);
-      } else {
-        doc.setFont('helvetica','normal'); doc.setFontSize(8.4); doc.setTextColor(cText[0], cText[1], cText[2]);
-        topNews.forEach(item => {
-          const prefix = item.critical ? '[BREAKING] ' : `[${(item.category || 'MKT').toUpperCase()}] `;
-          const tags = [...(item.countries||[]), ...(item.producers||[]), ...(item.mines||[])].slice(0,3).join(', ');
-          const tagSuffix = tags ? ` (${tags})` : '';
-          const rawLine = `*  ${prefix}${item.title}${tagSuffix} - ${item.source}`;
-          const oneLine = doc.splitTextToSize(pdfClean(rawLine), pageW - 24)[0];
-          doc.text(oneLine, 12, y3 + 3.2);
-          y3 += 4.4;
-        });
-      }
-    }
+
     const totalPages = doc.internal.getNumberOfPages();
     for (let p = 1; p <= totalPages; p++) {
       doc.setPage(p);
       drawPageFooter(p, totalPages);
     }
+
     doc.save(`NF_Desk_Intelligence_Report_${todayIso}.pdf`);
   } catch (err) {
     console.error('PDF generation failed:', err);
