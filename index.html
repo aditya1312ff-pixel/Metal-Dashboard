@@ -1241,6 +1241,18 @@ function fmtIndian(v, dp = 0) {
   const formatted = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
   return '₹' + (neg ? '-' : '') + formatted + (decPart ? '.' + decPart : '');
 }
+  /* Strip non-ASCII so jsPDF's built-in Helvetica never prints garbled glyphs */
+function pdfClean(str) {
+  if (str == null) return '-';
+  return String(str)
+    .replace(/[\u2013\u2014]/g, '-')   // en / em dash
+    .replace(/[\u2022\u00b7]/g, '|')   // bullet / middle dot
+    .replace(/\u2192/g, '->')          // right arrow
+    .replace(/\u0394/g, 'Chg ')        // Greek Delta
+    .replace(/\u03c3/g, ' SD')         // Greek sigma
+    .replace(/\u20b9/g, 'Rs.')         // rupee sign
+    .replace(/[^\x20-\x7E]/g, '');     // strip any other non-printable
+}
 
 /* ========================================================================
    STATE
