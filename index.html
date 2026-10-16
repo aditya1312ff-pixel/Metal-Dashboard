@@ -5244,34 +5244,50 @@ async function generateInstitutionalPdfReport() {
         doc.text('Chart data unavailable', cx + colW / 2, imgY + imgH / 2, { align: 'center' });
       }
     }
-
-    /* =============================================================
+        /* =============================================================
        PAGE 3 — SHFE INVENTORY + TECHNICAL SIGNALS
        ============================================================= */
     doc.addPage('a4', 'landscape');
     drawBigHeader('PAGE 3  |  SHFE INVENTORY & TECHNICAL SIGNALS');
     let y3 = 24;
 
+    /* ---------- Fetch SHFE live if cache is empty ---------- */
+    let SHFE_WAREHOUSE_CACHE = (typeof window !== 'undefined' && window.__SHFE_LAST_INVENTORY) ? window.__SHFE_LAST_INVENTORY : null;
+    if (!SHFE_WAREHOUSE_CACHE) {
+      try {
+        const urlEl = document.getElementById('shfeUrl');
+        const url = urlEl ? urlEl.value.trim() : '';
+        if (url) {
+          const res = await fetch(url, { cache: 'no-store' });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.inventory) {
+              SHFE_WAREHOUSE_CACHE = data.inventory;
+              window.__SHFE_LAST_INVENTORY = data.inventory;
+            }
+          }
+        }
+      } catch (e) { console.warn('SHFE fetch from PDF failed:', e); }
+    }
+
     /* ---------- SECTION 1: SHFE SUMMARY STRIP ---------- */
     doc.setFillColor(cCard[0], cCard[1], cCard[2]);
-    doc.rect(10, y3, pageW - 20, 6.5, 'F');
+    doc.rect(10, y3, pageW - 20, 6, 'F');
     doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
-    doc.rect(10, y3, 2.5, 6.5, 'F');
+    doc.rect(10, y3, 2.5, 6, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9.4);
     doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
-    doc.text('1.  SHFE INVENTORY — TOTAL WARRANTS & WAREHOUSE STOCK (Cu / Al / Zn)', 15, y3 + 4.6);
+    doc.text('1.  SHFE INVENTORY — TOTAL WARRANTS & WAREHOUSE STOCK (Cu / Al / Zn)', 15, y3 + 4.2);
 
     const shfeLatest = SHFE_HISTORY.length ? SHFE_HISTORY[SHFE_HISTORY.length - 1] : null;
     if (shfeLatest) {
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.6);
+      doc.setFontSize(7.4);
       doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
-      doc.text(`Warrant date: ${shfeLatest.date}`, pageW - 12, y3 + 4.6, { align: 'right' });
+      doc.text(`Warrant date: ${shfeLatest.date}`, pageW - 12, y3 + 4.2, { align: 'right' });
     }
-    y3 += 8;
-
-    const SHFE_WAREHOUSE_CACHE = (typeof window !== 'undefined' && window.__SHFE_LAST_INVENTORY) ? window.__SHFE_LAST_INVENTORY : null;
+    y3 += 7.5;
 
     const shfeMetals = [
       { key: 'copper',    label: 'Copper (Cu)',    rgb: [214, 139, 77] },
@@ -5279,7 +5295,8 @@ async function generateInstitutionalPdfReport() {
       { key: 'zinc',      label: 'Zinc (Zn)',      rgb: [91, 143, 201] },
     ];
 
-    const sumBoxH = 24;
+    /* ---- Compact summary strip (18mm) ---- */
+    const sumBoxH = 18;
     const sumGap = 3;
     const sumColW = (pageW - 20 - sumGap * 2) / 3;
 
@@ -5296,12 +5313,12 @@ async function generateInstitutionalPdfReport() {
       doc.rect(cx, cy, 2, sumBoxH, 'F');
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setTextColor(m.rgb[0], m.rgb[1], m.rgb[2]);
-      doc.text(m.label, cx + 5, cy + 5.5);
+      doc.text(m.label, cx + 4.5, cy + 4.2);
 
       doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
-      doc.line(cx + 4, cy + 7.5, cx + sumColW - 4, cy + 7.5);
+      doc.line(cx + 3, cy + 5.6, cx + sumColW - 3, cy + 5.6);
 
       let totalQty = null, dayChg = null, whCount = null;
       if (SHFE_WAREHOUSE_CACHE && SHFE_WAREHOUSE_CACHE[m.key]) {
@@ -5317,17 +5334,17 @@ async function generateInstitutionalPdfReport() {
         }
       }
 
-      const innerCellW = (sumColW - 10) / 3;
+      const innerCellW = (sumColW - 9) / 3;
       const drawSumCell = (idx, lbl, val, col) => {
-        const ccx = cx + 5 + idx * innerCellW;
+        const ccx = cx + 4.5 + idx * innerCellW;
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(6.4);
+        doc.setFontSize(6);
         doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
-        doc.text(lbl, ccx, cy + 12);
+        doc.text(lbl, ccx, cy + 9.5);
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9.6);
+        doc.setFontSize(8.6);
         doc.setTextColor(...(col || cWhite));
-        doc.text(pdfClean(val), ccx, cy + 18);
+        doc.text(pdfClean(val), ccx, cy + 15);
       };
 
       const chgCol = dayChg == null ? cText : (dayChg > 0 ? cGreen : dayChg < 0 ? cRed : cText);
@@ -5338,10 +5355,10 @@ async function generateInstitutionalPdfReport() {
       drawSumCell(2, 'WAREHOUSES', whCount != null ? String(whCount) : '-');
     });
 
-    y3 += sumBoxH + 4;
+    y3 += sumBoxH + 3;
 
-    /* ---------- SECTION 1b: WAREHOUSE DETAIL ---------- */
-    const wsDetailH = 78;
+    /* ---- Warehouse detail — smaller box so trend table fits on same page ---- */
+    const wsDetailH = 55;                     // was 78, reduced to fit trend table
     const wsColGap = 3;
     const wsColW = (pageW - 20 - wsColGap * 2) / 3;
 
@@ -5358,38 +5375,38 @@ async function generateInstitutionalPdfReport() {
       doc.rect(cx, cy, 2, wsDetailH, 'F');
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8.6);
+      doc.setFontSize(8.2);
       doc.setTextColor(m.rgb[0], m.rgb[1], m.rgb[2]);
-      doc.text(`${m.label} — Warehouse Stock`, cx + 5, cy + 4.6);
+      doc.text(`${m.label} — Warehouse Stock`, cx + 4.5, cy + 4.2);
 
-      const hdrY = cy + 9;
+      const hdrY = cy + 7.5;
       doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
       doc.line(cx + 3, hdrY, cx + wsColW - 3, hdrY);
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(6);
+      doc.setFontSize(5.8);
       doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
       const regionX = cx + 4;
-      const nameX   = cx + wsColW * 0.30;
+      const nameX   = cx + wsColW * 0.32;
       const qtyX    = cx + wsColW - 4;
-      doc.text('REGION', regionX, hdrY + 3.6);
-      doc.text('WAREHOUSE', nameX, hdrY + 3.6);
-      doc.text('QTY (t)', qtyX, hdrY + 3.6, { align: 'right' });
+      doc.text('REGION', regionX, hdrY + 3.4);
+      doc.text('WAREHOUSE', nameX, hdrY + 3.4);
+      doc.text('QTY (t)', qtyX, hdrY + 3.4, { align: 'right' });
 
       let warehouses = [];
       if (SHFE_WAREHOUSE_CACHE && SHFE_WAREHOUSE_CACHE[m.key] && SHFE_WAREHOUSE_CACHE[m.key].warehouses) {
         warehouses = SHFE_WAREHOUSE_CACHE[m.key].warehouses.slice();
       }
 
-      const rowH2 = 4.2;
-      const listTop = hdrY + 5.2;
-      const listMaxRows = Math.floor((wsDetailH - (listTop - cy) - 3) / rowH2);
+      const rowH2 = 3.9;
+      const listTop = hdrY + 4.8;
+      const listMaxRows = Math.floor((wsDetailH - (listTop - cy) - 2) / rowH2);
 
       if (warehouses.length === 0) {
         doc.setFont('helvetica', 'italic');
-        doc.setFontSize(7.2);
+        doc.setFontSize(6.6);
         doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
-        doc.text('Warehouse detail not cached. Open the SHFE tab and click Fetch Now, then regenerate the PDF.',
+        doc.text('Open SHFE tab → Fetch Now, then regenerate PDF.',
           cx + 4, listTop + 4, { maxWidth: wsColW - 8 });
       } else {
         warehouses.sort((a, b) => (b.qty || 0) - (a.qty || 0));
@@ -5397,16 +5414,16 @@ async function generateInstitutionalPdfReport() {
           const ry = listTop + idx * rowH2 + 3;
           if (idx % 2 === 0) {
             doc.setFillColor(cRowEven[0], cRowEven[1], cRowEven[2]);
-            doc.rect(cx + 2, ry - 3, wsColW - 4, rowH2, 'F');
+            doc.rect(cx + 2, ry - 2.8, wsColW - 4, rowH2, 'F');
           }
 
           doc.setFont('helvetica', 'normal');
-          doc.setFontSize(6.4);
+          doc.setFontSize(6);
           doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
           doc.text(pdfClean(shfeTrRegion(w.region) || '—'), regionX, ry);
 
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(6.4);
+          doc.setFontSize(6);
           doc.setTextColor(cText[0], cText[1], cText[2]);
           doc.text(pdfClean(shfeTrWarehouse(w.name) || '—'), nameX, ry, { maxWidth: wsColW * 0.55 });
 
@@ -5414,38 +5431,32 @@ async function generateInstitutionalPdfReport() {
           const c = w.change != null ? w.change : 0;
           const qtyCol = c > 0 ? cGreen : c < 0 ? cRed : cWhite;
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(6.6);
+          doc.setFontSize(6.2);
           doc.setTextColor(qtyCol[0], qtyCol[1], qtyCol[2]);
           doc.text(qty != null ? fNum(qty, 0) : '-', qtyX, ry, { align: 'right' });
         });
 
         if (warehouses.length > listMaxRows) {
           doc.setFont('helvetica', 'italic');
-          doc.setFontSize(6.2);
+          doc.setFontSize(5.8);
           doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
-          doc.text(`+ ${warehouses.length - listMaxRows} more…`, cx + 4, cy + wsDetailH - 2);
+          doc.text(`+ ${warehouses.length - listMaxRows} more…`, cx + 4, cy + wsDetailH - 1.5);
         }
       }
     });
 
-    y3 += wsDetailH + 4;
+    y3 += wsDetailH + 3;
 
     /* ---------- SECTION 2: TECHNICAL SIGNALS ---------- */
-    if (y3 > pageH - 55) {
-      doc.addPage('a4', 'landscape');
-      drawBigHeader('PAGE 4  |  TECHNICAL SIGNALS — EMA-DERIVED TREND REGIME');
-      y3 = 24;
-    }
-
     doc.setFillColor(cCard[0], cCard[1], cCard[2]);
-    doc.rect(10, y3, pageW - 20, 6.5, 'F');
+    doc.rect(10, y3, pageW - 20, 6, 'F');
     doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
-    doc.rect(10, y3, 2.5, 6.5, 'F');
+    doc.rect(10, y3, 2.5, 6, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9.4);
     doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
-    doc.text('2.  TECHNICAL SIGNALS — EMA-DERIVED TREND REGIME', 15, y3 + 4.6);
-    y3 += 8;
+    doc.text('2.  TECHNICAL SIGNALS — EMA-DERIVED TREND REGIME', 15, y3 + 4.2);
+    y3 += 7.5;
 
     const trendMetals = [
       { name:'LME Copper',    label:'LME Copper' },
@@ -5475,8 +5486,8 @@ async function generateInstitutionalPdfReport() {
       body: trendRows,
       theme: 'grid',
       styles: {
-        fontSize: 8.4,
-        cellPadding: 2.4,
+        fontSize: 8,
+        cellPadding: 1.9,
         textColor: cText,
         lineColor: cBorder,
         lineWidth: 0.15,
@@ -5487,7 +5498,7 @@ async function generateInstitutionalPdfReport() {
         textColor: cWhite,
         fontStyle: 'bold',
         halign: 'center',
-        fontSize: 8.6
+        fontSize: 8.4
       },
       alternateRowStyles: { fillColor: cRowOdd },
       columnStyles: {
