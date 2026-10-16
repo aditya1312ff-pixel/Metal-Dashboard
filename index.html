@@ -4582,15 +4582,22 @@ async function generateInstitutionalPdfReport() {
     const todayIso = now.toISOString().slice(0, 10);
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-    const cNavy  = [14, 20, 32];
-    const cSlate = [22, 29, 43];
-    const cAmber = [232, 163, 61];
-    const cGreen = [39, 174, 96];
-    const cRed   = [214, 48, 49];
-    const cText  = [30, 35, 45];
-    const cMuted = [110, 118, 135];
-    const cWhite = [255, 255, 255];
-    const cLine  = [215, 222, 232];
+    /* ---------- DARKER THEME ---------- */
+    const cNavy   = [8, 12, 22];       // deeper page band
+    const cSlate  = [14, 20, 32];      // section bars (very dark)
+    const cAmber  = [255, 165, 45];    // brighter amber accent
+    const cAmberD = [232, 143, 35];    // deeper amber for text on light
+    const cGreen  = [34, 197, 94];     // bright green
+    const cRed    = [239, 68, 68];     // bright red
+    const cText   = [225, 232, 240];   // light text on dark rows
+    const cDark   = [30, 35, 45];      // dark text on light backgrounds
+    const cMuted  = [148, 163, 184];   // muted labels
+    const cWhite  = [255, 255, 255];
+    const cLine   = [45, 58, 82];      // dark row divider
+    const cRowEven = [20, 28, 42];     // dark alternate row
+    const cRowOdd  = [26, 34, 50];     // dark alternate row 2
+    const cLabelBg = [16, 22, 34];     // metric label column background
+    const cPanelBg = [18, 24, 38];     // chart card inner
 
     const fNum = (v, dp = 2) => (v == null || !isFinite(v)) ? '-' : Number(v).toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
     const fSgn = (v, dp = 2) => (v == null || !isFinite(v)) ? '-' : (v >= 0 ? '+' : '') + fNum(v, dp);
@@ -4605,6 +4612,7 @@ async function generateInstitutionalPdfReport() {
     const cspDateStr = CSP_RAW.length ? CSP_RAW[CSP_RAW.length - 1].date : '-';
     const shfeDateStr = SHFE_HISTORY.length ? SHFE_HISTORY[SHFE_HISTORY.length - 1].date : '-';
 
+    /* ---------- HEADER / FOOTER ---------- */
     const drawPageHeader = (pageTitleSuffix) => {
       doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
       doc.rect(0, 0, pageW, 20, 'F');
@@ -4613,42 +4621,41 @@ async function generateInstitutionalPdfReport() {
 
       doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text('NON-FERROUS METALS RISK & HEDGING DESK', 10, 7.5);
+      doc.setFontSize(13);
+      doc.text('NON-FERROUS METALS RISK & HEDGING DESK', 10, 7.8);
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.4);
-      doc.setTextColor(215, 225, 238);
-      doc.text(pdfClean(`Run: ${todayIso} ${timeStr} IST   |   LME CSP: ${cspDateStr}   |   SHFE: ${shfeDateStr}`), pageW - 10, 7.5, { align: 'right' });
+      doc.setTextColor(200, 215, 235);
+      doc.text(pdfClean(`Run: ${todayIso} ${timeStr} IST   |   LME CSP: ${cspDateStr}   |   SHFE: ${shfeDateStr}`), pageW - 10, 7.8, { align: 'right' });
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8.6);
-      doc.setTextColor(230, 240, 250);
-      doc.text(pdfClean(pageTitleSuffix), 10, 14.5);
+      doc.setFontSize(9.4);
+      doc.setTextColor(240, 246, 255);
+      doc.text(pdfClean(pageTitleSuffix), 10, 15.2);
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7.4);
       doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
-      doc.text(pdfClean(`USD/INR ${fNum(usdinrSpot, 2)}  |  SBI TT ${fNum(sbiTt, 2)}  |  DXY ${fNum(dxyVal, 2)}  |  US 2Y/10Y ${fNum(us02y, 2)}% / ${fNum(us10y, 2)}% (${curve2s10s})  |  Gold $${fNum(goldSpot, 1)}`), pageW - 10, 14.5, { align: 'right' });
+      doc.text(pdfClean(`USD/INR ${fNum(usdinrSpot, 2)}  |  SBI TT ${fNum(sbiTt, 2)}  |  DXY ${fNum(dxyVal, 2)}  |  US 2Y/10Y ${fNum(us02y, 2)}% / ${fNum(us10y, 2)}% (${curve2s10s})  |  Gold $${fNum(goldSpot, 1)}`), pageW - 10, 15.2, { align: 'right' });
     };
 
     const drawPageFooter = (pageNum, totalPages) => {
       doc.setDrawColor(cLine[0], cLine[1], cLine[2]);
       doc.line(10, pageH - 7, pageW - 10, pageH - 7);
       doc.setFont('helvetica', 'italic');
-      doc.setFontSize(6.5);
+      doc.setFontSize(6.6);
       doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
       doc.text('CONFIDENTIAL | Non-Ferrous Metals Trading & Risk Management Desk | Sources: LME, MCX, SHFE, CFTC, SBI FX, NALCO', 10, pageH - 3.5);
       doc.text(`Page ${pageNum} of ${totalPages}`, pageW - 10, pageH - 3.5, { align: 'right' });
     };
 
     /* =============================================================
-       PAGE 1 — PER-METAL VALUE TABLE (3 metal columns) + NALCO band
+       PAGE 1 — TABLE
        ============================================================= */
     drawPageHeader('PAGE 1  |  PER-METAL DESK SNAPSHOT');
     let y = 24;
 
-    /* Compute per-metal values */
     const lmeEntries = LME_HISTORY.entries || [];
     const lmeLast = lmeEntries.length ? lmeEntries[lmeEntries.length - 1] : {};
     const lmePrev = lmeEntries.length > 1 ? lmeEntries[lmeEntries.length - 2] : {};
@@ -4663,8 +4670,16 @@ async function generateInstitutionalPdfReport() {
     for (const m of PARITY_METALS) {
       const key = m.key;
       const lmeKey = lmeKeyByCsp[key];
-      const parity = parityCalc(m);
-      const e = parityEdits[key] || {};
+
+      // --- metal price day change (LME Cash) ---
+      // Use CSP cash: last vs previous
+      const cashNow  = cspLast ? cspLast[key]?.cash ?? null : null;
+      const cashPrev = cspPrev ? cspPrev[key]?.cash ?? null : null;
+      let priceChg = null, pricePct = null;
+      if (cashNow != null && cashPrev != null && cashPrev !== 0) {
+        priceChg = cashNow - cashPrev;
+        pricePct = (priceChg / cashPrev) * 100;
+      }
 
       const lmeStockCur  = lmeLast[lmeKey]?.total ?? (cspLast ? cspLast[key]?.stock : null) ?? null;
       const lmeStockPrev = lmePrev[lmeKey]?.total ?? (cspPrev ? cspPrev[key]?.stock : null) ?? null;
@@ -4681,31 +4696,35 @@ async function generateInstitutionalPdfReport() {
       const isCu = key === 'Cu';
       const comexNet = isCu && cftcSt ? cftcSt.last.ncNet : null;
 
+      const parity = parityCalc(m);
+      const e = parityEdits[key] || {};
+
       d[key] = {
         parity, e,
-        lmeStockChg,
-        shfeChg,
-        lmeRoll,
-        mcxRoll: mcxDef.roll,
+        cashNow, priceChg, pricePct,
+        lmeStockChg, shfeChg,
+        lmeRoll, mcxRoll: mcxDef.roll,
         lmeCotrStat, comexNet
       };
     }
 
-    /* Table geometry */
+    /* ---------- Table geometry ---------- */
     const labelColW = 62;
     const valueColW = (pageW - 20 - labelColW) / 3;
     const rowH = 6.4;
     const sectionH = 6;
 
     const drawHeaderRow = (yy) => {
-      doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
-      doc.rect(10, yy, pageW - 20, 8, 'F');
+      // solid dark bar
+      doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
+      doc.rect(10, yy, pageW - 20, 9, 'F');
       doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
-      doc.rect(10, yy, 2, 8, 'F');
+      doc.rect(10, yy, 2.5, 9, 'F');
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.setTextColor(cWhite[0], cWhite[1], cWhite[2]);
-      doc.text('METRIC', 15, yy + 5.3);
+      doc.setFontSize(9.5);
+      doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
+      doc.text('METRIC', 15, yy + 6);
+
       const headers = [
         { label: 'COPPER (Cu)',     rgb: [214, 139, 77] },
         { label: 'ZINC (Zn)',       rgb: [91, 143, 201] },
@@ -4714,44 +4733,49 @@ async function generateInstitutionalPdfReport() {
       headers.forEach((h, i) => {
         const xLeft = 10 + labelColW + i * valueColW;
         doc.setFillColor(h.rgb[0], h.rgb[1], h.rgb[2]);
-        doc.rect(xLeft, yy, valueColW, 8, 'F');
+        doc.rect(xLeft, yy, valueColW, 9, 'F');
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9.5);
-        doc.setTextColor(cWhite[0], cWhite[1], cWhite[2]);
-        doc.text(h.label, xLeft + valueColW / 2, yy + 5.3, { align: 'center' });
+        doc.setFontSize(10.5);
+        doc.setTextColor(20, 20, 20);
+        doc.text(h.label, xLeft + valueColW / 2, yy + 6, { align: 'center' });
       });
-      return yy + 8;
+      return yy + 9;
     };
 
     const drawSectionBar = (yy, title) => {
-      doc.setFillColor(240, 244, 250);
-      doc.rect(10, yy, pageW - 20, sectionH, 'F');
+      doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
+      doc.rect(10, yy, pageW - 20, sectionH + 0.4, 'F');
       doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
-      doc.rect(10, yy, 2, sectionH, 'F');
+      doc.rect(10, yy, 2.5, sectionH + 0.4, 'F');
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8.5);
-      doc.setTextColor(cSlate[0], cSlate[1], cSlate[2]);
-      doc.text(pdfClean(title), 15, yy + 4.3);
-      return yy + sectionH;
+      doc.setFontSize(9.2);
+      doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
+      doc.text(pdfClean(title), 15, yy + 4.5);
+      return yy + sectionH + 0.4;
     };
 
     const drawRow = (yy, label, values, opts = {}) => {
       const h = opts.h || rowH;
+
+      // label column — darker background
+      doc.setFillColor(cLabelBg[0], cLabelBg[1], cLabelBg[2]);
+      doc.rect(10, yy, labelColW, h, 'F');
       doc.setFont('helvetica', opts.bold ? 'bold' : 'normal');
-      doc.setFontSize(7.8);
-      doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
+      doc.setFontSize(7.9);
+      doc.setTextColor(opts.bold ? cWhite[0] : 210, opts.bold ? cWhite[1] : 220, opts.bold ? cWhite[2] : 235);
       doc.text(pdfClean(label), 15, yy + h * 0.68);
 
+      // value columns — alternating dark
       values.forEach((v, i) => {
         const xLeft = 10 + labelColW + i * valueColW;
-        if (i % 2 === 0) {
-          doc.setFillColor(252, 253, 255);
-          doc.rect(xLeft, yy, valueColW, h, 'F');
-        }
+        const bg = (i % 2 === 0) ? cRowEven : cRowOdd;
+        doc.setFillColor(bg[0], bg[1], bg[2]);
+        doc.rect(xLeft, yy, valueColW, h, 'F');
+
         const txt = v == null ? '-' : (typeof v === 'object' ? v.text : String(v));
         const col = (typeof v === 'object' && v.color) ? v.color : (opts.color || cText);
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(opts.fs || 8.4);
+        doc.setFontSize(opts.fs || 8.6);
         doc.setTextColor(col[0], col[1], col[2]);
         doc.text(pdfClean(txt), xLeft + valueColW / 2, yy + h * 0.68, { align: 'center' });
       });
@@ -4767,35 +4791,55 @@ async function generateInstitutionalPdfReport() {
     const cNeu = cText;
     const signColor = v => v == null ? cNeu : (v > 0 ? cPos : v < 0 ? cNeg : cNeu);
 
-    /* ----- TABLE ----- */
+    // format a change as "+X ▲" or "-X ▼"
+    const chgArrow = (v, dp = 0) => {
+      if (v == null || !isFinite(v)) return null;
+      const arrow = v > 0 ? '\u25B2' : v < 0 ? '\u25BC' : '\u2022';
+      const sign = v > 0 ? '+' : '';
+      return `${sign}${fNum(v, dp)}  ${arrow}`;
+    };
+
     y = drawHeaderRow(y);
 
-    /* 1. DAY CHANGE */
-    y = drawSectionBar(y, '1. DAY CHANGE');
+    /* ===== 1. DAY CHANGE ===== */
+    y = drawSectionBar(y, '1.  DAY CHANGE');
+    // Price day change (replaces COMEX row)
+    y = drawRow(y, 'Price Day Change (LME Cash $/t)',
+      ['Cu','Zn','Al'].map(k => {
+        const v = d[k].priceChg;
+        if (v == null) return null;
+        return { text: chgArrow(v, 2), color: signColor(v) };
+      }),
+      { bold: true, fs: 9 });
     y = drawRow(y, 'LME Stock Chg (t)',
-      ['Cu','Zn','Al'].map(k => d[k].lmeStockChg == null ? null : { text: fSgn(d[k].lmeStockChg, 0), color: signColor(d[k].lmeStockChg) }));
+      ['Cu','Zn','Al'].map(k => {
+        const v = d[k].lmeStockChg;
+        if (v == null) return null;
+        return { text: chgArrow(v, 0), color: signColor(v) };
+      }));
     y = drawRow(y, 'SHFE Stock Chg (t)',
-      ['Cu','Zn','Al'].map(k => d[k].shfeChg == null ? null : { text: fSgn(d[k].shfeChg, 0), color: signColor(d[k].shfeChg) }));
-    y = drawRow(y, 'COMEX Net Spec Chg (lots)',
-      ['Cu','Zn','Al'].map(k => d[k].comexNet == null ? 'n/a' :
-        (cftcSt ? { text: fSgn(cftcSt.deltaNc, 0), color: signColor(cftcSt.deltaNc) } : null)));
+      ['Cu','Zn','Al'].map(k => {
+        const v = d[k].shfeChg;
+        if (v == null) return null;
+        return { text: chgArrow(v, 0), color: signColor(v) };
+      }));
 
-    /* 2. IMPORT PARITY — ONLY NET */
-    y = drawSectionBar(y, '2. IMPORT PARITY (Rs/kg)');
+    /* ===== 2. IMPORT PARITY ===== */
+    y = drawSectionBar(y, '2.  IMPORT PARITY  (Rs/kg)');
     y = drawRow(y, 'Landed (Rs/kg)',
       ['Cu','Zn','Al'].map(k => d[k].parity.landedKg == null ? null : fNum(d[k].parity.landedKg, 2)));
     y = drawRow(y, 'MCX (Rs/kg)',
       ['Cu','Zn','Al'].map(k => d[k].e.mcx == null ? null : fNum(d[k].e.mcx, 2)));
-    y = drawRow(y, 'NET DIFF (Landed − MCX) (Rs/kg)',
+    y = drawRow(y, 'NET DIFF  (Landed − MCX)  Rs/kg',
       ['Cu','Zn','Al'].map(k => {
         const n = d[k].parity.net;
         if (n == null) return null;
         return { text: fSgn(n, 2), color: n < 0 ? cPos : cNeg };
       }),
-      { bold: true, fs: 9.2, h: 7 });
+      { bold: true, fs: 9.6, h: 7 });
 
-    /* 3. NET POSITIONING — ONLY NET + SIGNAL */
-    y = drawSectionBar(y, '3. NET POSITIONING');
+    /* ===== 3. NET POSITIONING ===== */
+    y = drawSectionBar(y, '3.  NET POSITIONING');
     y = drawRow(y, 'LME Funds Net (lots)',
       ['Cu','Zn','Al'].map(k => {
         const s = d[k].lmeCotrStat;
@@ -4814,10 +4858,14 @@ async function generateInstitutionalPdfReport() {
     y = drawRow(y, 'COMEX Net (lots)',
       ['Cu','Zn','Al'].map(k => d[k].comexNet == null ? 'n/a' : { text: fSgn(d[k].comexNet, 0), color: signColor(d[k].comexNet) }));
 
-    /* 4. ROLLOVER — VALUE + STRUCTURE */
-    y = drawSectionBar(y, '4. ROLLOVER');
+    /* ===== 4. ROLLOVER ===== */
+    y = drawSectionBar(y, '4.  ROLLOVER');
     y = drawRow(y, 'LME Cash–3M Roll ($/t)',
-      ['Cu','Zn','Al'].map(k => d[k].lmeRoll == null ? null : { text: fSgn(d[k].lmeRoll, 2), color: signColor(d[k].lmeRoll) }),
+      ['Cu','Zn','Al'].map(k => {
+        const v = d[k].lmeRoll;
+        if (v == null) return null;
+        return { text: fSgn(v, 2), color: signColor(v) };
+      }),
       { bold: true, fs: 9 });
     y = drawRow(y, 'LME Structure',
       ['Cu','Zn','Al'].map(k => {
@@ -4828,7 +4876,11 @@ async function generateInstitutionalPdfReport() {
       }),
       { bold: true, fs: 8.8 });
     y = drawRow(y, 'MCX 1M Roll (Rs/kg)',
-      ['Cu','Zn','Al'].map(k => d[k].mcxRoll == null ? null : { text: fSgn(d[k].mcxRoll, 2), color: signColor(d[k].mcxRoll) }),
+      ['Cu','Zn','Al'].map(k => {
+        const v = d[k].mcxRoll;
+        if (v == null) return null;
+        return { text: fSgn(v, 2), color: signColor(v) };
+      }),
       { bold: true, fs: 9 });
     y = drawRow(y, 'MCX Structure',
       ['Cu','Zn','Al'].map(k => {
@@ -4839,45 +4891,47 @@ async function generateInstitutionalPdfReport() {
       }),
       { bold: true, fs: 8.8 });
 
-    /* =============================================================
-       NALCO — Separate band below the table
-       ============================================================= */
+    /* ===== NALCO BAND ===== */
     y += 3;
 
-    if (y + 24 < pageH - 8) {
-      // NALCO box
-      const boxH = 22;
+    if (y + 26 < pageH - 8) {
+      const boxH = 26;
       const boxW = pageW - 20;
       const boxX = 10;
 
-      doc.setDrawColor(cAmber[0], cAmber[1], cAmber[2]);
-      doc.setLineWidth(0.25);
-      doc.setFillColor(255, 250, 235);
-      doc.rect(boxX, y, boxW, boxH, 'FD');
-
-      // Title strip
+      // dark card
       doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
+      doc.rect(boxX, y, boxW, boxH, 'F');
+      doc.setDrawColor(cAmber[0], cAmber[1], cAmber[2]);
+      doc.setLineWidth(0.3);
+      doc.rect(boxX, y, boxW, boxH, 'S');
+
+      // title strip
+      doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
       doc.rect(boxX, y, boxW, 6.5, 'F');
       doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
-      doc.rect(boxX, y, 2, 6.5, 'F');
+      doc.rect(boxX, y, 3, 6.5, 'F');
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.setTextColor(cWhite[0], cWhite[1], cWhite[2]);
-      doc.text('NALCO ALUMINIUM — REVISION WATCH & ROLLING 3-DAY SIGNAL', boxX + 5, y + 4.4);
+      doc.setFontSize(9.4);
+      doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
+      doc.text('NALCO ALUMINIUM — REVISION WATCH & ROLLING 3-DAY SIGNAL', boxX + 6, y + 4.6);
 
-      // Body — 4 columns of info
-      let ny = y + 8.5;
-      const colW2 = boxW / 4;
+      const innerPad = 5;
+      const colW2 = (boxW - innerPad * 2) / 4;
+      const labelY = y + 11;
+      const valueY = y + 16.6;
+      const detailY = y + 23;
 
-      const drawNalcoField = (cx, cy, lbl, val, col) => {
+      const drawNalcoCol = (cx, lbl, val, col) => {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(6.6);
         doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
-        doc.text(pdfClean(lbl), cx, cy);
+        doc.text(pdfClean(lbl), cx, labelY);
+
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8.6);
-        doc.setTextColor(...(col || cText));
-        doc.text(pdfClean(val), cx, cy + 4.4);
+        doc.setFontSize(9.2);
+        doc.setTextColor(...(col || cWhite));
+        doc.text(pdfClean(val), cx, valueY);
       };
 
       if (NALCO_RAW.length) {
@@ -4889,95 +4943,107 @@ async function generateInstitutionalPdfReport() {
         const dirColor = nLast.direction === 'increase' ? cGreen : cRed;
         const sigColor = nSig.status === 'up' ? cGreen : nSig.status === 'down' ? cRed : nSig.status === 'hold' ? cAmber : cMuted;
 
-        drawNalcoField(boxX + 5,               ny, 'EFFECTIVE DATE', nLast.effDate);
-        drawNalcoField(boxX + 5 + colW2,       ny, 'DIRECTION & MAGNITUDE',
-          `${dirTxt}  Rs.${fNum(nLast.magnitude, 0)}/MT`, dirColor);
-        drawNalcoField(boxX + 5 + colW2 * 2,   ny, 'PREV-DAY LME CASH (REF)',
-          nRef != null ? `$${fNum(nRef, 2)}/t` : '-');
-        drawNalcoField(boxX + 5 + colW2 * 3,   ny, '3-DAY ROLLING SIGNAL',
-          nSig.status.toUpperCase(), sigColor);
+        drawNalcoCol(boxX + innerPad,                    'EFFECTIVE DATE',           nLast.effDate);
+        drawNalcoCol(boxX + innerPad + colW2,            'DIRECTION & MAGNITUDE',    `${dirTxt}  Rs.${fNum(nLast.magnitude, 0)}/MT`, dirColor);
+        drawNalcoCol(boxX + innerPad + colW2 * 2,        'PREV-DAY LME CASH (REF)',  nRef != null ? `$${fNum(nRef, 2)}/t` : '-');
+        drawNalcoCol(boxX + innerPad + colW2 * 3,        '3-DAY ROLLING SIGNAL',     nSig.status.toUpperCase(), sigColor);
 
-        // signal detail line
-        ny += 10.5;
         doc.setFont('helvetica', 'italic');
         doc.setFontSize(7.6);
         doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
-        doc.text(pdfClean(nSig.detail), boxX + 5, ny);
+        doc.text(pdfClean(nSig.detail), boxX + innerPad, detailY);
       } else {
         doc.setFont('helvetica', 'italic');
         doc.setFontSize(8);
         doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
-        doc.text('NALCO data pending fetch.', boxX + 5, ny + 4);
+        doc.text('NALCO data pending fetch.', boxX + innerPad, valueY);
       }
 
       y += boxH + 2;
     }
 
     doc.setFont('helvetica', 'italic');
-    doc.setFontSize(6.5);
+    doc.setFontSize(6.6);
     doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
     doc.text(`Generated ${todayIso} ${timeStr} · Sources: LME · SHFE · CFTC · MCX · SBI FX · NALCO`, 10, pageH - 4);
 
     /* =============================================================
-       PAGE 2 — 3 CHARTS
+       PAGE 2 — 6 CHARTS (COT row + LME inventory row)
        ============================================================= */
     doc.addPage('a4', 'landscape');
-    drawPageHeader('PAGE 2  |  CHARTS — INVENTORY, ARBITRAGE & CURVE SPREAD');
+    drawPageHeader('PAGE 2  |  COT NET POSITIONING & LME TOTAL INVENTORY — Cu / Zn / Al');
     let yc = 24;
 
-    const chartPanelH = pageH - yc - 12;
-    const chartGap = 4;
-    const chartW = (pageW - 20 - chartGap * 2) / 3;
+    const gridGapX = 4;
+    const gridGapY = 4;
+    const chartW = (pageW - 20 - gridGapX * 2) / 3;
+    const availableH = pageH - yc - 12;
+    const chartH = (availableH - gridGapY) / 2;
 
     const drawChartPanel = (title, sub, img, x, yy, w, h) => {
+      // dark card
+      doc.setFillColor(cPanelBg[0], cPanelBg[1], cPanelBg[2]);
+      doc.rect(x, yy, w, h, 'F');
       doc.setDrawColor(cLine[0], cLine[1], cLine[2]);
-      doc.setLineWidth(0.15);
-      doc.setFillColor(252, 253, 255);
-      doc.rect(x, yy, w, h, 'FD');
+      doc.setLineWidth(0.2);
+      doc.rect(x, yy, w, h, 'S');
 
-      doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
-      doc.rect(x, yy, w, 7, 'F');
+      // title bar
+      doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
+      doc.rect(x, yy, w, 6.5, 'F');
       doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
-      doc.rect(x, yy, 2, 7, 'F');
+      doc.rect(x, yy, 2.5, 6.5, 'F');
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.setTextColor(cWhite[0], cWhite[1], cWhite[2]);
-      doc.text(pdfClean(title), x + 4, yy + 4.8);
+      doc.setFontSize(8.4);
+      doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
+      doc.text(pdfClean(title), x + 4.5, yy + 4.5);
+
+      let imgY = yy + 7.5;
+      let imgH = h - 8.5;
 
       if (sub) {
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7);
+        doc.setFontSize(6.6);
         doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
-        doc.text(pdfClean(sub), x + 4, yy + 11);
+        doc.text(pdfClean(sub), x + 4.5, yy + 10.8);
+        imgY = yy + 11.5;
+        imgH = h - 12.5;
       }
 
-      const imgY = yy + 13;
-      const imgH = h - 15;
       if (img) {
         try { doc.addImage(img, 'PNG', x + 2, imgY, w - 4, imgH); }
         catch (e) {
-          doc.setFont('helvetica', 'italic'); doc.setFontSize(8.5);
+          doc.setFont('helvetica', 'italic'); doc.setFontSize(8);
           doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
           doc.text('Chart render error', x + w / 2, imgY + imgH / 2, { align: 'center' });
         }
       } else {
-        doc.setFont('helvetica', 'italic'); doc.setFontSize(8.5);
+        doc.setFont('helvetica', 'italic'); doc.setFontSize(8);
         doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
         doc.text('Chart data unavailable', x + w / 2, imgY + imgH / 2, { align: 'center' });
       }
     };
 
-    const chartPanels = [
-      { title: 'SHFE Inventory — Cu / Al / Zn', sub: 'Warrants & daily change (t)', img: chartImgs.shfeTot },
-      { title: `LME–MCX Spread — ${currentLMC}`, sub: 'MCX minus LME cash (Rs/kg)', img: chartImgs.lmc },
-      { title: `LME Cash–3M & Stock — ${currentCSP}`, sub: 'Curve structure & warehouse stock', img: chartImgs.csp }
+    const cotPanels = [
+      { title: 'LME COPPER — COT Net Positioning',    sub: 'Investment Funds Net + LME Price', img: chartImgs.cotLmeCu },
+      { title: 'LME ZINC — COT Net Positioning',      sub: 'Investment Funds Net + LME Price', img: chartImgs.cotLmeZn },
+      { title: 'LME ALUMINIUM — COT Net Positioning', sub: 'Investment Funds Net + LME Price', img: chartImgs.cotLmeAl }
+    ];
+    const invPanels = [
+      { title: 'LME COPPER — Total Inventory',    sub: 'Total warehouse stock trend (t)', img: chartImgs.lmeInvCu },
+      { title: 'LME ZINC — Total Inventory',      sub: 'Total warehouse stock trend (t)', img: chartImgs.lmeInvZn },
+      { title: 'LME ALUMINIUM — Total Inventory', sub: 'Total warehouse stock trend (t)', img: chartImgs.lmeInvAl }
     ];
 
-    for (let i = 0; i < chartPanels.length; i++) {
-      const p = chartPanels[i];
-      const cx = 10 + i * (chartW + chartGap);
-      drawChartPanel(p.title, p.sub, p.img, cx, yc, chartW, chartPanelH);
-    }
+    cotPanels.forEach((p, i) => {
+      const cx = 10 + i * (chartW + gridGapX);
+      drawChartPanel(p.title, p.sub, p.img, cx, yc, chartW, chartH);
+    });
+    const row2Y = yc + chartH + gridGapY;
+    invPanels.forEach((p, i) => {
+      const cx = 10 + i * (chartW + gridGapX);
+      drawChartPanel(p.title, p.sub, p.img, cx, row2Y, chartW, chartH);
+    });
 
     const totalPages = doc.internal.getNumberOfPages();
     for (let p = 1; p <= totalPages; p++) {
