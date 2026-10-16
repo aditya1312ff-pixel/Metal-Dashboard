@@ -1,5 +1,5 @@
 {
-  "Cu_basis": 102,
+  "Cu_basis": 0,
   "Zn_basis": 61,
   "Al_basis": 6,
   "Cu_premium": 285,
@@ -10,5 +10,5 @@
   "Al_dutyPct": 8.25,
   "Cu_freight": 0,
   "Zn_freight": 0,
-  "Al_freight": null
+  "Al_freight": 1500
 }
