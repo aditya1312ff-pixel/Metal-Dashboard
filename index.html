@@ -4582,22 +4582,20 @@ async function generateInstitutionalPdfReport() {
     const todayIso = now.toISOString().slice(0, 10);
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-    /* ---------- DARKER THEME ---------- */
-    const cNavy   = [8, 12, 22];       // deeper page band
-    const cSlate  = [14, 20, 32];      // section bars (very dark)
-    const cAmber  = [255, 165, 45];    // brighter amber accent
-    const cAmberD = [232, 143, 35];    // deeper amber for text on light
-    const cGreen  = [34, 197, 94];     // bright green
-    const cRed    = [239, 68, 68];     // bright red
-    const cText   = [225, 232, 240];   // light text on dark rows
-    const cDark   = [30, 35, 45];      // dark text on light backgrounds
-    const cMuted  = [148, 163, 184];   // muted labels
+    /* ---------- DARK THEME ---------- */
+    const cNavy   = [8, 12, 22];
+    const cSlate  = [14, 20, 32];
+    const cAmber  = [255, 165, 45];
+    const cGreen  = [34, 197, 94];
+    const cRed    = [239, 68, 68];
+    const cText   = [225, 232, 240];
+    const cMuted  = [148, 163, 184];
     const cWhite  = [255, 255, 255];
-    const cLine   = [45, 58, 82];      // dark row divider
-    const cRowEven = [20, 28, 42];     // dark alternate row
-    const cRowOdd  = [26, 34, 50];     // dark alternate row 2
-    const cLabelBg = [16, 22, 34];     // metric label column background
-    const cPanelBg = [18, 24, 38];     // chart card inner
+    const cLine   = [45, 58, 82];
+    const cRowEven = [20, 28, 42];
+    const cRowOdd  = [26, 34, 50];
+    const cLabelBg = [16, 22, 34];
+    const cPanelBg = [18, 24, 38];
 
     const fNum = (v, dp = 2) => (v == null || !isFinite(v)) ? '-' : Number(v).toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
     const fSgn = (v, dp = 2) => (v == null || !isFinite(v)) ? '-' : (v >= 0 ? '+' : '') + fNum(v, dp);
@@ -4612,7 +4610,6 @@ async function generateInstitutionalPdfReport() {
     const cspDateStr = CSP_RAW.length ? CSP_RAW[CSP_RAW.length - 1].date : '-';
     const shfeDateStr = SHFE_HISTORY.length ? SHFE_HISTORY[SHFE_HISTORY.length - 1].date : '-';
 
-    /* ---------- HEADER / FOOTER ---------- */
     const drawPageHeader = (pageTitleSuffix) => {
       doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
       doc.rect(0, 0, pageW, 20, 'F');
@@ -4651,7 +4648,7 @@ async function generateInstitutionalPdfReport() {
     };
 
     /* =============================================================
-       PAGE 1 — TABLE
+       PAGE 1 — PER-METAL TABLE
        ============================================================= */
     drawPageHeader('PAGE 1  |  PER-METAL DESK SNAPSHOT');
     let y = 24;
@@ -4663,7 +4660,6 @@ async function generateInstitutionalPdfReport() {
     const cspPrev = CSP_RAW.length > 1 ? CSP_RAW[CSP_RAW.length - 2] : null;
     const shfeLast = SHFE_HISTORY.length ? SHFE_HISTORY[SHFE_HISTORY.length - 1] : { metals: {} };
     const shfePrev = SHFE_HISTORY.length > 1 ? SHFE_HISTORY[SHFE_HISTORY.length - 2] : { metals: {} };
-    const cftcSt = cftcStats();
     const lmeKeyByCsp = { Cu: 'copper', Zn: 'zinc', Al: 'aluminium' };
 
     const d = {};
@@ -4671,20 +4667,24 @@ async function generateInstitutionalPdfReport() {
       const key = m.key;
       const lmeKey = lmeKeyByCsp[key];
 
-      // --- metal price day change (LME Cash) ---
-      // Use CSP cash: last vs previous
+      // LME Cash day change
       const cashNow  = cspLast ? cspLast[key]?.cash ?? null : null;
       const cashPrev = cspPrev ? cspPrev[key]?.cash ?? null : null;
-      let priceChg = null, pricePct = null;
-      if (cashNow != null && cashPrev != null && cashPrev !== 0) {
-        priceChg = cashNow - cashPrev;
-        pricePct = (priceChg / cashPrev) * 100;
-      }
+      let cashChg = null;
+      if (cashNow != null && cashPrev != null) cashChg = cashNow - cashPrev;
 
+      // LME 3M day change
+      const threeNow  = cspLast ? cspLast[key]?.threeM ?? null : null;
+      const threePrev = cspPrev ? cspPrev[key]?.threeM ?? null : null;
+      let threeChg = null;
+      if (threeNow != null && threePrev != null) threeChg = threeNow - threePrev;
+
+      // LME Stock day change
       const lmeStockCur  = lmeLast[lmeKey]?.total ?? (cspLast ? cspLast[key]?.stock : null) ?? null;
       const lmeStockPrev = lmePrev[lmeKey]?.total ?? (cspPrev ? cspPrev[key]?.stock : null) ?? null;
       const lmeStockChg  = (lmeStockCur != null && lmeStockPrev != null) ? lmeStockCur - lmeStockPrev : null;
 
+      // SHFE Stock day change
       const shfeCur  = shfeLast.metals?.[lmeKey]?.qty ?? null;
       const shfePrevQ = shfePrev.metals?.[lmeKey]?.qty ?? null;
       const shfeChg  = (shfeCur != null && shfePrevQ != null) ? shfeCur - shfePrevQ : null;
@@ -4692,30 +4692,41 @@ async function generateInstitutionalPdfReport() {
       const lmeRoll = rolloverGetEffectiveLmeRoll(key);
       const mcxDef = rolloverMcxDefaults(key);
 
-      const lmeCotrStat = lmeCotrStats(lmeKey);
-      const isCu = key === 'Cu';
-      const comexNet = isCu && cftcSt ? cftcSt.last.ncNet : null;
-
       const parity = parityCalc(m);
       const e = parityEdits[key] || {};
 
+      // Desk signal — same logic as dashboard
+      let deskSignal, deskSignalColor;
+      if (parity.net == null) {
+        deskSignal = '—';
+        deskSignalColor = cMuted;
+      } else if (parity.net < -2) {
+        deskSignal = 'IMPORT ARB OPEN';
+        deskSignalColor = cGreen;
+      } else if (parity.net > 2) {
+        deskSignal = 'DOMESTIC DISCOUNT';
+        deskSignalColor = cRed;
+      } else {
+        deskSignal = 'PARITY BALANCED';
+        deskSignalColor = cAmber;
+      }
+
       d[key] = {
         parity, e,
-        cashNow, priceChg, pricePct,
+        cashNow, cashChg, threeNow, threeChg,
         lmeStockChg, shfeChg,
         lmeRoll, mcxRoll: mcxDef.roll,
-        lmeCotrStat, comexNet
+        deskSignal, deskSignalColor
       };
     }
 
-    /* ---------- Table geometry ---------- */
+    /* Table geometry */
     const labelColW = 62;
     const valueColW = (pageW - 20 - labelColW) / 3;
     const rowH = 6.4;
     const sectionH = 6;
 
     const drawHeaderRow = (yy) => {
-      // solid dark bar
       doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
       doc.rect(10, yy, pageW - 20, 9, 'F');
       doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
@@ -4757,7 +4768,6 @@ async function generateInstitutionalPdfReport() {
     const drawRow = (yy, label, values, opts = {}) => {
       const h = opts.h || rowH;
 
-      // label column — darker background
       doc.setFillColor(cLabelBg[0], cLabelBg[1], cLabelBg[2]);
       doc.rect(10, yy, labelColW, h, 'F');
       doc.setFont('helvetica', opts.bold ? 'bold' : 'normal');
@@ -4765,7 +4775,6 @@ async function generateInstitutionalPdfReport() {
       doc.setTextColor(opts.bold ? cWhite[0] : 210, opts.bold ? cWhite[1] : 220, opts.bold ? cWhite[2] : 235);
       doc.text(pdfClean(label), 15, yy + h * 0.68);
 
-      // value columns — alternating dark
       values.forEach((v, i) => {
         const xLeft = 10 + labelColW + i * valueColW;
         const bg = (i % 2 === 0) ? cRowEven : cRowOdd;
@@ -4791,7 +4800,6 @@ async function generateInstitutionalPdfReport() {
     const cNeu = cText;
     const signColor = v => v == null ? cNeu : (v > 0 ? cPos : v < 0 ? cNeg : cNeu);
 
-    // format a change as "+X ▲" or "-X ▼"
     const chgArrow = (v, dp = 0) => {
       if (v == null || !isFinite(v)) return null;
       const arrow = v > 0 ? '\u25B2' : v < 0 ? '\u25BC' : '\u2022';
@@ -4803,10 +4811,16 @@ async function generateInstitutionalPdfReport() {
 
     /* ===== 1. DAY CHANGE ===== */
     y = drawSectionBar(y, '1.  DAY CHANGE');
-    // Price day change (replaces COMEX row)
-    y = drawRow(y, 'Price Day Change (LME Cash $/t)',
+    y = drawRow(y, 'LME Cash Chg ($/t)',
       ['Cu','Zn','Al'].map(k => {
-        const v = d[k].priceChg;
+        const v = d[k].cashChg;
+        if (v == null) return null;
+        return { text: chgArrow(v, 2), color: signColor(v) };
+      }),
+      { bold: true, fs: 9 });
+    y = drawRow(y, 'LME 3M Chg ($/t)',
+      ['Cu','Zn','Al'].map(k => {
+        const v = d[k].threeChg;
         if (v == null) return null;
         return { text: chgArrow(v, 2), color: signColor(v) };
       }),
@@ -4837,29 +4851,13 @@ async function generateInstitutionalPdfReport() {
         return { text: fSgn(n, 2), color: n < 0 ? cPos : cNeg };
       }),
       { bold: true, fs: 9.6, h: 7 });
+    // DESK SIGNAL row — big, prominent
+    y = drawRow(y, 'DESK SIGNAL',
+      ['Cu','Zn','Al'].map(k => ({ text: d[k].deskSignal, color: d[k].deskSignalColor })),
+      { bold: true, fs: 9.6, h: 8 });
 
-    /* ===== 3. NET POSITIONING ===== */
-    y = drawSectionBar(y, '3.  NET POSITIONING');
-    y = drawRow(y, 'LME Funds Net (lots)',
-      ['Cu','Zn','Al'].map(k => {
-        const s = d[k].lmeCotrStat;
-        if (!s) return null;
-        return { text: fSgn(s.cur.fundNet, 0), color: signColor(s.cur.fundNet) };
-      }),
-      { bold: true, fs: 9 });
-    y = drawRow(y, 'Signal',
-      ['Cu','Zn','Al'].map(k => {
-        const s = d[k].lmeCotrStat;
-        if (!s) return null;
-        const col = s.signalCls === 'bwd' ? cGreen : s.signalCls === 'ctg' ? cRed : cMuted;
-        return { text: s.signal, color: col };
-      }),
-      { bold: true, fs: 9 });
-    y = drawRow(y, 'COMEX Net (lots)',
-      ['Cu','Zn','Al'].map(k => d[k].comexNet == null ? 'n/a' : { text: fSgn(d[k].comexNet, 0), color: signColor(d[k].comexNet) }));
-
-    /* ===== 4. ROLLOVER ===== */
-    y = drawSectionBar(y, '4.  ROLLOVER');
+    /* ===== 3. ROLLOVER ===== */
+    y = drawSectionBar(y, '3.  ROLLOVER');
     y = drawRow(y, 'LME Cash–3M Roll ($/t)',
       ['Cu','Zn','Al'].map(k => {
         const v = d[k].lmeRoll;
@@ -4899,14 +4897,12 @@ async function generateInstitutionalPdfReport() {
       const boxW = pageW - 20;
       const boxX = 10;
 
-      // dark card
       doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
       doc.rect(boxX, y, boxW, boxH, 'F');
       doc.setDrawColor(cAmber[0], cAmber[1], cAmber[2]);
       doc.setLineWidth(0.3);
       doc.rect(boxX, y, boxW, boxH, 'S');
 
-      // title strip
       doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
       doc.rect(boxX, y, boxW, 6.5, 'F');
       doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
@@ -4968,10 +4964,12 @@ async function generateInstitutionalPdfReport() {
     doc.text(`Generated ${todayIso} ${timeStr} · Sources: LME · SHFE · CFTC · MCX · SBI FX · NALCO`, 10, pageH - 4);
 
     /* =============================================================
-       PAGE 2 — 6 CHARTS (COT row + LME inventory row)
+       PAGE 2 — CHARTS
+       Row 1: LME COT net positioning for Cu / Zn / Al (no COMEX)
+       Row 2: LME Total Inventory for Cu / Zn / Al
        ============================================================= */
     doc.addPage('a4', 'landscape');
-    drawPageHeader('PAGE 2  |  COT NET POSITIONING & LME TOTAL INVENTORY — Cu / Zn / Al');
+    drawPageHeader('PAGE 2  |  LME COT NET POSITIONING & LME TOTAL INVENTORY — Cu / Zn / Al');
     let yc = 24;
 
     const gridGapX = 4;
@@ -4981,14 +4979,12 @@ async function generateInstitutionalPdfReport() {
     const chartH = (availableH - gridGapY) / 2;
 
     const drawChartPanel = (title, sub, img, x, yy, w, h) => {
-      // dark card
       doc.setFillColor(cPanelBg[0], cPanelBg[1], cPanelBg[2]);
       doc.rect(x, yy, w, h, 'F');
       doc.setDrawColor(cLine[0], cLine[1], cLine[2]);
       doc.setLineWidth(0.2);
       doc.rect(x, yy, w, h, 'S');
 
-      // title bar
       doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
       doc.rect(x, yy, w, 6.5, 'F');
       doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
