@@ -151,7 +151,6 @@
   .csp-latest-card .badge.bwd { background:rgba(46,204,113,0.18); color:var(--green); }
   .csp-latest-card .badge.ctg { background:rgba(231,76,60,0.18); color:var(--red); }
   .csp-latest-card .badge.na { background:rgba(124,138,160,0.18); color:var(--muted); }
-  /* Fixed CSP table alignment */
   .csp-days-wrap { overflow-x:auto; }
   .csp-days-table { width:100%; border-collapse:collapse; font-size:0.78rem; table-layout:fixed; }
   .csp-days-table col.c-metal { width:12%; }
@@ -1241,17 +1240,29 @@ function fmtIndian(v, dp = 0) {
   const formatted = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
   return '₹' + (neg ? '-' : '') + formatted + (decPart ? '.' + decPart : '');
 }
-  /* Strip non-ASCII so jsPDF's built-in Helvetica never prints garbled glyphs */
+/* Strip non-ASCII so jsPDF's built-in Helvetica never prints garbled glyphs */
 function pdfClean(str) {
   if (str == null) return '-';
   return String(str)
-    .replace(/[\u2013\u2014]/g, '-')   // en / em dash
-    .replace(/[\u2022\u00b7]/g, '|')   // bullet / middle dot
-    .replace(/\u2192/g, '->')          // right arrow
-    .replace(/\u0394/g, 'Chg ')        // Greek Delta
-    .replace(/\u03c3/g, ' SD')         // Greek sigma
-    .replace(/\u20b9/g, 'Rs.')         // rupee sign
-    .replace(/[^\x20-\x7E]/g, '');     // strip any other non-printable
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/[\u2022\u00b7]/g, '|')
+    .replace(/\u2192/g, '->')
+    .replace(/\u0394/g, 'Chg ')
+    .replace(/\u03c3/g, ' SD')
+    .replace(/\u20b9/g, 'Rs.')
+    .replace(/[^\x20-\x7E]/g, '');
+}
+/* Safe RGB helper — never returns NaN channels */
+function safeRgbFromHex(hex, fallback) {
+  const fb = fallback || [100, 100, 100];
+  if (typeof hex !== 'string') return fb;
+  const m = hex.match(/^#([0-9a-fA-F]{6})$/);
+  if (!m) return fb;
+  const r = parseInt(m[1].slice(0,2), 16);
+  const g = parseInt(m[1].slice(2,4), 16);
+  const b = parseInt(m[1].slice(4,6), 16);
+  if (!isFinite(r) || !isFinite(g) || !isFinite(b)) return fb;
+  return [r, g, b];
 }
 
 /* ========================================================================
@@ -1265,7 +1276,7 @@ let currentSeasonMetal = 'copper';
 let currentCSP = 'Cu', currentCSP2 = 'Cu', currentLMC = 'Copper';
 let selectedMatrixSeries = new Set();
 let selectedPriceSeries = new Set();
-let priceSelectMode = 'single';          // NEW
+let priceSelectMode = 'single';
 let priceFreq = 'daily', cspFreq = 'daily', csp2Freq = 'daily', lmcFreq = 'daily', sbiFreq = 'daily';
 let controlsWired = false;
 let NALCO_RAW = [], nalcoTimer = null;
@@ -1308,8 +1319,8 @@ const LME_YAXIS_KEY = 'lme_y_axis';
 const LME_RATIOMODE_KEY = 'lme_ratio_mode';
 const SHFE_LAST_KEY = 'shfe_last_updated';
 const SHFE_HISTORY_KEY = 'shfe_history';
-const SHFE_TF_KEY = 'shfe_tf_days';         // NEW
-const SHFE_CHIPS_KEY = 'shfe_chips';        // NEW
+const SHFE_TF_KEY = 'shfe_tf_days';
+const SHFE_CHIPS_KEY = 'shfe_chips';
 
 const ROLL_EDITS_KEY = 'rollover_lme_roll_v1';
 const ROLL_PL_INPUTS_KEY = 'rollover_pl_inputs_v1';
@@ -1337,15 +1348,16 @@ let rollMcxRollRange = '6m';
 
 let CFTC_COT = [];
 let cftcNetChart;
-const cftcSettings = { range: '1y', mode: 'both' };      // default now 'both'
+const cftcSettings = { range: '1y', mode: 'both' };
 let LME_COTR_HISTORY = [];
 const lmeChartInstances = { copper: null, aluminium: null, zinc: null };
-const lmeChartSettings = {                                 // default mode now 'both'
+const lmeChartSettings = {
   copper:    { range:'1y', mode:'both' },
   aluminium: { range:'1y', mode:'both' },
   zinc:      { range:'1y', mode:'both' },
 };
 let lmeCotrQueue = [];
+
 /* ========================================================================
    TAB SWITCHING
    ======================================================================== */
@@ -1917,17 +1929,15 @@ function parseNalcoHTML(html) {
   return rows;
 }
 
-/* FIX: reference = last CSP strictly BEFORE the effective date */
 function getPrevLmeCashBefore(date) {
   let best = null;
   for (const r of CSP_RAW) {
     if (!r.Al || r.Al.cash == null) continue;
     if (r.date < date) best = r;
-    else break;                        // CSP_RAW is sorted ascending
+    else break;
   }
   return best ? best.Al.cash : null;
 }
-/* FIX: count CSP days strictly AFTER the effective date */
 function countAllCspDaysAfter(date) {
   const out = [];
   for (const r of CSP_RAW) { if (r.date > date && r.Al && r.Al.cash != null) out.push({ date: r.date, cash: r.Al.cash }); }
@@ -1954,7 +1964,7 @@ function renderNalcoCard() {
   if (!NALCO_RAW.length) { grid.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;">No NALCO data.</div>'; return; }
   const last = NALCO_RAW[0];
   const eff = last.effDate;
-  const ref = getPrevLmeCashBefore(eff);      // << FIX
+  const ref = getPrevLmeCashBefore(eff);
   const allDays = countAllCspDaysAfter(eff);
   const sig = computeNalcoSignal(ref, allDays);
   const signal = sig.status;
@@ -2161,7 +2171,7 @@ function wireCspUpdater() {
 }
 
 /* ========================================================================
-   CSP SNAPSHOT (FIXED ALIGNMENT)
+   CSP SNAPSHOT
    ======================================================================== */
 function renderCSPLatest() {
   const grid = document.getElementById('cspLatestGrid');
@@ -2187,8 +2197,6 @@ function renderCSPLatest() {
   }
   grid.innerHTML = html;
 }
-
-/* FIXED ALIGNMENT: single table per metal, correct thead/tbody nesting */
 function renderCSPDaysTable() {
   const wrap = document.getElementById('cspDaysTable');
   if (!wrap) return;
@@ -2314,7 +2322,7 @@ function renderLmcChart() {
 }
 
 /* ========================================================================
-   PRICE CHART — NEW single/multi selection
+   PRICE CHART
    ======================================================================== */
 function populatePricePicker() {
   const picker = document.getElementById('pricePicker');
@@ -2325,16 +2333,10 @@ function populatePricePicker() {
     cb.type = 'checkbox'; cb.value = name;
     cb.addEventListener('change', () => {
       if (priceSelectMode === 'single') {
-        /* SINGLE mode: clear all, only keep this one */
-        if (cb.checked) {
-          selectedPriceSeries.clear();
-          selectedPriceSeries.add(name);
-        } else {
-          selectedPriceSeries.delete(name);
-        }
+        if (cb.checked) { selectedPriceSeries.clear(); selectedPriceSeries.add(name); }
+        else { selectedPriceSeries.delete(name); }
         updatePricePickerUI();
       } else {
-        /* MULTI mode: accumulate */
         if (cb.checked) selectedPriceSeries.add(name);
         else selectedPriceSeries.delete(name);
         lbl.classList.toggle('active', cb.checked);
@@ -2345,7 +2347,6 @@ function populatePricePicker() {
     lbl.appendChild(document.createTextNode(name));
     picker.appendChild(lbl);
   });
-  /* Default selection: single mode -> only LME Copper; multi -> a few */
   if (priceSelectMode === 'single') {
     if (SERIES_NAMES.includes('LME Copper')) selectedPriceSeries = new Set(['LME Copper']);
   } else {
@@ -3090,8 +3091,6 @@ function wireControls() {
   document.querySelectorAll('#csp2Freq button').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('#csp2Freq button').forEach(x => x.classList.remove('active')); b.classList.add('active'); csp2Freq = b.dataset.freq; renderCSP2(); }));
   document.querySelectorAll('#lmcFreq button').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('#lmcFreq button').forEach(x => x.classList.remove('active')); b.classList.add('active'); lmcFreq = b.dataset.freq; renderLmcChart(); }));
   document.querySelectorAll('#sbiFreq button').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('#sbiFreq button').forEach(x => x.classList.remove('active')); b.classList.add('active'); sbiFreq = b.dataset.freq; renderSbiChart(); }));
-
-  /* NEW: single/multi mode toggle for the price chart */
   document.querySelectorAll('#priceSelectMode button').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('#priceSelectMode button').forEach(x => x.classList.remove('active'));
     b.classList.add('active');
@@ -3100,7 +3099,6 @@ function wireControls() {
     if (hint) hint.textContent = priceSelectMode === 'single'
       ? 'Single-select mode: clicking a series replaces the current one.'
       : 'Multi-select mode: click to add / remove any number of series.';
-    /* In single mode, collapse to the first currently-selected series */
     if (priceSelectMode === 'single' && selectedPriceSeries.size > 1) {
       const first = [...selectedPriceSeries][0];
       selectedPriceSeries = new Set([first]);
@@ -3108,20 +3106,14 @@ function wireControls() {
       renderPriceChart();
     }
   }));
-
   document.getElementById('priceAllBtn').addEventListener('click', () => {
-    if (priceSelectMode === 'single') {
-      /* just take the first series to respect single-select mode */
-      selectedPriceSeries = new Set(SERIES_NAMES.slice(0, 1));
-    } else {
-      selectedPriceSeries = new Set(SERIES_NAMES);
-    }
+    if (priceSelectMode === 'single') selectedPriceSeries = new Set(SERIES_NAMES.slice(0, 1));
+    else selectedPriceSeries = new Set(SERIES_NAMES);
     updatePricePickerUI(); renderPriceChart();
   });
   document.getElementById('priceNoneBtn').addEventListener('click', () => { selectedPriceSeries = new Set(); updatePricePickerUI(); renderPriceChart(); });
   document.getElementById('priceMetalsBtn').addEventListener('click', () => {
     if (priceSelectMode === 'single') {
-      /* pick the first matching metal only */
       const first = SERIES_NAMES.find(n => { const c = categorize(n); return c === 'lme' || c === 'mcx' || c === 'comex'; });
       selectedPriceSeries = new Set(first ? [first] : []);
     } else {
@@ -3130,7 +3122,6 @@ function wireControls() {
     }
     updatePricePickerUI(); renderPriceChart();
   });
-
   document.querySelectorAll('[data-season]').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('[data-season]').forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentSeasonMetal = btn.dataset.metal; renderSeasonChart(); }));
   document.querySelectorAll('[data-csp]').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('[data-csp]').forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentCSP = btn.dataset.csp; renderCSP(); }));
   document.querySelectorAll('[data-csp2]').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('[data-csp2]').forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentCSP2 = btn.dataset.csp2; renderCSP2(); }));
@@ -3143,6 +3134,7 @@ function wireControls() {
   document.getElementById('corrWindow').addEventListener('change', renderCorrChart);
   document.getElementById('parityResetBtn')?.addEventListener('click', () => { for (const k of Object.keys(parityEdits)) delete parityEdits[k]; parityEdits.__usdinr = null; parityEdited.clear(); initParityEdits(); scheduleSaveParityOverrides(); renderParity(); });
 }
+
 /* ========================================================================
    LME WAREHOUSE
    ======================================================================== */
@@ -3354,7 +3346,7 @@ function lmeWire() {
 }
 
 /* ========================================================================
-   SHFE  (NEW: timeframe selector + metal chip multi-select)
+   SHFE
    ======================================================================== */
 const SHFE_METAL_META = {
   copper: { label:'Copper', symbol:'Cu', unit:'t', color:'#d68b4d', cls:'' },
@@ -3372,15 +3364,15 @@ const SHFE_METAL_META = {
 };
 const SHFE_ORDER = ['copper','aluminium','zinc','lead','nickel','tin','alumina_wh','alumina_factory','cast_aluminium','stainless_wh','stainless_factory','copper_bc'];
 const SHFE_CHART_METALS = ['copper','aluminium','zinc','lead','nickel','tin'];
-const SHFE_DEFAULT_CHIPS = ['copper','aluminium','zinc'];         // NEW default
+const SHFE_DEFAULT_CHIPS = ['copper','aluminium','zinc'];
 const SHFE_REGION_MAP = { '上海':'Shanghai','广东':'Guangdong','江苏':'Jiangsu','浙江':'Zhejiang','江西':'Jiangxi','山东':'Shandong','天津':'Tianjin','河南':'Henan','重庆':'Chongqing','甘肃':'Gansu','四川':'Sichuan','安徽':'Anhui','福建':'Fujian','湖北':'Hubei','湖南':'Hunan','河北':'Hebei','辽宁':'Liaoning','广西':'Guangxi','新疆':'Xinjiang','海南':'Hainan','陕西':'Shaanxi','云南':'Yunnan','北京':'Beijing','厂库提货地':'Factory Pickup','泰国':'Thailand' };
 const SHFE_WAREHOUSE_MAP = { '国储天威':'Guochu Tianwei','国储外高桥':'Guochu Waigaoqiao','中储吴淞':'Zhongchu Wusong','裕强闵行':'Yuqiang Minhang','中储大场':'Zhongchu Dachang','上港云仓安达':'SIPG Yuncang Anda','上港云仓龙吴':'SIPG Yuncang Longwu','中储沪闵':'Zhongchu Humin','四川中远海运宝山':'Sichuan COSCO Baoshan','四川中远海运临港':'Sichuan COSCO Lingang','外运华东张华浜':'Sinotrans East China Zhanghuabang','世天威外高桥':'SGW Waigaoqiao','世天威临港':'SGW Lingang','中储临港':'Zhongchu Lingang','上港保税':'SIPG Bonded','上海国储':'Shanghai Guochu','全胜物流':'Quansheng Logistics','上海裕强':'Shanghai Yuqiang','中储塘沽':'Zhongchu Tanggu','中储陆通':'Zhongchu Lutong','中储陆港':'Zhongchu Lugang','上海远盛':'Shanghai Yuansheng','上海兴晟':'Shanghai Xingsheng','深圳威豹':'Shenzhen Weibao','五矿东莞':'Minmetals Dongguan','八三O黄埔':'830 Huangpu','八三O增城':'830 Zengcheng','广东炬申':'Guangdong Jushen','中储晟世':'Zhongchu Shengshi','中储广州':'Zhongchu Guangzhou','世天威广州':'SGW Guangzhou','广物物流':'Guangwu Logistics','广州港物流':'Guangzhou Port Logistics','中储无锡':'Zhongchu Wuxi','无锡国联':'Wuxi Guolian','添马行物流':'Tamahang Logistics','五矿无锡':'Minmetals Wuxi','中储南京':'Zhongchu Nanjing','惠龙港':'Huilong Port','玖隆物流':'Jiulong Logistics','国储837处':'Guochu 837','宁波九龙仓':'Ningbo Whampoa','浙江南湖':'Zhejiang Nanhu','浙江田川':'Zhejiang Tianchuan','中化兴中':'Sinochem Xingzhong','海洋仓储':'Haiyang Warehousing','大鼎石油':'Dading Petroleum','浙江永安资本':'Zhejiang Yongan Capital','浙江宝盈':'Zhejiang Baoying','山东高通泰安':'Shandong Gaotong Taian','外运华中':'Sinotrans Central China','山港青岛港':'Shangang Qingdao Port','青岛832':'Qingdao 832','中远海运高新':'COSCO Gaoxin','中远海运黄岛':'COSCO Huangdao','中储青岛':'Zhongchu Qingdao','山东中储':'Shandong Zhongchu','山高新材料':'Shangang New Materials','中铝山东':'Chalco Shandong','山东宏拓':'Shandong Hongtuo','国贸纸业':'Guomao Paper','中储天津':'Zhongchu Tianjin','天津中远海运':'Tianjin COSCO','中储洛阳':'Zhongchu Luoyang','河南国储431':'Henan Guochu 431','中储巩义':'Zhongchu Gongyi','中州铝业':'Zhongzhou Aluminium','中物流重庆':'Zhongwuliu Chongqing','甘肃国通':'Gansu Guotong','中储广元':'Zhongchu Guangyuan','中储西安':'Zhongchu Xian','中储汉口':'Zhongchu Hankou','中物流乌鲁木齐':'Zhongwuliu Urumqi','炬申新疆':'Jushen Xinjiang','中疆物流':'Zhongjiang Logistics','炬申钦州':'Jushen Qinzhou','海垦现代物流':'Haiken Modern Logistics','云南储运':'Yunnan Storage','四邦实业':'Sibang Industrial','中石化化销':'Sinopec Chemical Sales','四联':'Silian','物产中大金属':'Wuchan Zhongda Metals','中基宁波':'Zhongji Ningbo','中海泰州石化':'CNOOC Taizhou Petrochemical','中油高富':'PetroChina Gaofu','中油湛江':'PetroChina Zhanjiang','中国石化湛江':'Sinopec Zhanjiang','中国石化日照':'Sinopec Rizhao','中国石化海南':'Sinopec Hainan','国投洋浦油储':'SDIC Yangpu Oil Storage','中油大连保税':'PetroChina Dalian Bonded','北方油品':'Beifang Oil','中油广西国际':'PetroChina Guangxi Intl','山港青岛油品':'Shangang Qingdao Oil','泰华树胶':'Thai Hua Rubber','宏旺集团':'Hongwang Group','鞍钢股份':'Angang Steel','沙钢集团':'Shagang Group','镔钢集团':'Bingang Group','河钢集团承钢':'HBIS Chengde Steel','河钢集团邯钢':'HBIS Handan Steel','南钢股份':'Nanjing Steel','杭钢国贸':'Hangzhou Steel Trading','欧冶云商':'Ouyeel Cloud Commerce','柳钢股份':'Liuzhou Steel','热联集团':'Reliance Group','纵横钢铁':'Zongheng Steel','岳阳林纸':'Yueyang Paper','玖龙环球':'Nine Dragons Global' };
 function shfeTrRegion(cn) { return SHFE_REGION_MAP[cn] || cn || ''; }
 function shfeTrWarehouse(cn) { return SHFE_WAREHOUSE_MAP[cn] || cn || ''; }
 let SHFE_HISTORY = [];
 let shfeChartTotal, shfeChartChange, shfeChartCuAl;
-let SHFE_TF_DAYS = 30;                                       // NEW
-let SHFE_ACTIVE_CHIPS = new Set(SHFE_DEFAULT_CHIPS);         // NEW
+let SHFE_TF_DAYS = 30;
+let SHFE_ACTIVE_CHIPS = new Set(SHFE_DEFAULT_CHIPS);
 function shfeSaveHistory(date, inventory) {
   const entry = { date, metals: {} };
   for (const k of SHFE_CHART_METALS) { const inv = inventory[k]; if (!inv || !inv.total) continue; entry.metals[k] = { qty: inv.total.qty, change: inv.total.change || 0 }; }
@@ -3408,12 +3400,10 @@ async function shfeLoadHistory() {
     }
   } catch (e) { console.warn('SHFE history fetch failed:', e); }
 }
-/* NEW: filter by timeframe */
 function shfeFilteredHistory() {
   if (SHFE_TF_DAYS === 'all') return SHFE_HISTORY.slice();
   return SHFE_HISTORY.slice(-SHFE_TF_DAYS);
 }
-/* NEW: build chip row */
 function shfeRenderChips() {
   const row = document.getElementById('shfeMetalChips');
   if (!row) return;
@@ -3450,8 +3440,6 @@ function shfeRenderCharts() {
     return;
   }
   const labels = filt.map(e => e.date);
-
-  /* Total Inventory — only chips selected */
   const active = SHFE_CHART_METALS.filter(m => SHFE_ACTIVE_CHIPS.has(m));
   const totalDatasets = active.map(m => ({
     label: SHFE_METAL_META[m].label,
@@ -3462,8 +3450,6 @@ function shfeRenderCharts() {
   }));
   if (shfeChartTotal) shfeChartTotal.destroy();
   shfeChartTotal = new Chart(document.getElementById('shfeChartTotal'), { type: 'line', data: { labels, datasets: totalDatasets }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(14,20,32,0.95)', borderColor: '#232d42', borderWidth: 1, titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10, callbacks: { label: ctx => { const v = ctx.parsed.y; return `${ctx.dataset.label}: ${v != null ? Number(v).toLocaleString() + ' t' : '—'}`; } } } }, scales: { x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } } } } });
-
-  /* Daily Change — same active metals */
   const changeDatasets = active.map(m => ({
     label: SHFE_METAL_META[m].label,
     data: filt.map(e => e.metals[m]?.change ?? 0),
@@ -3473,8 +3459,6 @@ function shfeRenderCharts() {
   }));
   if (shfeChartChange) shfeChartChange.destroy();
   shfeChartChange = new Chart(document.getElementById('shfeChartChange'), { type: 'bar', data: { labels, datasets: changeDatasets }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 9 } } }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(14,20,32,0.95)', borderColor: '#232d42', borderWidth: 1, titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10, callbacks: { label: ctx => { const v = ctx.parsed.y; if (v == null) return `${ctx.dataset.label}: —`; const sign = v > 0 ? '+' : ''; return `${ctx.dataset.label}: ${sign}${Number(v).toLocaleString()} t`; } } } }, scales: { x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } } } } });
-
-  /* Cu vs Al always */
   if (shfeChartCuAl) shfeChartCuAl.destroy();
   shfeChartCuAl = new Chart(document.getElementById('shfeChartCuAl'), { type: 'line', data: { labels, datasets: [ { label: 'Copper', data: filt.map(e => e.metals.copper?.qty ?? null), borderColor: '#d68b4d', backgroundColor: '#d68b4d20', borderWidth: 2, pointRadius: 0, tension: 0.15, fill: true, yAxisID: 'y' }, { label: 'Aluminium', data: filt.map(e => e.metals.aluminium?.qty ?? null), borderColor: '#93a2b5', backgroundColor: '#93a2b520', borderWidth: 2, pointRadius: 0, tension: 0.15, fill: true, yAxisID: 'y1' } ]}, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#a9b6cb', boxWidth: 12, font: { size: 10 } } }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(14,20,32,0.95)', borderColor: '#232d42', borderWidth: 1, titleColor: '#e8a33d', bodyColor: '#e6ecf5', padding: 10, callbacks: { label: ctx => { const v = ctx.parsed.y; return `${ctx.dataset.label}: ${v != null ? Number(v).toLocaleString() + ' t' : '—'}`; } } } }, scales: { x: { grid: { color: '#1c2536' }, ticks: { color: '#7c8aa0', font: { size: 9 } } }, y: { position: 'left', grid: { color: '#1c2536' }, ticks: { color: '#d68b4d', font: { size: 9 } } }, y1: { position: 'right', grid: { display: false }, ticks: { color: '#93a2b5', font: { size: 9 } } } } } });
 }
@@ -3538,7 +3522,6 @@ async function shfeWire() {
     cards.forEach(c => { const wh = c.querySelector('.shfe-wh'); const tgl = c.querySelector('.shfe-wh-toggle'); if (!wh || !tgl) return; if (allOpen) { wh.classList.remove('open'); tgl.classList.remove('open'); } else { wh.classList.add('open'); tgl.classList.add('open'); } });
     document.getElementById('shfeToggleAll').innerHTML = allOpen ? '<i class="fas fa-expand"></i> Expand all' : '<i class="fas fa-compress"></i> Collapse all';
   });
-  /* NEW: timeframe buttons */
   document.querySelectorAll('#shfeTfGroup button').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('#shfeTfGroup button').forEach(x => x.classList.remove('active'));
     b.classList.add('active');
@@ -3547,7 +3530,6 @@ async function shfeWire() {
     SAFE_STORE.setItem(SHFE_TF_KEY, String(SHFE_TF_DAYS));
     shfeRenderCharts();
   }));
-  /* restore saved timeframe */
   const savedTf = SAFE_STORE.getItem(SHFE_TF_KEY);
   if (savedTf) {
     SHFE_TF_DAYS = savedTf === 'all' ? 'all' : parseInt(savedTf, 10);
@@ -4470,8 +4452,7 @@ function rolloverWire() {
 }
 
 /* ========================================================================
-   PDF REPORT — REBUILT (large fonts, per-metal tables, major changes,
-   net positioning charts big & clear on page 2)
+   PDF REPORT
    ======================================================================== */
 function computeQuantMetricsForPdf(seriesName, metalKey) {
   const prices = seriesValues(seriesName).map(p => p.v);
@@ -4501,7 +4482,7 @@ function computeQuantMetricsForPdf(seriesName, metalKey) {
   const badge = composite >= 0.5 ? 'BULLISH' : composite <= -0.5 ? 'BEARISH' : 'NEUTRAL';
   return { composite, badge, momZ, basisZ, volScore };
 }
-  function captureCanvasWithDarkBg(canvasId, bgHex = '#161d2b') {
+function captureCanvasWithDarkBg(canvasId, bgHex = '#161d2b') {
   const srcCanvas = document.getElementById(canvasId);
   if (!srcCanvas || srcCanvas.width === 0 || srcCanvas.height === 0) return null;
   const tmp = document.createElement('canvas');
@@ -4513,27 +4494,11 @@ function computeQuantMetricsForPdf(seriesName, metalKey) {
   ctx.drawImage(srcCanvas, 0, 0);
   return tmp.toDataURL('image/png', 0.95);
 }
-
-/* Strip non-ASCII characters so jsPDF built-in Helvetica never prints garbled symbols */
-function pdfClean(str) {
-  if (str == null) return '-';
-  return String(str)
-    .replace(/—|–/g, '-')
-    .replace(/•|·/g, '|')
-    .replace(/→/g, '->')
-    .replace(/Δ/g, 'Chg ')
-    .replace(/σ/g, ' SD')
-    .replace(/₹/g, 'Rs.')
-    .replace(/[^\x20-\x7E]/g, '');
-}
-
 async function ensureAllChartsRenderedForPdf() {
   const tabIds = ['tab-main', 'tab-lme', 'tab-shfe', 'tab-positioning', 'tab-rollover'];
   const prevStyles = {};
-
   const prevAnim = Chart.defaults.animation;
   Chart.defaults.animation = false;
-
   tabIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
@@ -4547,7 +4512,6 @@ async function ensureAllChartsRenderedForPdf() {
       }
     }
   });
-
   if (!LME_HISTORY.entries || !LME_HISTORY.entries.length) {
     try { await lmeLoadHistory(); } catch (e) {}
   } else {
@@ -4566,7 +4530,6 @@ async function ensureAllChartsRenderedForPdf() {
   if (!ROLL_METALS_RAW.length && RAW.length) {
     ROLL_METALS_RAW = RAW.slice();
   }
-
   try {
     renderLmcChart();
     renderCSP();
@@ -4577,9 +4540,7 @@ async function ensureAllChartsRenderedForPdf() {
     renderCftcChart();
     renderLmeCotrCharts();
   } catch (e) {}
-
   await new Promise(r => setTimeout(r, 300));
-
   const snapshots = {
     lmc:      captureCanvasWithDarkBg('lmcChart'),
     csp:      captureCanvasWithDarkBg('cspChart'),
@@ -4593,7 +4554,6 @@ async function ensureAllChartsRenderedForPdf() {
     cotLmeZn: captureCanvasWithDarkBg('chart-zinc'),
     sbi:      captureCanvasWithDarkBg('sbiChart')
   };
-
   Chart.defaults.animation = prevAnim;
   tabIds.forEach(id => {
     const el = document.getElementById(id);
@@ -4601,7 +4561,6 @@ async function ensureAllChartsRenderedForPdf() {
   });
   return snapshots;
 }
-
 async function generateInstitutionalPdfReport() {
   const btn = document.getElementById('btnDownloadPdf');
   const origHtml = btn ? btn.innerHTML : '';
@@ -4614,16 +4573,13 @@ async function generateInstitutionalPdfReport() {
     const chartImgs = await ensureAllChartsRenderedForPdf();
     const { jsPDF } = window.jspdf || {};
     if (!jsPDF) throw new Error('jsPDF library not loaded');
-
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     if (typeof doc.autoTable !== 'function') throw new Error('jsPDF-AutoTable plugin not loaded');
-
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
     const now = new Date();
     const todayIso = now.toISOString().slice(0, 10);
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
     const cNavy  = [14, 20, 32];
     const cSlate = [22, 29, 43];
     const cAmber = [232, 163, 61];
@@ -4631,10 +4587,8 @@ async function generateInstitutionalPdfReport() {
     const cRed   = [214, 48, 49];
     const cText  = [30, 35, 45];
     const cMuted = [110, 118, 135];
-
     const fNum = (v, dp = 2) => (v == null || !isFinite(v)) ? '-' : Number(v).toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
     const fSgn = (v, dp = 2) => (v == null || !isFinite(v)) ? '-' : (v >= 0 ? '+' : '') + fNum(v, dp);
-
     const usdinrSpot = LIVE_LATEST['USDINR']?.price ?? ROLL_SPOT_USDINR ?? latest['USDINR']?.value ?? null;
     const sbiTt = parityEdits.__usdinr ?? (SBI_RAW.length ? SBI_RAW[SBI_RAW.length - 1].value : null);
     const dxyVal = LIVE_LATEST['DXY']?.price ?? latest['Dollar Index']?.value ?? null;
@@ -4644,46 +4598,33 @@ async function generateInstitutionalPdfReport() {
     const curve2s10s = (us10y != null && us02y != null) ? ((us10y - us02y) * 100).toFixed(0) + ' bps' : '-';
     const cspDateStr = CSP_RAW.length ? CSP_RAW[CSP_RAW.length - 1].date : '-';
     const shfeDateStr = SHFE_HISTORY.length ? SHFE_HISTORY[SHFE_HISTORY.length - 1].date : '-';
-
-    /* ---- Helper Functions Defined Up Front ---- */
     const drawPageHeader = (pageTitleSuffix) => {
-      doc.setFillColor(...cNavy);
+      doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
       doc.rect(0, 0, pageW, 22, 'F');
-      doc.setFillColor(...cAmber);
+      doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
       doc.rect(0, 22, pageW, 1.2, 'F');
-
-      doc.setTextColor(...cAmber);
+      doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(13.5);
       doc.text('NON-FERROUS METALS RISK & HEDGING DESK', 10, 8.5);
-
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8.2);
       doc.setTextColor(215, 225, 238);
-      doc.text(
-        pdfClean(`Run: ${todayIso} ${timeStr} IST   |   LME CSP: ${cspDateStr}   |   SHFE Warrant: ${shfeDateStr}`),
-        pageW - 10, 8.5, { align: 'right' }
-      );
-
+      doc.text(pdfClean(`Run: ${todayIso} ${timeStr} IST   |   LME CSP: ${cspDateStr}   |   SHFE Warrant: ${shfeDateStr}`), pageW - 10, 8.5, { align: 'right' });
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9.2);
       doc.setTextColor(190, 204, 222);
       doc.text(pdfClean(pageTitleSuffix), 10, 16.5);
-
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8.2);
-      doc.setTextColor(...cAmber);
-      doc.text(
-        pdfClean(`USD/INR Spot: ${fNum(usdinrSpot, 2)}  |  SBI TT: ${fNum(sbiTt, 2)}  |  DXY: ${fNum(dxyVal, 2)}  |  US 2Y/10Y: ${fNum(us02y, 2)}% / ${fNum(us10y, 2)}% (${curve2s10s})  |  Gold: $${fNum(goldSpot, 1)}`),
-        pageW - 10, 16.5, { align: 'right' }
-      );
+      doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
+      doc.text(pdfClean(`USD/INR Spot: ${fNum(usdinrSpot, 2)}  |  SBI TT: ${fNum(sbiTt, 2)}  |  DXY: ${fNum(dxyVal, 2)}  |  US 2Y/10Y: ${fNum(us02y, 2)}% / ${fNum(us10y, 2)}% (${curve2s10s})  |  Gold: $${fNum(goldSpot, 1)}`), pageW - 10, 16.5, { align: 'right' });
     };
-
     const drawSectionHeader = (title, subtitle, yPos) => {
       const h = 6.2;
-      doc.setFillColor(...cSlate);
+      doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
       doc.rect(10, yPos, pageW - 20, h, 'F');
-      doc.setFillColor(...cAmber);
+      doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
       doc.rect(10, yPos, 2.2, h, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9.2);
@@ -4697,17 +4638,15 @@ async function generateInstitutionalPdfReport() {
       }
       return yPos + h + 1.5;
     };
-
     const drawPageFooter = (pageNum, totalPages) => {
       doc.setDrawColor(200, 208, 220);
       doc.line(10, pageH - 8, pageW - 10, pageH - 8);
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(7.5);
-      doc.setTextColor(...cMuted);
+      doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
       doc.text('CONFIDENTIAL | Non-Ferrous Metals Trading & Risk Management Desk | Sources: LME, MCX, SHFE, CFTC, SBI FX, NALCO', 10, pageH - 4);
       doc.text(`Page ${pageNum} of ${totalPages}`, pageW - 10, pageH - 4, { align: 'right' });
     };
-
     const drawChartCard = (title, imgData, x, y, w, h) => {
       doc.setFillColor(22, 29, 43);
       doc.setDrawColor(45, 58, 82);
@@ -4716,26 +4655,20 @@ async function generateInstitutionalPdfReport() {
       doc.rect(x, y, w, 6.2, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8.5);
-      doc.setTextColor(...cAmber);
+      doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
       doc.text(pdfClean(title), x + 3, y + 4.3);
       if (imgData) {
         doc.addImage(imgData, 'PNG', x + 1.5, y + 7.0, w - 3, h - 8.5);
       } else {
         doc.setFont('helvetica', 'italic');
         doc.setFontSize(8.5);
-        doc.setTextColor(...cMuted);
+        doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
         doc.text('Chart data unavailable', x + w / 2, y + h / 2, { align: 'center' });
       }
     };
-
-    /* =========================================================================
-       PAGE 1: EXECUTIVE BRIEFING + IMPORT PARITY + ROLLOVER & NALCO WATCH
-       ========================================================================= */
     drawPageHeader('PAGE 1  |  EXECUTIVE BRIEFING, IMPORT PARITY WATERFALL & ROLLOVER MONITOR');
     let y = 26.5;
-
     y = drawSectionHeader('1. EXECUTIVE DESK BRIEFING', 'Auto-synthesized from live curve, parity, inventory & producer models', y);
-
     const cuParity = parityCalc(PARITY_METALS[0]);
     const znParity = parityCalc(PARITY_METALS[1]);
     const alParity = parityCalc(PARITY_METALS[2]);
@@ -4743,7 +4676,6 @@ async function generateInstitutionalPdfReport() {
     const mcxExp = rolloverNextMcxExpiry();
     const lmeDays = rolloverDaysUntil(lmeExp);
     const mcxDays = rolloverDaysUntil(mcxExp);
-
     let nalcoSummary = 'NALCO data pending fetch.';
     if (NALCO_RAW.length) {
       const nLast = NALCO_RAW[0];
@@ -4752,43 +4684,34 @@ async function generateInstitutionalPdfReport() {
       const dirWord = nLast.direction === 'increase' ? 'HIKED' : 'CUT';
       nalcoSummary = `Latest NALCO revision w.e.f. ${nLast.effDate} (${dirWord} Rs.${fNum(nLast.magnitude, 0)}/MT; Prev-day LME Cash ref $${fNum(nRef, 2)}/t) -> Rolling 3-Day Signal: ${nSig.status.toUpperCase()} (${pdfClean(nSig.detail)}).`;
     }
-
     const bulletLines = [
       `Arbitrage & Landed Parity: Cu Net Diff (Landed - MCX) = Rs.${fSgn(cuParity.net, 2)}/kg (${cuParity.net < 0 ? 'IMPORT ARB OPEN' : 'Import closed / Domestic discount'}); Zn = Rs.${fSgn(znParity.net, 2)}/kg; Al = Rs.${fSgn(alParity.net, 2)}/kg | SBI TT USD/INR @ ${fNum(sbiTt, 2)}.`,
       `Curve & Roll Carry: LME Cash-3M Cu: ${fSgn(rolloverGetEffectiveLmeRoll('Cu'), 2)} $/t, Al: ${fSgn(rolloverGetEffectiveLmeRoll('Al'), 2)} $/t, Zn: ${fSgn(rolloverGetEffectiveLmeRoll('Zn'), 2)} $/t. Next LME 3rd-Wed Prompt: ${rolloverFmtDate(lmeExp)} (${lmeDays ?? '-'}d) | MCX Near-Month Expiry: ${rolloverFmtDate(mcxExp)} (${mcxDays ?? '-'}d).`,
       `Primary Producer Watch (NALCO): ${nalcoSummary}`
     ];
-
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.8);
-    doc.setTextColor(...cText);
+    doc.setTextColor(cText[0], cText[1], cText[2]);
     bulletLines.forEach(line => {
       const wrapped = doc.splitTextToSize(pdfClean('*  ' + line), pageW - 24);
       doc.text(wrapped, 12, y + 3.2);
       y += wrapped.length * 4.3 + 1.0;
     });
     y += 1.5;
-
     y = drawSectionHeader('2. PHYSICAL IMPORT PARITY WATERFALL (LME -> LANDED INR vs MCX)', `FX basis: SBI TT Sell @ ${fNum(sbiTt, 2)} | Landed = ((LME 3M + Basis + Premium) x FX x (1 + Duty%)) + Freight`, y);
-
     const parityHead = [['Metal','LME 3M ($/t)','Basis ($/t)','LME Cash ($/t)','Premium ($/t)','CIF Cost ($/t)','SBI TT','Duty %','Duty (Rs/t)','Freight (Rs/t)','Landed (Rs/kg)','MCX (Rs/kg)','Net Diff (Rs/kg)','Desk Signal']];
     for (const m of PARITY_METALS) {
       const e = parityEdits[m.key] || {};
       const c = parityCalc(m);
       const signal = c.net == null ? '-' : (c.net < -2 ? 'IMPORT ARB OPEN' : c.net > 2 ? 'DOMESTIC DISCOUNT' : 'PARITY BALANCED');
-
       doc.setFillColor(240, 244, 250);
       doc.rect(10, y, pageW - 20, 4.8, 'F');
-      const mRgb = m.color.startsWith('#')
-        ? [parseInt(m.color.slice(1,3),16), parseInt(m.color.slice(3,5),16), parseInt(m.color.slice(5,7),16)]
-        : [100, 100, 100];
-      doc.setFillColor(...mRgb);
+      const mRgb = safeRgbFromHex(m.color, [100, 100, 100]);
+      doc.setFillColor(mRgb[0], mRgb[1], mRgb[2]);
       doc.rect(10, y, 2.2, 4.8, 'F');
-
-      doc.setFont('helvetica','bold'); doc.setFontSize(9.2); doc.setTextColor(...cNavy);
+      doc.setFont('helvetica','bold'); doc.setFontSize(9.2); doc.setTextColor(cNavy[0], cNavy[1], cNavy[2]);
       doc.text(`${m.name.toUpperCase()} - IMPORT PARITY`, 14, y + 3.5);
       y += 5.0;
-
       doc.autoTable({
         startY: y,
         margin: { left: 10, right: 10 },
@@ -4826,10 +4749,8 @@ async function generateInstitutionalPdfReport() {
       });
       y = doc.lastAutoTable.finalY + 2.2;
     }
-
     y += 1.0;
     y = drawSectionHeader('3. LME & MCX ROLLOVER SPREADS & EXPIRY MONITOR', `Next LME 3M Prompt: ${rolloverFmtDate(lmeExp)} (${lmeDays ?? '-'}d)  |  Next MCX Expiry: ${rolloverFmtDate(mcxExp)} (${mcxDays ?? '-'}d)`, y);
-
     const rollSummaryRows = ['Al', 'Cu', 'Zn'].map(mk => {
       const mName = mk === 'Al' ? 'Aluminium' : mk === 'Cu' ? 'Copper' : 'Zinc';
       const lmeD = rolloverLmeDefaults(mk);
@@ -4849,7 +4770,6 @@ async function generateInstitutionalPdfReport() {
         mcxStruct
       ];
     });
-
     doc.autoTable({
       startY: y,
       margin: { left: 10, right: 10 },
@@ -4871,16 +4791,10 @@ async function generateInstitutionalPdfReport() {
         }
       }
     });
-
-    /* =========================================================================
-       PAGE 2: MAJOR DAILY CHANGES + INVENTORY & CURVE VISUAL SNAPSHOT
-       ========================================================================= */
     doc.addPage('a4', 'landscape');
     drawPageHeader('PAGE 2  |  MAJOR DAILY CHANGES & INVENTORY / CURVE ANALYTICS');
     let y2 = 26.5;
-
     y2 = drawSectionHeader('4. MAJOR DAILY CHANGES - LME / SHFE / COMEX & CURVE', 'Sorted by largest absolute day-on-day move across stock, spreads & positioning', y2);
-
     const lmeEntries2 = LME_HISTORY.entries || [];
     const lmeLast2 = lmeEntries2.length ? lmeEntries2[lmeEntries2.length - 1] : {};
     const lmePrev2 = lmeEntries2.length > 1 ? lmeEntries2[lmeEntries2.length - 2] : {};
@@ -4889,7 +4803,6 @@ async function generateInstitutionalPdfReport() {
     const cspLast2 = CSP_RAW.length ? CSP_RAW[CSP_RAW.length - 1] : null;
     const cspPrev2 = CSP_RAW.length > 1 ? CSP_RAW[CSP_RAW.length - 2] : null;
     const cftcSt2 = cftcStats();
-
     const majorChanges2 = [];
     ['copper','aluminium','zinc'].forEach(mk => {
       const label = LME_METAL_META[mk].label;
@@ -4930,7 +4843,6 @@ async function generateInstitutionalPdfReport() {
         majorChanges2.push({ cat: 'LME Funds Pos', metal: meta.label, cur: st.cur.fundNet, prev: st.pv.fundNet, delta: st.deltaFund, unit: 'lots', direction: st.deltaFund >= 0 ? 'NET BUY' : 'NET SELL' });
       }
     }
-
     majorChanges2.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
     const majorRows2 = majorChanges2.slice(0, 12).map(r => [
       r.cat, r.metal,
@@ -4939,7 +4851,6 @@ async function generateInstitutionalPdfReport() {
       (r.delta >= 0 ? '+' : '') + fNum(r.delta, r.unit === '$/t' ? 2 : 0),
       r.unit, r.direction
     ]);
-
     doc.autoTable({
       startY: y2,
       margin: { left: 10, right: 10 },
@@ -4967,9 +4878,7 @@ async function generateInstitutionalPdfReport() {
       }
     });
     y2 = doc.lastAutoTable.finalY + 3.5;
-
     y2 = drawSectionHeader('5. INVENTORY & CURVE VISUAL SNAPSHOT', 'SHFE Stocks  |  LME Cash-3M & Stock  |  Roll Spread History  |  LME-MCX Arbitrage', y2);
-
     const chartBoxH = Math.max(42, pageH - y2 - 11);
     const tCols = 4;
     const tGap = 3.5;
@@ -4984,33 +4893,17 @@ async function generateInstitutionalPdfReport() {
       const bx = 10 + i * (tW + tGap);
       drawChartCard(p.title, p.img, bx, y2, tW, chartBoxH);
     });
-
-    /* =========================================================================
-       PAGE 3: COT NET POSITIONING CHARTS + COT SUMMARY TABLE + NEWS WIRE
-       ========================================================================= */
     doc.addPage('a4', 'landscape');
     drawPageHeader('PAGE 3  |  COT NET POSITIONING & LIVE SUPPLY / MACRO INTELLIGENCE');
     let y3 = 26.5;
-
     y3 = drawSectionHeader('6. COMMITMENTS OF TRADERS (COT) - NET POSITIONING & PRICE OVERLAY', 'LME Investment Funds & COMEX / LME Base Metals Positioning', y3);
-
     const posChartH = 60;
     const halfW = (pageW - 24) / 2;
-
-    drawChartCard(
-      'LME COPPER - Investment Funds Net Position (with LME Price)',
-      chartImgs.cotLmeCu,
-      10, y3, halfW, posChartH
-    );
-
+    drawChartCard('LME COPPER - Investment Funds Net Position (with LME Price)', chartImgs.cotLmeCu, 10, y3, halfW, posChartH);
     const rightCotImg = chartImgs.cotCftc || chartImgs.cotLmeAl;
-    const rightCotTitle = chartImgs.cotCftc
-      ? 'COMEX COPPER (CFTC) - Speculators & Hedgers Net (with Price)'
-      : 'LME ALUMINIUM - Investment Funds Net Position (with LME Price)';
+    const rightCotTitle = chartImgs.cotCftc ? 'COMEX COPPER (CFTC) - Speculators & Hedgers Net (with Price)' : 'LME ALUMINIUM - Investment Funds Net Position (with LME Price)';
     drawChartCard(rightCotTitle, rightCotImg, 10 + halfW + 4, y3, halfW, posChartH);
-
     y3 += posChartH + 3.5;
-
     const cotRows3 = [];
     for (const code of ['CA','AH','ZS']) {
       const meta = LME_COTR_METALS[code];
@@ -5029,18 +4922,17 @@ async function generateInstitutionalPdfReport() {
         cotRows3.push([`LME ${meta.label}`, '-', '-', '-', '-', '-', 'No COTR loaded']);
       }
     }
-    if (cftcSt) {
+    if (cftcSt2) {
       cotRows3.push([
         'COMEX Copper (CFTC)',
-        cftcSt.last.date,
-        fNum(cftcSt.last.oi, 0),
-        fSgn(cftcSt.last.ncNet, 0),
-        fSgn(cftcSt.deltaNc, 0),
-        `${fNum(cftcSt.last.ncNetPct, 1)}%`,
-        `${fSgn(cftcSt.z, 2)} SD  |  ${cftcSt.signal}`
+        cftcSt2.last.date,
+        fNum(cftcSt2.last.oi, 0),
+        fSgn(cftcSt2.last.ncNet, 0),
+        fSgn(cftcSt2.deltaNc, 0),
+        `${fNum(cftcSt2.last.ncNetPct, 1)}%`,
+        `${fSgn(cftcSt2.z, 2)} SD  |  ${cftcSt2.signal}`
       ]);
     }
-
     doc.autoTable({
       startY: y3,
       margin: { left: 10, right: 10 },
@@ -5063,16 +4955,15 @@ async function generateInstitutionalPdfReport() {
       }
     });
     y3 = doc.lastAutoTable.finalY + 3.5;
-
     if (y3 < pageH - 25) {
       y3 = drawSectionHeader('7. SUPPLY & MACRO INTELLIGENCE WIRE', 'Top live headlines filtered for producers, mines, macro & FX', y3);
       const maxNews = Math.min(6, Math.floor((pageH - y3 - 10) / 4.5));
       const topNews = NEWS_ITEMS.slice(0, Math.max(1, maxNews));
       if (!topNews.length) {
-        doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(...cMuted);
+        doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
         doc.text('No live news items loaded yet.', 12, y3 + 3.5);
       } else {
-        doc.setFont('helvetica','normal'); doc.setFontSize(8.4); doc.setTextColor(...cText);
+        doc.setFont('helvetica','normal'); doc.setFontSize(8.4); doc.setTextColor(cText[0], cText[1], cText[2]);
         topNews.forEach(item => {
           const prefix = item.critical ? '[BREAKING] ' : `[${(item.category || 'MKT').toUpperCase()}] `;
           const tags = [...(item.countries||[]), ...(item.producers||[]), ...(item.mines||[])].slice(0,3).join(', ');
@@ -5084,13 +4975,11 @@ async function generateInstitutionalPdfReport() {
         });
       }
     }
-
     const totalPages = doc.internal.getNumberOfPages();
     for (let p = 1; p <= totalPages; p++) {
       doc.setPage(p);
       drawPageFooter(p, totalPages);
     }
-
     doc.save(`NF_Desk_Intelligence_Report_${todayIso}.pdf`);
   } catch (err) {
     console.error('PDF generation failed:', err);
