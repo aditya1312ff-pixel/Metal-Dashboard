@@ -4596,7 +4596,6 @@ async function generateInstitutionalPdfReport() {
     const cRowOdd  = [26, 34, 50];
     const cLabelBg = [16, 22, 34];
     const cPanelBg = [18, 24, 38];
-    const cDark   = [30, 35, 45];
 
     const fNum = (v, dp = 2) => (v == null || !isFinite(v)) ? '-' : Number(v).toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
     const fSgn = (v, dp = 2) => (v == null || !isFinite(v)) ? '-' : (v >= 0 ? '+' : '') + fNum(v, dp);
@@ -4611,7 +4610,10 @@ async function generateInstitutionalPdfReport() {
     const cspDateStr = CSP_RAW.length ? CSP_RAW[CSP_RAW.length - 1].date : '-';
     const shfeDateStr = SHFE_HISTORY.length ? SHFE_HISTORY[SHFE_HISTORY.length - 1].date : '-';
 
-    const drawPageHeader = (pageTitleSuffix) => {
+    /* ==================================================================
+       STANDARD HEADER (used on Page 1 and Page 3)
+       ================================================================== */
+    const drawBigHeader = (pageTitleSuffix) => {
       doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
       doc.rect(0, 0, pageW, 20, 'F');
       doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
@@ -4638,6 +4640,32 @@ async function generateInstitutionalPdfReport() {
       doc.text(pdfClean(`USD/INR ${fNum(usdinrSpot, 2)}  |  SBI TT ${fNum(sbiTt, 2)}  |  DXY ${fNum(dxyVal, 2)}  |  US 2Y/10Y ${fNum(us02y, 2)}% / ${fNum(us10y, 2)}% (${curve2s10s})  |  Gold $${fNum(goldSpot, 1)}`), pageW - 10, 15.2, { align: 'right' });
     };
 
+    /* ==================================================================
+       COMPACT HEADER — single line, 12mm — used on Page 2 so charts
+       get maximum vertical space.
+       ================================================================== */
+    const drawCompactHeader = (pageTitleSuffix) => {
+      doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
+      doc.rect(0, 0, pageW, 11, 'F');
+      doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
+      doc.rect(0, 11, pageW, 0.8, 'F');
+
+      doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10.5);
+      doc.text('NON-FERROUS METALS', 10, 7.2);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(240, 246, 255);
+      doc.text(pdfClean(' |  ' + pageTitleSuffix), 62, 7.2);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(200, 215, 235);
+      doc.text(pdfClean(`${todayIso} ${timeStr}   |   LME CSP: ${cspDateStr}   |   USD/INR ${fNum(usdinrSpot, 2)}   |   SBI TT ${fNum(sbiTt, 2)}`), pageW - 10, 7.2, { align: 'right' });
+    };
+
     const drawPageFooter = (pageNum, totalPages) => {
       doc.setDrawColor(cLine[0], cLine[1], cLine[2]);
       doc.line(10, pageH - 7, pageW - 10, pageH - 7);
@@ -4651,7 +4679,7 @@ async function generateInstitutionalPdfReport() {
     /* =============================================================
        PAGE 1 — PER-METAL TABLE
        ============================================================= */
-    drawPageHeader('PAGE 1  |  PER-METAL DESK SNAPSHOT');
+    drawBigHeader('PAGE 1  |  PER-METAL DESK SNAPSHOT');
     let y = 24;
 
     const lmeEntries = LME_HISTORY.entries || [];
@@ -4946,28 +4974,31 @@ async function generateInstitutionalPdfReport() {
     doc.text(`Generated ${todayIso} ${timeStr} · Sources: LME · SHFE · CFTC · MCX · SBI FX · NALCO`, 10, pageH - 4);
 
     /* =============================================================
-       PAGE 2 — FULL-WIDTH COT CHARTS (Cu / Zn / Al) + COT TABLE + TREND TABLE
+       PAGE 2 — CHARTS ONLY (compact header, 3 full-width COT charts)
        ============================================================= */
     doc.addPage('a4', 'landscape');
-    drawPageHeader('PAGE 2  |  LME COT NET POSITIONING & TECHNICAL SIGNALS');
-    let y2 = 24;
+    drawCompactHeader('PAGE 2  |  LME COT NET POSITIONING');
+    // Compact header occupies y=0..11.8; content starts at y=14
+    let y2 = 14;
 
-    /* --- Section title --- */
+    // Section title bar (thin)
     doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
-    doc.rect(10, y2, pageW - 20, 6.5, 'F');
+    doc.rect(10, y2, pageW - 20, 5.8, 'F');
     doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
-    doc.rect(10, y2, 2.5, 6.5, 'F');
+    doc.rect(10, y2, 2.5, 5.8, 'F');
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9.4);
+    doc.setFontSize(9);
     doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
-    doc.text('1.  LME COMMITMENTS OF TRADERS — NET POSITIONING (Cu / Zn / Al)', 15, y2 + 4.6);
-    y2 += 8;
+    doc.text('1.  LME COMMITMENTS OF TRADERS — NET POSITIONING (Cu / Zn / Al)', 15, y2 + 4.1);
+    y2 += 7;
 
-    /* --- 3 full-width COT charts stacked --- */
-    // Height budget: leave room for the two tables below.
-    // Each chart ~48mm tall → 3 * 48 = 144mm; plus 2 tables ~44mm; total 188mm + headers ~20 = fits.
-    const cotChartH = 46;
-    const cotChartGap = 2;
+    // Fill remaining page height with 3 equal-height chart panels
+    const footerReserve = 10;                     // space for footer line
+    const chartsTop = y2;
+    const chartsBottom = pageH - footerReserve;
+    const chartGap = 2.5;
+    const totalChartsH = chartsBottom - chartsTop;
+    const cotChartH = (totalChartsH - chartGap * 2) / 3;
 
     const drawFullWidthChart = (title, sub, img, yy, h) => {
       doc.setFillColor(cPanelBg[0], cPanelBg[1], cPanelBg[2]);
@@ -4977,23 +5008,23 @@ async function generateInstitutionalPdfReport() {
       doc.rect(10, yy, pageW - 20, h, 'S');
 
       doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
-      doc.rect(10, yy, pageW - 20, 6.5, 'F');
+      doc.rect(10, yy, pageW - 20, 6, 'F');
       doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
-      doc.rect(10, yy, 2.5, 6.5, 'F');
+      doc.rect(10, yy, 2.5, 6, 'F');
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8.8);
+      doc.setFontSize(8.6);
       doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
-      doc.text(pdfClean(title), 15, yy + 4.5);
+      doc.text(pdfClean(title), 15, yy + 4.1);
 
       if (sub) {
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.6);
+        doc.setFontSize(6.4);
         doc.setTextColor(cMuted[0], cMuted[1], cMuted[2]);
-        doc.text(pdfClean(sub), pageW - 12, yy + 4.5, { align: 'right' });
+        doc.text(pdfClean(sub), pageW - 12, yy + 4.1, { align: 'right' });
       }
 
-      const imgY = yy + 7.2;
-      const imgH = h - 8.2;
+      const imgY = yy + 6.5;
+      const imgH = h - 7.5;
 
       if (img) {
         try { doc.addImage(img, 'PNG', 11, imgY, pageW - 22, imgH); }
@@ -5013,28 +5044,39 @@ async function generateInstitutionalPdfReport() {
       'LME COPPER — Investment Funds Net Position (with LME Price)',
       'Speculators Net + Hedgers Net · overlay LME Cash ($/t)',
       chartImgs.cotLmeCu,
-      y2, cotChartH
+      chartsTop, cotChartH
     );
-    y2 += cotChartH + cotChartGap;
-
     drawFullWidthChart(
       'LME ZINC — Investment Funds Net Position (with LME Price)',
       'Speculators Net + Hedgers Net · overlay LME Cash ($/t)',
       chartImgs.cotLmeZn,
-      y2, cotChartH
+      chartsTop + (cotChartH + chartGap), cotChartH
     );
-    y2 += cotChartH + cotChartGap;
-
     drawFullWidthChart(
       'LME ALUMINIUM — Investment Funds Net Position (with LME Price)',
       'Speculators Net + Hedgers Net · overlay LME Cash ($/t)',
       chartImgs.cotLmeAl,
-      y2, cotChartH
+      chartsTop + 2 * (cotChartH + chartGap), cotChartH
     );
-    y2 += cotChartH + 3;
 
-    /* --- COT Summary Table --- */
-    // Add new page if not enough room
+    /* =============================================================
+       PAGE 3 — COT SUMMARY TABLE + TECHNICAL SIGNALS
+       ============================================================= */
+    doc.addPage('a4', 'landscape');
+    drawBigHeader('PAGE 3  |  COT SUMMARY & TECHNICAL SIGNALS');
+    let y3 = 24;
+
+    /* Section title */
+    doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
+    doc.rect(10, y3, pageW - 20, 6.5, 'F');
+    doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
+    doc.rect(10, y3, 2.5, 6.5, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.4);
+    doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
+    doc.text('1.  LME COMMITMENTS OF TRADERS — LAST REPORT SUMMARY', 15, y3 + 4.6);
+    y3 += 8;
+
     const cotTableRows = [];
     for (const code of ['CA','AH','ZS']) {
       const meta = LME_COTR_METALS[code];
@@ -5053,16 +5095,29 @@ async function generateInstitutionalPdfReport() {
         cotTableRows.push([`LME ${meta.label}`, '-', '-', '-', '-', '-', 'No COTR loaded']);
       }
     }
+    // Add COMEX row if we have CFTC data
+    const cftcSt = cftcStats();
+    if (cftcSt) {
+      cotTableRows.push([
+        'COMEX Copper (CFTC)',
+        cftcSt.last.date,
+        fNum(cftcSt.last.oi, 0),
+        fSgn(cftcSt.last.ncNet, 0),
+        fSgn(cftcSt.deltaNc, 0),
+        `${fNum(cftcSt.last.ncNetPct, 1)}%`,
+        `${fSgn(cftcSt.z, 2)} SD  ·  ${cftcSt.signal}`
+      ]);
+    }
 
     doc.autoTable({
-      startY: y2,
+      startY: y3,
       margin: { left: 10, right: 10 },
       head: [['Contract', 'Report Date', 'Open Interest', 'Net Spec Position (lots)', 'Weekly Change', '% of OI', '52W Z-Score & Signal']],
       body: cotTableRows,
       theme: 'grid',
       styles: {
-        fontSize: 8.4,
-        cellPadding: 2.2,
+        fontSize: 8.6,
+        cellPadding: 2.4,
         textColor: cText,
         lineColor: cLine,
         lineWidth: 0.15,
@@ -5073,7 +5128,7 @@ async function generateInstitutionalPdfReport() {
         textColor: cWhite,
         fontStyle: 'bold',
         halign: 'center',
-        fontSize: 8.6
+        fontSize: 8.8
       },
       alternateRowStyles: { fillColor: cRowOdd },
       columnStyles: {
@@ -5093,21 +5148,15 @@ async function generateInstitutionalPdfReport() {
         }
       }
     });
-    let y3 = doc.lastAutoTable.finalY + 4;
+    y3 = doc.lastAutoTable.finalY + 6;
 
-    /* --- Trend / Technical Signals Table (no EMA columns) --- */
-    if (y3 > pageH - 40) {
-      doc.addPage('a4', 'landscape');
-      drawPageHeader('PAGE 3  |  TECHNICAL SIGNALS — EMA-DERIVED TREND REGIME');
-      y3 = 24;
-    }
-
+    /* Technical Signals table */
     doc.setFillColor(cSlate[0], cSlate[1], cSlate[2]);
     doc.rect(10, y3, pageW - 20, 6.5, 'F');
     doc.setFillColor(cAmber[0], cAmber[1], cAmber[2]);
     doc.rect(10, y3, 2.5, 6.5, 'F');
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9.2);
+    doc.setFontSize(9.4);
     doc.setTextColor(cAmber[0], cAmber[1], cAmber[2]);
     doc.text('2.  TECHNICAL SIGNALS — EMA-DERIVED TREND REGIME', 15, y3 + 4.6);
     y3 += 8;
@@ -5150,7 +5199,7 @@ async function generateInstitutionalPdfReport() {
       theme: 'grid',
       styles: {
         fontSize: 8.6,
-        cellPadding: 2.2,
+        cellPadding: 2.4,
         textColor: cText,
         lineColor: cLine,
         lineWidth: 0.15,
@@ -5161,7 +5210,7 @@ async function generateInstitutionalPdfReport() {
         textColor: cWhite,
         fontStyle: 'bold',
         halign: 'center',
-        fontSize: 8.6
+        fontSize: 8.8
       },
       alternateRowStyles: { fillColor: cRowOdd },
       columnStyles: {
