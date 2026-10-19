@@ -2133,7 +2133,12 @@ function getPrevLmeCashBefore(date) {
 }
 function countAllCspDaysAfter(date) {
   const out = [];
-  for (const r of CSP_RAW) { if (r.date > date && r.Al && r.Al.cash != null) out.push({ date: r.date, cash: r.Al.cash }); }
+  for (const r of CSP_RAW) { 
+    // Changed '>' to '>=' so the effective date itself is included in the 3-day window
+    if (r.date >= date && r.Al && r.Al.cash != null) {
+      out.push({ date: r.date, cash: r.Al.cash }); 
+    } 
+  }
   return out;
 }
 function computeNalcoSignal(ref, daysAll) {
