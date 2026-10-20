@@ -49949,6 +49949,39 @@
       }
     },
     {
+      "date": "2026-10-19",
+      "copper": {
+        "total": 232175,
+        "live": 147450,
+        "cancelled": 84725
+      },
+      "aluminium": {
+        "total": 236375,
+        "live": 221350,
+        "cancelled": 15025
+      },
+      "nickel": {
+        "total": 280110,
+        "live": 258894,
+        "cancelled": 21216
+      },
+      "lead": {
+        "total": 338125,
+        "live": 301200,
+        "cancelled": 36925
+      },
+      "zinc": {
+        "total": 163050,
+        "live": 152750,
+        "cancelled": 10300
+      },
+      "tin": {
+        "total": 4060,
+        "live": 3525,
+        "cancelled": 535
+      }
+    },
+    {
       "date": "2026-10-20",
       "copper": {
         "total": 233800,
