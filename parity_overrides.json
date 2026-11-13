@@ -1,10 +1,10 @@
 {
   "Cu_basis": 66,
-  "Zn_basis": 52,
-  "Al_basis": 113,
+  "Zn_basis": 50,
+  "Al_basis": 111,
   "Cu_premium": 285,
   "Zn_premium": 126,
-  "Al_premium": 75,
+  "Al_premium": null,
   "Cu_dutyPct": 0,
   "Zn_dutyPct": 5.5,
   "Al_dutyPct": 8.25,
