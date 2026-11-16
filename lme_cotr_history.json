@@ -3042,6 +3042,62 @@
           "commNetPct": -14.751691763970918
         }
       }
+    },
+    {
+      "date": "2026-11-06",
+      "metals": {
+        "zinc": {
+          "oi": 386933,
+          "ifLong": 167804.32,
+          "ifShort": 184837.66,
+          "fundLong": 120762.36,
+          "fundShort": 81246.87,
+          "ofLong": 28741.43,
+          "ofShort": 16264.91,
+          "commLong": 69586.06,
+          "commShort": 104420.47,
+          "fundNet": 39515.490000000005,
+          "commNet": -34834.41,
+          "ifNet": -17033.339999999997,
+          "ofNet": 12476.52,
+          "fundNetPct": 10.212488983880931,
+          "commNetPct": -9.002698141538717
+        },
+        "copper": {
+          "oi": 411478,
+          "ifLong": 188361,
+          "ifShort": 184231.09,
+          "fundLong": 51364.04,
+          "fundShort": 33278.89,
+          "ofLong": 12814.95,
+          "ofShort": 8374.54,
+          "commLong": 158978.67,
+          "commShort": 185633.05,
+          "fundNet": 18085.15,
+          "commNet": -26654.379999999976,
+          "ifNet": 4129.9100000000035,
+          "ofNet": 4440.41,
+          "fundNetPct": 4.395168149937542,
+          "commNetPct": -6.477716913176397
+        },
+        "aluminium": {
+          "oi": 924302,
+          "ifLong": 493353.12,
+          "ifShort": 492691.78,
+          "fundLong": 169747.61,
+          "fundShort": 52329.35,
+          "ofLong": 41661.37,
+          "ofShort": 23825.53,
+          "commLong": 219539.58,
+          "commShort": 355357.17,
+          "fundNet": 117418.25999999998,
+          "commNet": -135817.59,
+          "ifNet": 661.3399999999674,
+          "ofNet": 17835.840000000004,
+          "fundNetPct": 12.703451902083948,
+          "commNetPct": -14.694070769077639
+        }
+      }
     }
   ]
 }
